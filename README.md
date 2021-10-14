@@ -1,3 +1,3 @@
 # ccc-linux-guest-hardening
 
-Joined repo for TDX guest kernel hardening work
+Linux guest kernel hardening effort for the Confidential Cloud Computing threat model.
