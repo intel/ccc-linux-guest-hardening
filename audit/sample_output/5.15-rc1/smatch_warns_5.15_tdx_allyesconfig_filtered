@@ -3603,14 +3603,6 @@ lib/iomap.c:68 iomap_readw() error: {15716997441267247238}
 	'check_host_input' read from the host using function 'readw' returned as a part of an expression;
 lib/iomap.c:63 iomap_readb() error: {15716996546279944721}
 	'check_host_input' read from the host using function 'readb' returned as a part of an expression;
-lib/stmp_device.c:32 stmp_clear_poll_bit() error: {15716996972464374495}
-	'check_host_input' empty read from the host using function 'readl' used inside a condition for iteration;
-lib/stmp_device.c:32 stmp_clear_poll_bit() warn: {15716996972464374495}
-	'check_host_input' empty read from the host using function 'readl';
-lib/stmp_device.c:56 stmp_reset_block() error: {1678705378809827149}
-	'check_host_input' empty read from the host using function 'readl' used inside a condition for iteration;
-lib/stmp_device.c:56 stmp_reset_block() warn: {1678705378809827149}
-	'check_host_input' empty read from the host using function 'readl';
 ./include/sound/hdaudio.h:446 snd_hdac_reg_readw() error: {15716997441267247239}
 	'check_host_input' read from the host using function 'readw' returned as a part of an expression;
 ./include/sound/hdaudio.h:440 snd_hdac_reg_readb() error: {15716996546279944722}
@@ -3623,18 +3615,14 @@ lib/stmp_device.c:56 stmp_reset_block() warn: {1678705378809827149}
 	'check_host_input' read from the host using function 'inb' to an int type local variable 'count', type is ushort;
 ./arch/x86/include/asm/dma.h:300 get_dma_residue() error: {580870775272523990}
 	'check_host_input' return an expression containing a propagated value from the host '((dmanr <= 3)) ?count:(count << 1)';
-./arch/x86/include/asm/io.h:346 inb_p() warn: {8246458663303367892}
-	'check_host_input' read from the host using function 'inb' to an int type local variable 'value', type is uchar;
-./arch/x86/include/asm/io.h:346 inb_p() error: {6954126163842}
-	'check_host_input' return an expression containing a propagated value from the host 'value';
-./include/sound/gus.h:455 snd_gf1_uart_stat() error: {15610910685189415371}
-	'check_host_input' read from the host using function 'inb' returned as a value;
-./include/sound/gus.h:465 snd_gf1_uart_get() error: {15612442264174679820}
-	'check_host_input' read from the host using function 'inb' returned as a value;
 ./include/sound/sb.h:267 snd_sb_ack_8bit() warn: {6613660634950805350}
 	'check_host_input' empty read from the host using function 'inb';
 ./include/sound/sb.h:272 snd_sb_ack_16bit() warn: {6613660634950841287}
 	'check_host_input' empty read from the host using function 'inb';
+./arch/x86/include/asm/io.h:346 inb_p() warn: {8246458663303367892}
+	'check_host_input' read from the host using function 'inb' to an int type local variable 'value', type is uchar;
+./arch/x86/include/asm/io.h:346 inb_p() error: {6954126163842}
+	'check_host_input' return an expression containing a propagated value from the host 'value';
 kernel/debug/kdb/kdb_keyboard.c:44 kdb_get_kbd_char() warn: {249892686689717289}
 	'check_host_input' empty read from the host using function 'inb' used inside an 'if' clause;
 kernel/debug/kdb/kdb_keyboard.c:44 kdb_get_kbd_char() warn: {7572505657557927}
@@ -3667,20 +3655,6 @@ kernel/irq/generic-chip.c:267 irq_gc_init_mask_cache() error: {33250339647863743
 	'check_host_input' read from the host using function 'irq_reg_readl' to a non int type local variable 'mskptr', type is uint*;
 ./include/linux/irq.h:1214 irq_reg_readl() error: {8146464021186260832}
 	'check_host_input' read from the host using function 'readl' returned as a value;
-./include/linux/fsl_ifc.h:858 ifc_in32() warn: {4638527718553547119}
-	'check_host_input' read from the host using function 'ioread32' to an int type local variable 'val', type is uint;
-./include/linux/fsl_ifc.h:860 ifc_in32() warn: {15395635046659004440}
-	'check_host_input' read from the host using function 'ioread32be' to an int type local variable 'val', type is uint;
-./include/linux/fsl_ifc.h:862 ifc_in32() error: {6385790673}
-	'check_host_input' return an expression containing a propagated value from the host 'val';
-./include/linux/fsl_ifc.h:870 ifc_in16() warn: {4638525076210082545}
-	'check_host_input' read from the host using function 'ioread16' to an int type local variable 'val', type is ushort;
-./include/linux/fsl_ifc.h:872 ifc_in16() warn: {15392757534626083354}
-	'check_host_input' read from the host using function 'ioread16be' to an int type local variable 'val', type is ushort;
-./include/linux/fsl_ifc.h:874 ifc_in16() error: {6385790673}
-	'check_host_input' return an expression containing a propagated value from the host 'val';
-./include/linux/fsl_ifc.h:879 ifc_in8() error: {17469321232822418527}
-	'check_host_input' read from the host using function 'ioread8' returned as a value;
 ./include/linux/mtd/map.h:394 inline_map_read() error: {1869848608391128760}
 	'check_host_input' read from the host using function '__readb' to a member of the structure 'r.x';
 ./include/linux/mtd/map.h:396 inline_map_read() error: {13325911782243682831}
@@ -3699,12 +3673,6 @@ kernel/irq/generic-chip.c:267 irq_gc_init_mask_cache() error: {33250339647863743
 	'check_host_input' read from the host using function '__virtio16_to_cpu' returned as a value;
 ./include/linux/vringh.h:268 vringh64_to_cpu() error: {966074488472566842}
 	'check_host_input' read from the host using function '__virtio64_to_cpu' returned as a value;
-./include/linux/io-64-nonatomic-hi-lo.h:30 hi_lo_readq_relaxed() warn: {16162753956816672941}
-	'check_host_input' read from the host using function '__readl' to an int type local variable 'high', type is uint;
-./include/linux/io-64-nonatomic-hi-lo.h:31 hi_lo_readq_relaxed() warn: {13862731977409380562}
-	'check_host_input' read from the host using function '__readl' to an int type local variable 'low', type is uint;
-./include/linux/io-64-nonatomic-hi-lo.h:33 hi_lo_readq_relaxed() error: {2059810582508571448}
-	'check_host_input' return an expression containing a propagated value from the host 'low + (high << 32)';
 ./arch/x86/include/asm/mshyperv.h:27 hv_get_register() warn: {6000267377580699213}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'value', type is ullong;
 ./arch/x86/include/asm/mshyperv.h:28 hv_get_register() error: {6954126163847}
@@ -3717,8 +3685,6 @@ kernel/irq/generic-chip.c:267 irq_gc_init_mask_cache() error: {33250339647863743
 	'check_host_input' read from the host using function 'readl' to an int type local variable 'high', type is uint;
 ./include/linux/io-64-nonatomic-lo-hi.h:16 lo_hi_readq() error: {2059810582508571448}
 	'check_host_input' return an expression containing a propagated value from the host 'low + (high << 32)';
-./include/linux/mmc/sh_mmcif.h:83 sh_mmcif_readl() error: {9070093362884321986}
-	'check_host_input' read from the host using function '__readl' returned as a value;
 ./include/linux/cb710.h:73 cb710_read_port_16() error: {15367537040652666305}
 	'check_host_input' read from the host using function 'ioread16' returned as a value;
 ./include/linux/cb710.h:72 cb710_modify_port_8() error: {7933150628045813522}
@@ -3811,26 +3777,6 @@ drivers/net/virtio_net.c:3211 virtnet_probe() error: {3287703347479324266}
 	'check_host_input' propagating read value from the host 'max_queue_pairs' into a different complex variable 'vi->max_queue_pairs';
 drivers/net/virtio_net.c:3267 virtnet_probe() warn: {7572251756130435}
 	'check_host_input' propagating a tainted value from the host 'max_queue_pairs' into a function '__dynamic_pr_debug';
-./include/linux/qcom-geni-se.h:331 geni_se_setup_s_cmd() warn: {11681948922168875803}
-	'check_host_input' read from the host using function '__readl' to an int type local variable 's_cmd', type is uint;
-./include/linux/qcom-geni-se.h:335 geni_se_setup_s_cmd() warn: {17679243229353469250}
-	'check_host_input' propagating a tainted value from the host 's_cmd' into a function 'writel';
-./include/linux/qcom-geni-se.h:402 geni_se_get_tx_fifo_depth() warn: {11681948922248112532}
-	'check_host_input' read from the host using function '__readl' to an int type local variable 'val', type is uint;
-./include/linux/qcom-geni-se.h:404 geni_se_get_tx_fifo_depth() error: {1026778530219698758}
-	'check_host_input' return an expression containing a propagated value from the host '(val & (((0)) + (((~(((0)))) - ((((1))) << (16)) + 1) & (~(((0))) >> (64 - 1 - (21)))))) >> 16';
-./include/linux/qcom-geni-se.h:420 geni_se_get_tx_fifo_width() warn: {11681948922248112532}
-	'check_host_input' read from the host using function '__readl' to an int type local variable 'val', type is uint;
-./include/linux/qcom-geni-se.h:422 geni_se_get_tx_fifo_width() error: {285896737116019020}
-	'check_host_input' return an expression containing a propagated value from the host '(val & (((0)) + (((~(((0)))) - ((((1))) << (24)) + 1) & (~(((0))) >> (64 - 1 - (29)))))) >> 24';
-./include/linux/qcom-geni-se.h:438 geni_se_get_rx_fifo_depth() warn: {11681948922248116888}
-	'check_host_input' read from the host using function '__readl' to an int type local variable 'val', type is uint;
-./include/linux/qcom-geni-se.h:440 geni_se_get_rx_fifo_depth() error: {1026778530219698758}
-	'check_host_input' return an expression containing a propagated value from the host '(val & (((0)) + (((~(((0)))) - ((((1))) << (16)) + 1) & (~(((0))) >> (64 - 1 - (21)))))) >> 16';
-./include/linux/qcom-geni-se.h:296 geni_se_read_proto() warn: {10415858856028324798}
-	'check_host_input' read from the host using function '__readl' to an int type local variable 'val', type is uint;
-./include/linux/qcom-geni-se.h:298 geni_se_read_proto() error: {10735289934733926475}
-	'check_host_input' return an expression containing a propagated value from the host '(val & (((0)) + (((~(((0)))) - ((((1))) << (8)) + 1) & (~(((0))) >> (64 - 1 - (15)))))) >> 8';
 ./include/linux/parport_pc.h:213 parport_pc_read_status() error: {14972992196575804212}
 	'check_host_input' read from the host using function 'inb' returned as a value;
 ./include/linux/parport_pc.h:73 parport_pc_read_data() warn: {14972992196575768275}
@@ -3839,17 +3785,9 @@ drivers/net/virtio_net.c:3267 virtnet_probe() warn: {7572251756130435}
 	'check_host_input' return an expression containing a propagated value from the host 'val';
 ./include/linux/virtio_config.h:290 virtio32_to_cpu() error: {11774180170158199209}
 	'check_host_input' read from the host using function '__virtio32_to_cpu' returned as a value;
-./include/linux/reset/bcm63xx_pmb.h:72 bpcm_rd() error: {9962849152113429502}
-	'check_host_input' read from the host using function 'readl' into a non-local variable 'val';
-./include/linux/reset/bcm63xx_pmb.h:50 __bpcm_do_op() warn: {1419889009076741998}
-	'check_host_input' read from the host using function 'readl' to an int type local variable 'cmd', type is uint;
 ./arch/x86/include/asm/io.h:348 inl_p() warn: {8246459089487797662}
 	'check_host_input' read from the host using function 'inl' to an int type local variable 'value', type is uint;
 ./arch/x86/include/asm/io.h:348 inl_p() error: {6954126163842}
-	'check_host_input' return an expression containing a propagated value from the host 'value';
-./arch/x86/include/asm/io.h:347 inw_p() warn: {8246459558290670409}
-	'check_host_input' read from the host using function 'inw' to an int type local variable 'value', type is ushort;
-./arch/x86/include/asm/io.h:347 inw_p() error: {6954126163842}
 	'check_host_input' return an expression containing a propagated value from the host 'value';
 drivers/virtio/virtio_pci_modern_dev.c:30 vp_modern_map_capability() warn: {7572251756130247}
 	'check_host_input' read from the host using function 'pci_read_config_byte' to an int type local variable 'bar', type is uchar;
@@ -4239,6 +4177,10 @@ drivers/virtio/virtio_ring.c:476 virtqueue_add_desc_split() error: {210721765214
 	'check_host_input' return an expression containing a propagated value from the host 'next';
 ./include/linux/gameport.h:179 gameport_read() error: {9588461567759252342}
 	'check_host_input' read from the host using function 'inb' returned as a value;
+./arch/x86/include/asm/io.h:347 inw_p() warn: {8246459558290670409}
+	'check_host_input' read from the host using function 'inw' to an int type local variable 'value', type is ushort;
+./arch/x86/include/asm/io.h:347 inw_p() error: {6954126163842}
+	'check_host_input' return an expression containing a propagated value from the host 'value';
 ./include/linux/pxa2xx_ssp.h:271 pxa_ssp_read_reg() error: {6499561181651995901}
 	'check_host_input' read from the host using function '__readl' returned as a value;
 ./include/video/vga.h:220 vga_mm_r() error: {8092914276038035743}
@@ -4249,18 +4191,12 @@ drivers/virtio/virtio_ring.c:476 virtqueue_add_desc_split() error: {210721765214
 	'check_host_input' read from the host using function 'pci_read_config_word' to an int type local variable 'flags', type is ushort;
 ./include/linux/svga.h:96 svga_primary_device() error: {11978918857684461886}
 	'check_host_input' return an expression containing a propagated value from the host '(flags & 1)';
-./include/linux/cs5535.h:135 cs5535_has_vsa2() warn: {13878748311780846834}
-	'check_host_input' read from the host using function 'inw' to an int type local variable 'val', type is ushort;
 ./include/linux/via-core.h:191 via_read_reg() error: {14900045905716848819}
 	'check_host_input' read from the host using function 'inb' returned as a value;
 ./include/linux/via-core.h:214 via_write_misc_reg_mask() warn: {249892686699458387}
 	'check_host_input' read from the host using function 'inb' to an int type local variable 'old', type is uchar;
 ./include/linux/via-core.h:215 via_write_misc_reg_mask() warn: {1660345922009129273}
 	'check_host_input' propagating an expression containing a tainted value from the host '(data & mask) | (old & ~mask)' into a function 'outb';
-./include/asm-generic/io.h:324 readsb() warn: {12228617134060327156}
-	'check_host_input' read from the host using function '__readb' to an int type local variable 'x', type is uchar;
-./include/asm-generic/io.h:325 readsb() warn: {249803598470029865}
-	'check_host_input' propagating read value from the host 'x' into a different local value 'buf';
 drivers/firmware/qemu_fw_cfg.c:151 fw_cfg_read_blob() warn: {9424323543479731096}
 	'check_host_input' empty read from the host using function 'ioread8';
 drivers/firmware/qemu_fw_cfg.c:152 fw_cfg_read_blob() error: {3971451182673083677}
@@ -6976,7 +6912,7 @@ drivers/char/hpet.c:796 __hpet_calibrate() warn: {3016723827939333808}
 drivers/char/hpet.c:803 __hpet_calibrate() warn: {2716470927380845999}
 	'check_host_input' read from the host using function 'readq' to an int type local variable 'start', type is ulong;
 drivers/char/hpet.c:805 __hpet_calibrate() error: {7572251756130264}
-	'check_host_input' an expression containing a propagated value from the host '$expr_0x7f1594a813b0(21)' used in iterator;
+	'check_host_input' an expression containing a propagated value from the host '$expr_0x7f46172ed3b0(21)' used in iterator;
 drivers/char/hpet.c:806 __hpet_calibrate() warn: {2716470927380846002}
 	'check_host_input' read from the host using function 'readq' to an int type local variable 'm', type is ulong;
 drivers/char/hpet.c:807 __hpet_calibrate() warn: {15412049465253236410}
