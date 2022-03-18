@@ -1,0 +1,11 @@
+.env
+.pipenv
+.west/
+Pipfile
+Pipfile.lock
+manifest/
+kafl/
+linux-guest/
+linux-host/
+tdvf/
+smatch/

@@ -31,10 +31,10 @@ To boot and fuzz the TDX guest kernel on non-TDX hardware, we require a modified
 host kernel with with "SDV" emulation and kAFL/Nyx patches applied to Linux/KVM.
 
 Option 1: Install a host kernel from prebuild .deb packages. This is recommended and tested with several recent Ubuntu and Debian releases.
-- __TODO__ add URLs
+- [Prebuild SDV+kAFL host kernel](https://github.com/IntelLabs/kafl.linux/releases/tag/kafl%2Fsdv-5.6-rc1)
 
 ```shell
-sudo dpkg -i path/to/linux-image-*deb
+sudo dpkg -i /path/to/linux-image-*deb
 ```
 
 Option 2: Fetch host SDV + kAFL kernel to build from source
@@ -43,7 +43,7 @@ West does not fetch the host kernel repo by default. You can fetch it explicitly
 build based on known-working config:
 
 ```shell
-west update linux-host
+west update linux-host # not pulled by default
 cd $LINUX_HOST
 cp $BKC_ROOT/bkc/kafl/linux_kernel_sdv_kafl.config .config
 make -j$(nproc) bindeb-pkg
@@ -69,11 +69,14 @@ Linux tdx-fuzz0 5.6.0-rc1-tdfl[...]
 ### 3. Build TDVF firmware for the guest
 
 To boot the TDX guest kernel on our emulation setup, we require a modified TDVF
-firmware build:
+firmware build. Again, we recommend to use the prebuild image from github:
 
-__TODO:__ add prebuild package to github]
+- [TDVF-SDV v0.1](https://github.com/IntelLabs/kafl.edk2/releases/tag/tdvf-sdv-v0.1)
+
+Alternatively, to build TDVF youself:
 
 ```shell
+west update tdvf # not pulled by default
 cd $TDVF_ROOT
 make -j $(nproc) -C BaseTools
 source edksetup.sh --reconfig
@@ -115,8 +118,8 @@ harness in `$LINUX_GUEST/init/main.c`:
 ```shell
 cd $LINUX_GUEST
 cp $BKC_ROOT/bkc/kafl/linux_kernel_tdx_guest.config .config
-./scripts/config --set-val CONFIG_TDX_FUZZ_KAFL=y
-./scripts/config --set-val CONFIG_TDX_FUZZ_HARNESS_POST_TRAP=y
+./scripts/config -e CONFIG_TDX_FUZZ_KAFL
+./scripts/config -e CONFIG_TDX_FUZZ_HARNESS_DOINITCALLS_VIRTIO
 [...]
 make -j$(nproc)
 ```
@@ -126,10 +129,10 @@ make -j$(nproc)
 The fuzz.sh launch script pulls the various required components together for
 launching with the kAFL fuzzer, coverage and debug tools. In particular:
 
-- linux bzImage - taken from provided target folder (second argument)
-- initrd in ~/tdx/initrd.cpio.gz - customize this for userspace fuzzing
-- TDVF image at ~/tdx/TDVF.fd - customize this for UEFI fuzzing
-- sharedir directory in ~/tdx/sharedir  - customize for userspace fuzzing 
+- linux `bzImage` - taken from the target folder (second argument to `fuzz.sh`)
+- initrd in `$BKC_ROOT/initrd.cpio.gz` - customize this for userspace fuzzing
+- TDVF image at `$BKC_ROOT/TDVF.fd` - either based on prebuild or own TDVF build
+- sharedir directory in `$BKC_ROOT/sharedir`  - customize for userspace fuzzing
 
 Make sure that all the relevant assets exist. For kernel
 fuzzing, any dummy initrd can be used (copy one from /boot).
@@ -138,7 +141,8 @@ To launch with bzImage taken from `linux-guest/` (aka. `$LINUX_GUEST`) directory
 
 ```shell
 ln -s ./bkc/kafl/fuzz.sh
-ln -s $TDVF_ROOT/Build/OvmfX64/DEBUG_GCC5/FV/OVMF.fd TDVF.fd
+#ln -s $TDVF_ROOT/Build/OvmfX64/DEBUG_GCC5/FV/OVMF.fd TDVF.fd  # own build?
+ln -s TDVF_sdv_1G.fd TDVF.fd                                   # prebuild?
 ln -s /boot/initrd.img-$(uname -r) initrd.cpio.gz
 ./fuzz.sh run linux-guest -t 2 -ts 1 -p 2 --log-hprintf
 ```
