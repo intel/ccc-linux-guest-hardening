@@ -1,0 +1,36 @@
+From 00cc014a986ba613e259810c60010899422d0fbc Mon Sep 17 00:00:00 2001
+From: Steffen Schulz <steffen.schulz@intel.com>
+Date: Wed, 26 Jan 2022 09:49:46 -0800
+Subject: [PATCH 1/2] upgrade to stress-ng-0.13.05
+
+We need new -seed option
+---
+ package/stress-ng/stress-ng.hash | 1 +
+ package/stress-ng/stress-ng.mk   | 2 +-
+ 2 files changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/package/stress-ng/stress-ng.hash b/package/stress-ng/stress-ng.hash
+index bbdcd15..2c3112c 100644
+--- a/package/stress-ng/stress-ng.hash
++++ b/package/stress-ng/stress-ng.hash
+@@ -1,3 +1,4 @@
+ # Locally calculated
+ sha256  1973b142b9b731952dd4ce77c3618a7e3c62494587e23bf37c8683503d048f68  stress-ng-0.13.01.tar.gz
++sha256  3de49e1100866634f549e99c1644283d0cde817b844a69dcf7f80afa2227d350  stress-ng-0.13.05.tar.gz
+ sha256  8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643  COPYING
+diff --git a/package/stress-ng/stress-ng.mk b/package/stress-ng/stress-ng.mk
+index 5457238..0b2287c 100644
+--- a/package/stress-ng/stress-ng.mk
++++ b/package/stress-ng/stress-ng.mk
+@@ -4,7 +4,7 @@
+ #
+ ################################################################################
+ 
+-STRESS_NG_VERSION = 0.13.01
++STRESS_NG_VERSION = 0.13.05
+ STRESS_NG_SITE = $(call github,ColinIanKing,stress-ng,V$(STRESS_NG_VERSION))
+ STRESS_NG_LICENSE = GPL-2.0+
+ STRESS_NG_LICENSE_FILES = COPYING
+-- 
+2.25.1
+

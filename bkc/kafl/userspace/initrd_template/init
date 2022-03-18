@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# Mount the /proc and /sys filesystems.
+mount -t proc none /proc
+mount -t sysfs none /sys
+
+# autostart hooks
+test -x /etc/rcS && /etc/rcS
+
+# fallback to shell
+test -x /bin/ash && /bin/ash || /bin/sh

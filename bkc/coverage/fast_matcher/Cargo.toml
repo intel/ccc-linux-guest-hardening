@@ -1,0 +1,17 @@
+[package]
+name = "fast_matcher"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+lzzzz = "0.8"
+clap = "2.33"
+regex = "1.5.4"
+glob = "0.3.0"
+addr2line = "0.16.0"
+memmap = "0.7.0"
+itertools = "0.10.1"
+workctl = "0.2.0"
+rangemap = "0.1.13"

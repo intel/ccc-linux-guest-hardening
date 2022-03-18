@@ -1,0 +1,32 @@
+HARNESS OVERVIEW:
+
+FULL_BOOT: Full boot sequence init/main.c:start_kernel to init/main.c:kernel_init just before dropping to userspace
+EARLYBOOT: Early boot process init/main.c:start_kernel up to before the call to trap_init()
+START_KERNEL: Early boot init/main.c:start_kernel to before the call to arch_call_rest_init() 
+
+POST_TRAP: init/main.c:start_kernel after trap_init() to before arch_call_rest_init()
+REST_INIT: start_kernel from arch_call_rest_init() onwards to before userspace
+
+DO_BASIC: init/main.c:do_basic_setup(). Includes all initcall levels
+
+DOINITCALLS_LEVEL_3,4,5,6,7: Different initcall levels (see https://0xax.gitbooks.io/linux-insides/content/Concepts/linux-cpu-3.html for an explanation of levels). Biggest one here is level 4.
+DOINITCALLS_PCI: pci-related initcalls. Selective fuzzing for initcalls such as pci_subsys_init, pci_arch_init. See the code for DOINITCALLS_FILTER in init/main.c.
+DOINITCALLS_VIRTIO: virtio-related initcalls. virtio_mmio_init, virtio_pci_driver_init, etc.
+DOINITCALLS_ACPI: acpi-related initcalls. For now only acpi_init.
+
+VIRTIO_BLK_PROBE: Probing for virtio blk devices. drivers/block/virtio_blk.c
+ACPI_EARLY_INIT: acpi_early_init function that happens in start_kernel. Added because of ACPI fuzzing request (identified as concern).
+
+BOOT PARAM HARNESSES (BPH) (uses kprobe on function set by fuzzing_func_harness kernel boot param. fuzzing_disallow disables fuzzing input consumption for specified functions).
+
+"BPH_ACPI_INIT": "fuzzing_func_harness=acpi_init",
+"BPH_VP_MODERN_PROBE": "fuzzing_func_harness=vp_modern_probe fuzzing_disallow=virtio_pci_find_capability",
+"BPH_VIRTIO_CONSOLE_INIT": "fuzzing_func_harness=init",
+"BPH_VIRTIO_PCI_PROBE": "fuzzing_func_harness=virtio_pci_probe",
+"BPH_P9_VIRTIO_PROBE": "fuzzing_func_harness=p9_virtio_probe",
+"BPH_PCI_SUBSYS_INIT": "fuzzing_func_harness=pci_subsys_init",
+# TODO: kprobes not avail, do manual harness
+# "BPH_EARLY_PCI_SERIAL": "fuzzing_func_harness=setup_early_printk # earlyprintk=pciserial,force,00:18.1,115200",
+"BPH_PCIBIOS_FIXUP_IRQS": "fuzzing_func_harness=pcibios_fixup_irqs acpi=noirq",
+"BPH_HANDLE_CONTROL_MESSAGE": "fuzzing_func_harness=handle_control_message fuzzing_disallow=virtio_pci_find_capability,pci_read_config_dword",
+

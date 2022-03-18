@@ -1,0 +1,268 @@
+From 76e7d599d35ac9b3caf8283110f02ad8bee1269a Mon Sep 17 00:00:00 2001
+From: Steffen Schulz <steffen.schulz@intel.com>
+Date: Mon, 4 Oct 2021 14:05:02 -0700
+Subject: [PATCH 2/2] new package: perf_fuzzer
+
+---
+ package/Config.in                             |  1 +
+ .../0001-use-environment-CFLAGS-and-CC.patch  | 99 +++++++++++++++++++
+ .../0002-fixup-trinity-globals.patch          | 66 +++++++++++++
+ package/perf_fuzzer/Config.in                 |  8 ++
+ package/perf_fuzzer/perf_fuzzer.hash          |  3 +
+ package/perf_fuzzer/perf_fuzzer.mk            | 28 ++++++
+ 6 files changed, 205 insertions(+)
+ create mode 100644 package/perf_fuzzer/0001-use-environment-CFLAGS-and-CC.patch
+ create mode 100644 package/perf_fuzzer/0002-fixup-trinity-globals.patch
+ create mode 100644 package/perf_fuzzer/Config.in
+ create mode 100644 package/perf_fuzzer/perf_fuzzer.hash
+ create mode 100644 package/perf_fuzzer/perf_fuzzer.mk
+
+diff --git a/package/Config.in b/package/Config.in
+index 4d323d4..06d1ec8 100644
+--- a/package/Config.in
++++ b/package/Config.in
+@@ -139,6 +139,7 @@ menu "Debugging, profiling and benchmark"
+ 	source "package/strace/Config.in"
+ 	source "package/stress/Config.in"
+ 	source "package/stress-ng/Config.in"
++	source "package/perf_fuzzer/Config.in"
+ 	source "package/sysdig/Config.in"
+ 	source "package/sysprof/Config.in"
+ 	source "package/tcf-agent/Config.in"
+diff --git a/package/perf_fuzzer/0001-use-environment-CFLAGS-and-CC.patch b/package/perf_fuzzer/0001-use-environment-CFLAGS-and-CC.patch
+new file mode 100644
+index 0000000..4ffb445
+--- /dev/null
++++ b/package/perf_fuzzer/0001-use-environment-CFLAGS-and-CC.patch
+@@ -0,0 +1,99 @@
++From 3dde98ace7ca8007fcf167a839c172f14c6249a7 Mon Sep 17 00:00:00 2001
++From: Steffen Schulz <steffen.schulz@intel.com>
++Date: Mon, 4 Oct 2021 15:03:42 -0700
++Subject: [PATCH] use environment CFLAGS and CC
++
++---
++ Makefile                      |  4 ++++
++ fuzzer/Makefile               | 16 +++++++---------
++ fuzzer/trinity_files/Makefile | 11 ++++-------
++ lib/Makefile                  |  6 ++----
++ 4 files changed, 17 insertions(+), 20 deletions(-)
++
++diff --git a/Makefile b/Makefile
++index 4eca887..b1a1ee7 100644
++--- a/Makefile
+++++ b/Makefile
++@@ -1,3 +1,7 @@
+++perf_fuzzer:
+++	$(MAKE) -C lib
+++	$(MAKE) -C fuzzer
+++
++ all:
++	cd lib && make
++	cd tests && make
++diff --git a/fuzzer/Makefile b/fuzzer/Makefile
++index 1c6b83d..d3c265e 100644
++--- a/fuzzer/Makefile
+++++ b/fuzzer/Makefile
++@@ -1,10 +1,8 @@
++-CC = gcc
+++override CFLAGS += -Wall -I../include -I./include -I./trinity_files/include
+++override LFLAGS +=
++
++-CFLAGS = -Wall -g -I../include -I./include -I./trinity_files/include
++-LFLAGS =
++-
++-CFLAGS_X32 = -Wall -mx32 -g -I../include -I./include -I./trinity_files/include
++-LFLAGS_X32 = -mx32 -static
+++override CFLAGS_X32 += -Wall -mx32 -I../include -I./include -I./trinity_files/include
+++override LFLAGS_X32 += -mx32 -static
++
++ ####
++
++@@ -96,14 +94,14 @@ perf_fuzzer.x32.o:	perf_fuzzer.c perf_attr_print.h version.h
++ ####
++
++ trinity_files/trinity_lib.a:
++-	cd trinity_files && make
+++	$(MAKE) -C trinity_files
++
++ trinity_files/trinity_lib.x32.a:
++-	cd trinity_files && make x32
+++	$(MAKE) -C trinity_files x32
++
++ ####
++
++ clean:
++	rm -f *~ *.o perf_fuzzer replay_log log_to_code filter_log active_events
++-	cd trinity_files && make clean
+++	$(MAKE) -C trinity_files clean
++
++diff --git a/fuzzer/trinity_files/Makefile b/fuzzer/trinity_files/Makefile
++index 5e48a8a..9c090fc 100644
++--- a/fuzzer/trinity_files/Makefile
+++++ b/fuzzer/trinity_files/Makefile
++@@ -1,11 +1,8 @@
++-CC = gcc
++-AR = ar
+++override CFLAGS += -O2 -Wall -I./include -I../../include -I.
+++override LFLAGS +=
++
++-CFLAGS = -O2 -Wall -g -I./include -I../../include -I.
++-LFLAGS =
++-
++-CFLAGS_X32 = -mx32 -O2 -Wall -g -I./include -I../../include
++-LFLAGS_X32 = -mx32
+++override CFLAGS_X32 += -mx32 -O2 -Wall -I./include -I../../include
+++override LFLAGS_X32 += -mx32
++
++ all:	trinity_lib.a
++
++diff --git a/lib/Makefile b/lib/Makefile
++index 51f799d..977fd2c 100644
++--- a/lib/Makefile
+++++ b/lib/Makefile
++@@ -1,8 +1,6 @@
++-CC = gcc
+++override CFLAGS += -Wall -O2 -I../include
++
++-CFLAGS = -Wall -O2 -I../include
++-
++-CFLAGS_X32 = -mx32 -Wall -O2 -I../include
+++override CFLAGS_X32 += -mx32 -Wall -O2 -I../include
++
++
++ include ../Makefile.papi.inc
++--
++2.25.1
++
+diff --git a/package/perf_fuzzer/0002-fixup-trinity-globals.patch b/package/perf_fuzzer/0002-fixup-trinity-globals.patch
+new file mode 100644
+index 0000000..23f8272
+--- /dev/null
++++ b/package/perf_fuzzer/0002-fixup-trinity-globals.patch
+@@ -0,0 +1,66 @@
++From 8bc3a587899457296742fa7950a59c954d3c4d69 Mon Sep 17 00:00:00 2001
++From: Steffen Schulz <steffen.schulz@intel.com>
++Date: Mon, 4 Oct 2021 15:31:27 -0700
++Subject: [PATCH] fixup trinity globals
++
++---
++ fuzzer/perf_fuzzer.c | 4 +---
++ fuzzer/replay_log.c  | 8 ++++----
++ 2 files changed, 5 insertions(+), 7 deletions(-)
++
++diff --git a/fuzzer/perf_fuzzer.c b/fuzzer/perf_fuzzer.c
++index 3237c86..b13582f 100644
++--- a/fuzzer/perf_fuzzer.c
+++++ b/fuzzer/perf_fuzzer.c
++@@ -69,6 +69,7 @@ static int trigger_failure_logging=0;
++ #include "sanitise.h"
++ #include "syscall.h"
++ #include "tables.h"
+++#include "maps.h"
++
++ /* perf_event_test infrastructure */
++ #include "../include/perf_event.h"
++@@ -83,14 +84,11 @@ static int trigger_failure_logging=0;
++
++ /* Globals from Trinity */
++ int page_size;
++-struct shm_s *shm;
++-char *page_rand;
++ unsigned int num_online_cpus;
++ unsigned int max_children=1;
++ unsigned int get_cpu(void);
++
++
++-
++ #define MAX_THROTTLES		10
++
++ #define TYPE_ALL		0xffffffff
++diff --git a/fuzzer/replay_log.c b/fuzzer/replay_log.c
++index 6fd910a..18d7f4c 100644
++--- a/fuzzer/replay_log.c
+++++ b/fuzzer/replay_log.c
++@@ -17,6 +17,7 @@
++
++ #include "shm.h"
++ #include "syscall.h"
+++#include "maps.h"
++ #include "../include/perf_event.h"
++ #include "../include/perf_helpers.h"
++
++@@ -36,10 +37,9 @@ static int fd_throttles[FD_REMAP_SIZE];
++
++ static int original_pid=-1;
++
++-	int page_size;
++-	struct shm_s *shm;
++-	char *page_rand;
++-	extern struct syscallentry syscall_perf_event_open;
+++int page_size;
+++extern struct syscallentry syscall_perf_event_open;
+++unsigned int max_children=1;
++
++
++ static void mmap_event(char *line) {
++--
++2.25.1
++
+diff --git a/package/perf_fuzzer/Config.in b/package/perf_fuzzer/Config.in
+new file mode 100644
+index 0000000..5182c0b
+--- /dev/null
++++ b/package/perf_fuzzer/Config.in
+@@ -0,0 +1,8 @@
++config BR2_PACKAGE_PERF_FUZZER
++	bool "perf-fuzzer"
++	depends on BR2_USE_MMU # fork()
++	depends on BR2_TOOLCHAIN_HEADERS_AT_LEAST_3_3
++	depends on BR2_x86_64
++	help
++	  perf fuzzer for buildroot
++	  http://web.eece.maine.edu/~vweaver/projects/perf_events/fuzzer/
+diff --git a/package/perf_fuzzer/perf_fuzzer.hash b/package/perf_fuzzer/perf_fuzzer.hash
+new file mode 100644
+index 0000000..a6241aa
+--- /dev/null
++++ b/package/perf_fuzzer/perf_fuzzer.hash
+@@ -0,0 +1,3 @@
++# Locally calculated
++sha256  7e9dfa68282ad3e4064009cd44111add3ce5f867d779fe7ac46539f7bdf38ac9  perf_event_tests-0.29.tar.bz2
++sha256  dcc100d4161cc0b7177545ab6e47216f84857cda3843847c792a25289852dcaa  COPYING
+diff --git a/package/perf_fuzzer/perf_fuzzer.mk b/package/perf_fuzzer/perf_fuzzer.mk
+new file mode 100644
+index 0000000..5eba682
+--- /dev/null
++++ b/package/perf_fuzzer/perf_fuzzer.mk
+@@ -0,0 +1,28 @@
++################################################################################
++#
++# perf_fuzzer
++#
++################################################################################
++
++PERF_FUZZER_VERSION = 0.29
++PERF_FUZZER_SOURCE = perf_event_tests-$(PERF_FUZZER_VERSION).tar.bz2
++PERF_FUZZER_SITE = http://web.eece.maine.edu/~vweaver/projects/perf_events/validation
++PERF_FUZZER_LICENSE = GPL-2.0
++PERF_FUZZER_LICENSE_FILES = COPYING
++
++ifeq ($(BR2_PACKAGE_LIBBSD),y)
++PERF_FUZZER_DEPENDENCIES += libbsd
++endif
++
++define PERF_FUZZER_BUILD_CMDS
++	$(TARGET_CONFIGURE_OPTS) $(MAKE) -C $(@D) perf_fuzzer
++endef
++
++# Don't use make install otherwise stress-ng will be rebuild without
++# required link libraries if any. Furthermore, using INSTALL allow to
++# set the file permission correcly on the target.
++define PERF_FUZZER_INSTALL_TARGET_CMDS
++	$(INSTALL) -m 0755 -D $(@D)/fuzzer/perf_fuzzer $(TARGET_DIR)/usr/bin/perf_fuzzer
++endef
++
++$(eval $(generic-package))
+--
+2.25.1
+

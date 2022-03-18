@@ -1,0 +1,90 @@
+# West manifest for multi-repo management
+#
+# Configure custom branches and keep track in a repo of your choice.
+#
+# By default, west checks out a detached HEAD to avoid touching any local branches.
+# To work on sub-projects, pull/extend branches as you like and use west update -k:
+# https://docs.zephyrproject.org/latest/guides/west/built-in.html#west-update
+#
+
+manifest:
+  remotes:
+    - name: sandbox
+      url-base: https://github.com/intel-sandbox
+    - name: github
+      url-base: https://github.com
+
+  # put manifest repo at $(west topdir)
+  # only works with `west init -l`
+  self:
+      path: .
+
+  projects:
+
+    # import specific kAFL branch
+    - name: kafl
+      remote: github
+      repo-path: IntelLabs/kAFL
+      revision: kafl_tdx
+      import: manifest/west.yml
+
+    # override kAFL Qemu
+    - name: qemu
+      remote: github
+      repo-path: IntelLabs/kafl.qemu
+      revision: kafl_stable_tdx
+      path: kafl/nyx/qemu
+      groups:
+        - qemu
+
+    # override kAFL libxdc
+    - name: libxdc
+      remote: github
+      repo-path: IntelLabs/kafl.libxdc
+      revision: kafl_stable_tdx
+      path: kafl/nyx/libxdc
+      groups:
+        - qemu
+
+    # need htools component of Nyx 'packer'
+    - name: nyx-packer
+      remote: github
+      repo-path: il-steffen/packer
+      revision: kafl_stable
+      path: kafl/nyx/packer
+      groups:
+        - nyx-packer
+
+    # Linux TDX guest kernel
+    - name: linux-guest
+      remote: github
+      repo-path: IntelLabs/kafl.linux
+      revision: kafl/fuzz-5.15-3
+      groups:
+        - linux-guest
+
+    # Linux TDX host emulation (+ kAFL)
+    - name: linux-host
+      remote: github
+      repo-path: IntelLabs/kafl.linux
+      revision: kafl/sdv-5.6-rc1
+      groups:
+        - tdx-host-sdv
+
+    # EDK2 / TDVF for SDV + kAFL
+    - name: tdvf
+      remote: github
+      repo-path: IntelLabs/kafl.edk2
+      revision: TDVF_SDV
+      submodules: true
+      groups:
+        - tdvf
+
+    # Smatch static analyzer
+    - name: smatch
+      remote: github
+      repo-path: error27/smatch
+      revision: master
+      path: smatch
+
+  group-filter: [-tdx-host-sdv, -targets]

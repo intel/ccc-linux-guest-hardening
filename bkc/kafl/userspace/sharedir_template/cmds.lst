@@ -1,0 +1,15 @@
+lspci -vvv
+lspci -M -vvv
+lspci -H1 -vvv
+lspci -H2 -vvv
+stress-ng -t 1 --seed $RAND --procfs 1 #XXXXXX
+stress-ng -t 1 --seed $RAND --sysfs 1 #XXXXXX
+stress-ng -t 1 --seed $RAND --temp-path /mnt --iomix 1 #XXXXXX
+stress-ng -t 1 --seed $RAND --temp-path /mnt --aio 1 #XXXXXX
+stress-ng -t 1 --seed $RAND --temp-path /mnt --aiol 1
+stress-ng -t 1 --seed $RAND --temp-path /mnt --hdd 1 #XXXXXX
+stress-ng -t 1 --seed $RAND --netdev 2 --netdev-ops 12
+udhcpc
+ping -W 1 -c 1 10.0.2.2
+wget -T 1 10.0.2.2
+#mount -t 9p -o trans=virtio tmp /mnt
