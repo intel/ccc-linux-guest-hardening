@@ -118,8 +118,8 @@ harness in `$LINUX_GUEST/init/main.c`:
 ```shell
 cd $LINUX_GUEST
 cp $BKC_ROOT/bkc/kafl/linux_kernel_tdx_guest.config .config
-./scripts/config --set-val CONFIG_TDX_FUZZ_KAFL=y
-./scripts/config --set-val CONFIG_TDX_FUZZ_HARNESS_POST_TRAP=y
+./scripts/config -e CONFIG_TDX_FUZZ_KAFL
+./scripts/config -e CONFIG_TDX_FUZZ_HARNESS_DOINITCALLS_VIRTIO
 [...]
 make -j$(nproc)
 ```

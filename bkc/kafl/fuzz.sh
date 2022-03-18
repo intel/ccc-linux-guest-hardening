@@ -20,8 +20,8 @@ DEFAULT_WORK_DIR=$KAFL_WORKDIR
 # limited to 1G due to hardcoded TdHobList in TDVF!
 MEMSIZE=1024
 
-KAFL_FULL_OPTS="--redqueen --redqueen-hammer --redqueen-simple --grimoire --radamsa --funky -p 16"
-KAFL_QUICK_OPTS="--redqueen --redqueen-simple -D --funky -p 16"
+KAFL_FULL_OPTS="--redqueen --redqueen-hammer --redqueen-simple --grimoire --radamsa -p 2"
+KAFL_QUICK_OPTS="--redqueen --redqueen-simple -D -p 2"
 
 
 # enable TDX workaround in Qemu
