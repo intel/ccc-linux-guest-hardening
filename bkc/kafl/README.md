@@ -43,7 +43,7 @@ West does not fetch the host kernel repo by default. You can fetch it explicitly
 build based on known-working config:
 
 ```shell
-west update linux-host
+west update linux-host # not pulled by default
 cd $LINUX_HOST
 cp $BKC_ROOT/bkc/kafl/linux_kernel_sdv_kafl.config .config
 make -j$(nproc) bindeb-pkg
@@ -76,6 +76,7 @@ firmware build. Again, we recommend to use the prebuild image from github:
 Alternatively, to build TDVF youself:
 
 ```shell
+west update tdvf # not pulled by default
 cd $TDVF_ROOT
 make -j $(nproc) -C BaseTools
 source edksetup.sh --reconfig

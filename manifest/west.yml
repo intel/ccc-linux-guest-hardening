@@ -106,4 +106,4 @@ manifest:
       revision: master
       path: smatch
 
-  group-filter: [-tdx-host-sdv, -targets]
+  group-filter: [-tdx-host-sdv, -tdvf]
