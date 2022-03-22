@@ -268,10 +268,12 @@ def run_setup(campaign_name, setup, linux_source, global_storage_dir, debug=Fals
     dry_run_flags = "--abort-exec=10000" if dry_run else ""
     timeout = HARNESS_TIMEOUT_OVERRIDES.get(harness, DEFAULT_TIMEOUT_HOURS)
     kernel_boot_params = BOOT_PARAM_HARNESSES.get(harness, "")
+    if len(kernel_boot_params) > 0:
+        kernel_boot_params = f"--qemu-extra \"{kernel_boot_params}\""
     kafl_harness_extra_params = KAFL_PARAM_HARNESSES.get(harness, "")
     try:
 
-        exc_cmd = f"KAFL_WORKDIR={workdir_path} KERNEL_BOOT_PARAMS=\"{kernel_boot_params}\" {FUZZ_SH_PATH} full {kernel_build_path} --abort-time={timeout} --cpu-offset={cpu_offset} {seed_str} {KAFL_EXTRA_FLAGS} {kafl_harness_extra_params} {dry_run_flags}"
+        exc_cmd = f"KAFL_WORKDIR={workdir_path} {FUZZ_SH_PATH} full {kernel_build_path} --abort-time={timeout} --cpu-offset={cpu_offset} {seed_str} {KAFL_EXTRA_FLAGS} {kafl_harness_extra_params} {dry_run_flags} {kernel_boot_params}"
         command_log.append(exc_cmd)
         #with open(os.path.join(workdir_path, "cmd"), "w") as f:
         #    print(exc_cmd, file=f)
@@ -330,7 +332,9 @@ def do_cov(args):
 
         ncpu = args.work_parallelism * args.p
         kernel_boot_params = BOOT_PARAM_HARNESSES.get(harness, "")
-        cmd_cov = f"KERNEL_BOOT_PARAMS=\"{kernel_boot_params}\" {FUZZ_SH_PATH} cov {d} -p {ncpu}"
+        if len(kernel_boot_params) > 0:
+            kernel_boot_params = f"--qemu-extra \"{kernel_boot_params}\""
+        cmd_cov = f"{FUZZ_SH_PATH} cov {d} -p {ncpu} {kernel_boot_params}"
         cmd_smatch = f"USE_GHIDRA=1 {FUZZ_SH_PATH} smatch {d}"
         print(f"Gathering coverage for '{d}' with -p {ncpu}")
         subprocess.run(cmd_cov, shell=True, stdout=out_stdout, stderr=out_stderr)
@@ -421,7 +425,10 @@ def do_run(args):
             if harness in args.skip_harness:
                 continue
             kernel_boot_params = BOOT_PARAM_HARNESSES.get(harness, "")
-            cmd_cov = f"KERNEL_BOOT_PARAMS=\"{kernel_boot_params}\" {FUZZ_SH_PATH} cov {d} -p {ncpu}"
+            if len(kernel_boot_params) > 0:
+                kernel_boot_params = f"--qemu-extra \"{kernel_boot_params}\""
+
+            cmd_cov = f"{FUZZ_SH_PATH} cov {d} -p {ncpu} {kernel_boot_params}"
             cmd_smatch = f"USE_GHIDRA=1 {FUZZ_SH_PATH} smatch {d}"
             print(f"Gathering coverage for '{d}' with -p {ncpu}")
             try:
