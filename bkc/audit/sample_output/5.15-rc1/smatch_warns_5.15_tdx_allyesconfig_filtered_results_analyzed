@@ -8323,18 +8323,21 @@ excluded	drivers/acpi/nfit/core.c:2454 read_blk_stat() error: {15084329066159761
 excluded	drivers/acpi/nfit/core.c:2483 write_blk_ctl() warn: {3283256967876405040}
 	'check_host_input' empty read from the host using function 'readq'
 	[NFIT table is not in the allow list of ACPI tables for the TDX guest];
-unclassified	drivers/acpi/processor_idle.c:521 acpi_idle_bm_check() warn: {12736646844210178743}
+excluded	drivers/acpi/processor_idle.c:521 acpi_idle_bm_check() warn: {12736646844210178743}
 	'check_host_input' empty read from the host using function 'inb_p' used inside an 'if' clause
-	[affects only returned bus master activity status, i.e. 1 vs 0];
-unclassified	drivers/acpi/processor_idle.c:522 acpi_idle_bm_check() warn: {14480976237325735495}
+	[acpi_idle driver is not enabled for TDX guest];
+excluded	drivers/acpi/processor_idle.c:522 acpi_idle_bm_check() warn: {14480976237325735495}
 	'check_host_input' empty read from the host using function 'inb_p' used inside an 'if' clause
-	[affects only returned bus master activity status, i.e. 1 vs 0];
-unclassified	drivers/acpi/processor_idle.c:538 wait_for_freeze() warn: {6477962977397694579}
-	'check_host_input' empty read from the host using function 'inl';
-unclassified	drivers/acpi/processor_idle.c:556 acpi_idle_do_entry() warn: {6420454283294951396}
-	'check_host_input' empty read from the host using function 'inb';
-unclassified	drivers/acpi/processor_idle.c:577 acpi_idle_play_dead() warn: {6420454283294951398}
-	'check_host_input' empty read from the host using function 'inb';
+	[acpi_idle driver is not enabled for TDX guest];
+excluded	drivers/acpi/processor_idle.c:538 wait_for_freeze() warn: {6477962977397694579}
+	'check_host_input' empty read from the host using function 'inl'
+	[acpi_idle driver is not enabled for TDX guest];
+excluded	drivers/acpi/processor_idle.c:556 acpi_idle_do_entry() warn: {6420454283294951396}
+	'check_host_input' empty read from the host using function 'inb'
+	[acpi_idle driver is not enabled for TDX guest];
+excluded	drivers/acpi/processor_idle.c:577 acpi_idle_play_dead() warn: {6420454283294951398}
+	'check_host_input' empty read from the host using function 'inb'
+	[acpi_idle driver is not enabled for TDX guest];
 excluded	drivers/acpi/acpi_extlog.c:225 extlog_init() warn: {6303396387225216952}
 	'check_host_input' read from the host using function 'rdmsrl_safe' to an int type local variable 'cap', type is ullong
 	[extlog is not used for the TDX guest];
