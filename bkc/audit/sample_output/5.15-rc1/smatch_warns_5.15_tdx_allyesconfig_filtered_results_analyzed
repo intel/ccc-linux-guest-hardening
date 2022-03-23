@@ -8174,40 +8174,54 @@ wrapper	drivers/acpi/osl.c:817 acpi_os_read_pci_configuration() warn: {141106576
 	'check_host_input' read from the host using function 'raw_pci_read' to an int type local variable 'value32', type is uint;
 wrapper	drivers/acpi/osl.c:820 acpi_os_read_pci_configuration() error: {14606234851847903589}
 	'check_host_input' propagating read value from the host 'value32' into a different non-local value 'value';
-unclassified	drivers/acpi/processor_throttling.c:674 acpi_processor_get_throttling_fadt() warn: {10305106866929951783}
+excluded	drivers/acpi/processor_throttling.c:674 acpi_processor_get_throttling_fadt() warn: {10305106866929951783}
 	'check_host_input' read from the host using function 'inl' to an int type local variable 'value', type is uint
-	[Masked correctly];
-unclassified	drivers/acpi/processor_throttling.c:681 acpi_processor_get_throttling_fadt() warn: {10517330381812654685}
-	'check_host_input' propagating read value from the host 'value' into a different local value 'duty_value';
-unclassified	drivers/acpi/processor_throttling.c:685 acpi_processor_get_throttling_fadt() warn: {7112614519521838574}
-	'check_host_input' propagating read value from the host 'duty_value' into a different local value 'state';
-unclassified	drivers/acpi/processor_throttling.c:688 acpi_processor_get_throttling_fadt() error: {12624034021475932634}
-	'check_host_input' propagating read value from the host 'state' into a different complex variable 'pr->throttling.state';
-unclassified	drivers/acpi/processor_throttling.c:692 acpi_processor_get_throttling_fadt() error: {7572251756130285}
-	'check_host_input' propagating a tainted value from the host 'state' into a function '__acpi_handle_debug';
-unclassified	drivers/acpi/processor_throttling.c:712 acpi_throttling_rdmsr() warn: {44635556924025828}
-	'check_host_input' read from the host using function 'paravirt_read_msr_safe' to an int type local variable '_l', type is ullong;
-unclassified	drivers/acpi/processor_throttling.c:712 acpi_throttling_rdmsr() warn: {2748276500259789341}
-	'check_host_input' propagating read value from the host '_l' into a different local value 'msr_low';
-unclassified	drivers/acpi/processor_throttling.c:712 acpi_throttling_rdmsr() warn: {13603128788479972044}
-	'check_host_input' propagating read value from the host '_l' into a different local value 'msr_high';
-unclassified	drivers/acpi/processor_throttling.c:714 acpi_throttling_rdmsr() warn: {12003859326641703712}
-	'check_host_input' propagating read value from the host 'msr_high' into a different local value 'msr';
-unclassified	drivers/acpi/processor_throttling.c:715 acpi_throttling_rdmsr() error: {12050831741267578026}
-	'check_host_input' propagating read value from the host 'msr' into a different non-local value 'value';
-unclassified	drivers/acpi/processor_throttling.c:766 acpi_read_throttling_status() warn: {9642484140496536568}
-	'check_host_input' read from the host using function 'acpi_os_read_port' to an int type local variable 'ptc_value', type is uint;
-unclassified	drivers/acpi/processor_throttling.c:770 acpi_read_throttling_status() error: {424235700505178074}
+	[acpi processor driver is not enabled for TDX guest, as well as its throttling submodule];
+excluded	drivers/acpi/processor_throttling.c:681 acpi_processor_get_throttling_fadt() warn: {10517330381812654685}
+	'check_host_input' propagating read value from the host 'value' into a different local value 'duty_value'
+	[acpi processor driver is not enabled for TDX guest, as well as its throttling submodule];
+excluded	drivers/acpi/processor_throttling.c:685 acpi_processor_get_throttling_fadt() warn: {7112614519521838574}
+	'check_host_input' propagating read value from the host 'duty_value' into a different local value 'state'
+	[acpi processor driver is not enabled for TDX guest, as well as its throttling submodule];
+excluded	drivers/acpi/processor_throttling.c:688 acpi_processor_get_throttling_fadt() error: {12624034021475932634}
+	'check_host_input' propagating read value from the host 'state' into a different complex variable 'pr->throttling.state'
+	[acpi processor driver is not enabled for TDX guest, as well as its throttling submodule];
+excluded	drivers/acpi/processor_throttling.c:692 acpi_processor_get_throttling_fadt() error: {7572251756130285}
+	'check_host_input' propagating a tainted value from the host 'state' into a function '__acpi_handle_debug'
+	[acpi processor driver is not enabled for TDX guest, as well as its throttling submodule];
+excluded	drivers/acpi/processor_throttling.c:712 acpi_throttling_rdmsr() warn: {44635556924025828}
+	'check_host_input' read from the host using function 'paravirt_read_msr_safe' to an int type local variable '_l', type is ullong
+	[acpi processor driver is not enabled for TDX guest, as well as its throttling submodule];
+excluded	drivers/acpi/processor_throttling.c:712 acpi_throttling_rdmsr() warn: {2748276500259789341}
+	'check_host_input' propagating read value from the host '_l' into a different local value 'msr_low'
+	[acpi processor driver is not enabled for TDX guest, as well as its throttling submodule];
+excluded	drivers/acpi/processor_throttling.c:712 acpi_throttling_rdmsr() warn: {13603128788479972044}
+	'check_host_input' propagating read value from the host '_l' into a different local value 'msr_high'
+	[acpi processor driver is not enabled for TDX guest, as well as its throttling submodule];
+excluded	drivers/acpi/processor_throttling.c:714 acpi_throttling_rdmsr() warn: {12003859326641703712}
+	'check_host_input' propagating read value from the host 'msr_high' into a different local value 'msr'
+	[acpi processor driver is not enabled for TDX guest, as well as its throttling submodule];
+excluded	drivers/acpi/processor_throttling.c:715 acpi_throttling_rdmsr() error: {12050831741267578026}
+	'check_host_input' propagating read value from the host 'msr' into a different non-local value 'value'
+	[acpi processor driver is not enabled for TDX guest, as well as its throttling submodule];
+excluded	drivers/acpi/processor_throttling.c:766 acpi_read_throttling_status() warn: {9642484140496536568}
+	'check_host_input' read from the host using function 'acpi_os_read_port' to an int type local variable 'ptc_value', type is uint
+	[acpi processor driver is not enabled for TDX guest, as well as its throttling submodule];
+excluded	drivers/acpi/processor_throttling.c:770 acpi_read_throttling_status() error: {424235700505178074}
 	'check_host_input' propagating read value from the host 'ptc_value' into a different non-local value 'value'
-	[Value is masked];
-unclassified	drivers/acpi/processor_throttling.c:982 acpi_processor_set_throttling_fadt() warn: {10305106866929951795}
-	'check_host_input' read from the host using function 'inl' to an int type local variable 'value', type is uint;
-unclassified	drivers/acpi/processor_throttling.c:985 acpi_processor_set_throttling_fadt() warn: {17007640985441427424}
-	'check_host_input' propagating a tainted value from the host 'value' into a function 'outl';
-unclassified	drivers/acpi/processor_throttling.c:995 acpi_processor_set_throttling_fadt() warn: {17007640985441427434}
-	'check_host_input' propagating a tainted value from the host 'value' into a function 'outl';
-unclassified	drivers/acpi/processor_throttling.c:998 acpi_processor_set_throttling_fadt() warn: {17007640985441427437}
-	'check_host_input' propagating a tainted value from the host 'value' into a function 'outl';
+	[acpi processor driver is not enabled for TDX guest, as well as its throttling submodule];
+excluded	drivers/acpi/processor_throttling.c:982 acpi_processor_set_throttling_fadt() warn: {10305106866929951795}
+	'check_host_input' read from the host using function 'inl' to an int type local variable 'value', type is uint
+	[acpi processor driver is not enabled for TDX guest, as well as its throttling submodule];
+excluded	drivers/acpi/processor_throttling.c:985 acpi_processor_set_throttling_fadt() warn: {17007640985441427424}
+	'check_host_input' propagating a tainted value from the host 'value' into a function 'outl'
+	[acpi processor driver is not enabled for TDX guest, as well as its throttling submodule];
+excluded	drivers/acpi/processor_throttling.c:995 acpi_processor_set_throttling_fadt() warn: {17007640985441427434}
+	'check_host_input' propagating a tainted value from the host 'value' into a function 'outl'
+	[acpi processor driver is not enabled for TDX guest, as well as its throttling submodule];
+excluded	drivers/acpi/processor_throttling.c:998 acpi_processor_set_throttling_fadt() warn: {17007640985441427437}
+	'check_host_input' propagating a tainted value from the host 'value' into a function 'outl'
+	[acpi processor driver is not enabled for TDX guest, as well as its throttling submodule];
 excluded	drivers/acpi/processor_perflib.c:265 amd_fixup_frequency() warn: {18330844164906294677}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable '_l', type is ullong;
 excluded	drivers/acpi/processor_perflib.c:265 amd_fixup_frequency() warn: {7572632245471666}
