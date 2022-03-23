@@ -8296,11 +8296,13 @@ wrapper	drivers/acpi/acpica/hwvalid.c:220 acpi_hw_read_port() warn: {13334689102
 	'check_host_input' read from the host using function 'acpi_os_read_port' to an int type local variable 'one_byte', type is uint;
 wrapper	drivers/acpi/acpica/hwvalid.c:225 acpi_hw_read_port() error: {9538623425269276371}
 	'check_host_input' propagating read value from the host 'one_byte' into a different non-local value 'value';
-unclassified	drivers/acpi/acpica/hwesleep.c:125 acpi_hw_extended_sleep() warn: {973963657851027476}
-	'check_host_input' read from the host using function 'acpi_read' to an int type local variable 'status', type is uint;
-unclassified	drivers/acpi/acpica/hwesleep.c:127 acpi_hw_extended_sleep() warn: {4548346036722890897}
+excluded	drivers/acpi/acpica/hwesleep.c:125 acpi_hw_extended_sleep() warn: {973963657851027476}
+	'check_host_input' read from the host using function 'acpi_read' to an int type local variable 'status', type is uint
+	[This is only used for ACPI 5.0 reduced HW concept with the flag passed via FADT (default is false).
+	 TDX guest does not allow FADT table at the moment];
+excluded	drivers/acpi/acpica/hwesleep.c:127 acpi_hw_extended_sleep() warn: {4548346036722890897}
 	'check_host_input' propagating read value from the host 'status' into a different local value '_param';
-unclassified	drivers/acpi/acpica/hwesleep.c:127 acpi_hw_extended_sleep() error: {229457033520752}
+excluded	drivers/acpi/acpica/hwesleep.c:127 acpi_hw_extended_sleep() error: {229457033520752}
 	'check_host_input' return an expression containing a propagated value from the host '_param'
 	[Value is a state.];
 wrapper	drivers/acpi/acpica/exregion.c:323 acpi_ex_system_io_space_handler() warn: {1064894533371979657}
