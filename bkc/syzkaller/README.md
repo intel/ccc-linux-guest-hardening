@@ -40,12 +40,10 @@ We use sligthly modified version of the method described below:
 https://github.com/google/syzkaller/blob/master/docs/linux/setup_ubuntu-host_qemu-vm_x86-64-kernel.md#image
 
 ## Guest BIOS
-We recommend using the precompiled package available here [TDVF-SDV v0.1](https://github.com/IntelLabs/kafl.edk2/releases/tag/tdvf-sdv-v0.1)
-
-See the example in the kafl documentation [here](https://github.com/IntelLabs/kafl.edk2/releases/tag/tdvf-sdv-v0.1) for a guide on how to build it yourself. 
+Use TDVF-acpitest-072120.fd from bkc/sdv directory
 
 ## Guest Kernel
-Currently syzkaller uses tdx/fuzz-13 branch + guest.config,
+Currently syzkaller uses tdx/fuzz-8 branch + guest.config,
 with additional settings based on: https://github.com/google/syzkaller/blob/master/docs/linux/kernel_configs.md
 
 To build guest kernel use the following:

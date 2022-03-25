@@ -8,7 +8,7 @@ GOROOT=${PWD}/goroot
 PATH:=${GOPATH}/bin:${GOROOT}/bin:${PATH}
 
 GUEST:=guest-kernel
-GUEST_BRANCH:=tdx/fuzz-8
+GUEST_BRANCH:=tdx/fuzz-13
 
 default: syzkaller qemu guest-kernel guest-image
 
@@ -44,7 +44,7 @@ clean_qemu:
 	rm -rf qemu-4.2.0
 
 guest-kernel:
-	git clone --branch ${GUEST_BRANCH} ${GUEST}
+	git clone --branch ${GUEST_BRANCH} {$LINUX_GUEST} ${GUEST}
 	cp ../guest.config ${GUEST}/.config
 	cd ${GUEST} && ./scripts/config -e CONFIG_KCOV
 	cd ${GUEST} && ./scripts/config -e CONFIG_KCOV_INSTRUMENT_ALL
