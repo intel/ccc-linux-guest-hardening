@@ -244,7 +244,7 @@ def build_kernel(setup, linux_source, global_storage_dir, debug=False):
     return campaign_name
 
 
-def run_setup(campaign_name, setup, linux_source, global_storage_dir, debug=False, cpu_offset=0, dry_run=False):
+def run_setup(campaign_name, setup, linux_source, global_storage_dir, debug=False, cpu_offset=0, processes=1, dry_run=False):
 
     out_stdout = subprocess.DEVNULL
     out_stderr = subprocess.DEVNULL
@@ -283,7 +283,7 @@ def run_setup(campaign_name, setup, linux_source, global_storage_dir, debug=Fals
     kafl_harness_extra_params = KAFL_PARAM_HARNESSES.get(harness, "")
     try:
 
-        exc_cmd = f"KAFL_WORKDIR={workdir_path} {FUZZ_SH_PATH} full {kernel_build_path} --abort-time={timeout} --cpu-offset={cpu_offset} {seed_str} {KAFL_EXTRA_FLAGS} {kafl_harness_extra_params} {dry_run_flags} {kernel_boot_params}"
+        exc_cmd = f"KAFL_WORKDIR={workdir_path} {FUZZ_SH_PATH} full {kernel_build_path} --abort-time={timeout} -p={processes} --cpu-offset={cpu_offset} {seed_str} {KAFL_EXTRA_FLAGS} {kafl_harness_extra_params} {dry_run_flags} {kernel_boot_params}"
         command_log.append(exc_cmd)
         #with open(os.path.join(workdir_path, "cmd"), "w") as f:
         #    print(exc_cmd, file=f)
@@ -317,7 +317,7 @@ def worker(i, work_parallelism, stop, dry_run):
     while True:
         try:
             work_args = q.get(timeout=1)
-            run_setup(*work_args, cpu_offset=cpu_offset, dry_run=dry_run)
+            run_setup(*work_args, cpu_offset=cpu_offset, processes=work_parallelism, dry_run=dry_run)
             q.task_done()
         except queue.Empty:
             if stop():
