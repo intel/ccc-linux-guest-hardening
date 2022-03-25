@@ -311,13 +311,13 @@ def run_setup(campaign_name, setup, linux_source, global_storage_dir, debug=Fals
 
 
 
-def worker(i, work_parallelism, stop, dry_run):
-    cpu_offset = i*work_parallelism
-    print(f"Starting worker thread {i} with cpu-offset {cpu_offset} (work_parallelism={work_parallelism})")
+def worker(i, processes, stop, dry_run):
+    cpu_offset = i*processes
+    print(f"Starting worker thread {i} with cpu-offset {cpu_offset} (processes={processes})")
     while True:
         try:
             work_args = q.get(timeout=1)
-            run_setup(*work_args, cpu_offset=cpu_offset, processes=work_parallelism, dry_run=dry_run)
+            run_setup(*work_args, cpu_offset=cpu_offset, processes=processes, dry_run=dry_run)
             q.task_done()
         except queue.Empty:
             if stop():
@@ -340,7 +340,7 @@ def do_cov(args):
         if (not args.rerun) and os.path.exists(os.path.join(d, "traces/linecov.lst")):
             continue
 
-        ncpu = args.work_parallelism * args.p
+        ncpu = args.processes * args.jobs
         kafl_config_boot_params = get_kafl_config_boot_params()
         kernel_boot_params = kafl_config_boot_params + " " + BOOT_PARAM_HARNESSES.get(harness, "")
         if len(kernel_boot_params) > 0:
@@ -384,9 +384,8 @@ def do_run(args):
     print("Campaign will run {} different setups".format(len(setups)))
 
     # Start up workers
-    work_parallelism = args.work_parallelism
-    if args.overcommit is False and work_parallelism * args.p > multiprocessing.cpu_count():
-        print(f"Using more parallelism than cores available ({work_parallelism} * {args.p} > {multiprocessing.cpu_count()})!! If you really want this, specify --overcommit")
+    if not args.overcommit and args.processes * args.jobs > multiprocessing.cpu_count():
+        print(f"Requesting more threads than cores available ({args.processes} * {args.jobs} > {multiprocessing.cpu_count()})!! If you really want this, specify --overcommit")
         sys.exit(1)
 
 
@@ -402,8 +401,8 @@ def do_run(args):
     threads = []
     # Condition variable. No need for it to be atomic..
     stop_threads = False
-    for i in range(args.p):
-        t = threading.Thread(target=worker, args=(i, work_parallelism, lambda: stop_threads, args.dry_run))
+    for i in range(args.jobs):
+        t = threading.Thread(target=worker, args=(i, args.processes, lambda: stop_threads, args.dry_run))
         threads.append(t)
         t.start()
 
@@ -431,8 +430,7 @@ def do_run(args):
 
     if args.coverage:
         for d in glob.glob(storage_dir + "/*"):
-            ncpu = work_parallelism * args.p
-            #ncpu = args.p
+            ncpu = args.processes * args.jobs
             harness = name_to_harness(d)
             if harness in args.skip_harness:
                 continue
@@ -496,10 +494,10 @@ def parse_args():
 
     main_parser.add_argument('--debug', action='store_true',
             help='Turn on debug output (show fuzzer stdout/stderr)')
-    main_parser.add_argument('-p', metavar='<n>', type=int, default=1,
-            help='Parallelize workload')
-    main_parser.add_argument('--work_parallelism', metavar='<n>', type=int, default=get_work_parallelism(),
-            help='Parallelism used by fuzzer. Only use for manual override, automatically obtained from fuzz.sh')
+    main_parser.add_argument('-j', '--jobs', metavar='<n>', type=int, default=1,
+            help='Parallel run/cov jobs (default: 1)')
+    main_parser.add_argument('-p', '--processes', metavar='<n>', type=int, default=get_work_parallelism(),
+            help='Parallel fuzzer instances (default: obtained from fuzz.sh)')
     main_parser.add_argument('--overcommit', type=bool, default=False,
             help='Overcommit parallelization')
     main_parser.add_argument('--skip-harness', nargs="*", type=str, default=[],
