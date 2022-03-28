@@ -46,7 +46,7 @@ See the example in the kafl documentation [here](https://github.com/IntelLabs/ka
 
 
 ## Guest Kernel
-Currently syzkaller uses tdx/fuzz-13 branch + guest.config,
+Currently syzkaller uses kafl/fuzz-5.15-3 branch + guest.config,
 with additional settings based on: https://github.com/google/syzkaller/blob/master/docs/linux/kernel_configs.md
 
 To build guest kernel use the following:

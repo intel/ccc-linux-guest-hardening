@@ -8,7 +8,7 @@ GOROOT=${PWD}/goroot
 PATH:=${GOPATH}/bin:${GOROOT}/bin:${PATH}
 
 GUEST:=guest-kernel
-GUEST_BRANCH:=tdx/fuzz-13
+GUEST_BRANCH:=kafl/fuzz-5.15-3
 
 default: syzkaller qemu guest-kernel guest-image
 
