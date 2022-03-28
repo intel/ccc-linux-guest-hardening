@@ -18,7 +18,7 @@ set -e
 
 USE_GHIDRA="${USE_GHIDRA:-0}"
 	
-KAFL_ROOT=$(west path kafl)
+KAFL_ROOT=$(west list -f {abspath} kafl)
 KAFL_TOOLS=$(realpath $KAFL_ROOT/scripts/)
 
 
