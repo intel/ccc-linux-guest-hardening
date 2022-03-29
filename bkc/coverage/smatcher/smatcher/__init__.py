@@ -39,7 +39,6 @@ IND = "  "
 SMATCH_CAT_CONCERN = "concern"
 SMATCH_CAT_SAFE = "safe"
 SMATCH_CAT_EXCLUDED = "excluded"
-SMATCH_CAT_FIXED = "excluded"
 SMATCH_CAT_WRAPPER = "wrapper"
 SMATCH_CAT_UNCLASSIFIED = "unclassified"
 
@@ -188,7 +187,7 @@ def start(args):
     print(IND + "Not covered smatch entries: {}".format(len(not_covered)))
     cov_non_excl = []
     not_cov_non_excl = []
-    for cl in [SMATCH_CAT_SAFE, SMATCH_CAT_CONCERN, SMATCH_CAT_WRAPPER, SMATCH_CAT_EXCLUDED, SMATCH_CAT_UNCLASSIFIED, SMATCH_CAT_FIXED]:
+    for cl in [SMATCH_CAT_SAFE, SMATCH_CAT_CONCERN, SMATCH_CAT_WRAPPER, SMATCH_CAT_EXCLUDED, SMATCH_CAT_UNCLASSIFIED]:
         covered_class = list(filter(lambda e: e[0] == cl, covered))
         not_covered_class = list(filter(lambda e: e[0] == cl, not_covered))
         if not cl in ["excluded", "wrapper", "unclassified"]:
