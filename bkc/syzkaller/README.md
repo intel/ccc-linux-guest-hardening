@@ -1,17 +1,28 @@
 # TDX: Running syzkaller + with Qemu
 
+## Install
+
+The following components are needed to use syzkaller:
+
+ - Go compiler and syzkaller itself
+ - C compiler with coverage support
+ - Linux kernel with coverage additions
+ - Virtual machine or a physical device
+If you encounter any troubles, check the [troubleshooting](https://github.com/google/syzkaller/blob/master/docs/troubleshooting.md) page.
+
+
 ## Host OS:
 Recommended OS is Ubuntu 20.04, mostly because it contains GCC 9 and our host kernel
 doesn't contain patches which enabled GCC 10+ (will not boot and compile without additional patches).
 
+
 ## Host Kernel:
-ssh://git@gitlab.devtools.intel.com:29418/tdx/guest.git 
-sdv branch + host.config
-guest-kernel.config is based on sdv/sdfuzz.config
+For a more complete explanation of where to obtain and how to build the kernel for the host see the section [Install TDX SDV + kAFL host kernel]{https://github.com/intel/ccc-linux-guest-hardening/tree/master/bkc/kafl#2-install-tdx-sdv--kafl-host-kernel} in the kafl documentation. The easiest way is to download the newest kernel .deb package [here]{https://github.com/IntelLabs/kafl.linux/releases/tag/kafl%2Fsdv-5.6-rc1} and install it as follows 
 ```
-make  binrpm-pkg -j`nproc`
+sudo dpkg -i /path/to/linux-image-*deb
 ```
-Install kernel RPM package, reboot select kernel version in advanced boot options.
+
+Install kernel .deb package, then reboot. When GRUB comes up select advanced boot options, then select the kernel version you just installed.
 
 
 ## Guest OS:
@@ -29,10 +40,13 @@ We use sligthly modified version of the method described below:
 https://github.com/google/syzkaller/blob/master/docs/linux/setup_ubuntu-host_qemu-vm_x86-64-kernel.md#image
 
 ## Guest BIOS
-Use TDVF-acpitest-072120.fd from bkc/sdv directory
+We recommend using the precompiled package available here [TDVF-SDV v0.1](https://github.com/IntelLabs/kafl.edk2/releases/tag/tdvf-sdv-v0.1)
+
+See the example in the kafl documentation [here](https://github.com/IntelLabs/kafl.edk2/releases/tag/tdvf-sdv-v0.1) for a guide on how to build it yourself. 
+
 
 ## Guest Kernel
-Currently syzkaller uses tdx/fuzz-8 branch + guest.config,
+Currently syzkaller uses kafl/fuzz-5.15-3 branch + guest.config,
 with additional settings based on: https://github.com/google/syzkaller/blob/master/docs/linux/kernel_configs.md
 
 To build guest kernel use the following:
@@ -63,19 +77,32 @@ sleep 60
 ./ssh-vm.sh
 ```
 
-## Building syzkaller
-Makefile in build directory will download syzkaller and go lang dependency to build syzkaller from sources.
-Output directory is syzkaller/build/gopath/src/github.com/google/syzkaller/bin
+### Go and syzkaller
+
+`syzkaller` is written in [Go](https://golang.org), and `Go 1.16+` toolchain is required for build.
+Generally we aim at supporting 2 latest releases of Go.
+The toolchain can be installed with:
 
 ```
-cd build
-make syzkaller
+wget https://dl.google.com/go/go1.17.6.linux-amd64.tar.gz
+tar -xf go1.17.6.linux-amd64.tar.gz
+export GOROOT=`pwd`/go
+export PATH=$GOROOT/bin:$PATH
 ```
 
-To remove syzkaller and dependencies just run make clean.
+See [Go: Download and install](https://golang.org/doc/install) for other options.
+
+To download and build `syzkaller`:
+
+``` bash
+git clone https://github.com/google/syzkaller
+cd syzkaller
+make
+```
+After which all binaries should be appear in the folder `bin/`
 
 ## Syzkaller config
-Use my.cfg and change paths to the disk image and kernel locations.
+Use my.cfg and change paths to the disk image and kernel locations. A reference for the syzkaller config is available [here](https://github.com/google/syzkaller/blob/master/pkg/mgrconfig/config.go)
 
 ## Qemu-wrapper
 Make sure qemu-system-x86_64 is not in your PATH env variable.
@@ -101,3 +128,19 @@ list of all the parameters passed to the wrapped and parameters passed to the qe
 You can also try to start a VM using by using test-wrapper.sh (modify paths accordingly).
 It contains minimal set of parameters required by qemu-wrapper to start VM and similates
 syzkaller call to the qemu-system-x86_64.
+
+
+### Troubleshooting
+
+* QEMU requires root for `-enable-kvm`.
+
+    Solution: add your user to the `kvm` group (`sudo usermod -a -G kvm` and relogin).
+
+* QEMU crashes with:
+
+    ```
+    qemu-system-x86_64: error: failed to set MSR 0x48b to 0x159ff00000000
+    qemu-system-x86_64: /build/qemu-EmNSP4/qemu-4.2/target/i386/kvm.c:2947: kvm_put_msrs: Assertion `ret == cpu->kvm_msr_buf->nmsrs' failed.
+   ```
+
+    Solution: remove `-cpu host,migratable=off` from the QEMU command line. The easiest way to do that is to set `qemu_args` to `-enable-kvm` in the `syz-manager` config file.

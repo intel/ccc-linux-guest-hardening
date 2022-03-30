@@ -8,7 +8,7 @@ GOROOT=${PWD}/goroot
 PATH:=${GOPATH}/bin:${GOROOT}/bin:${PATH}
 
 GUEST:=guest-kernel
-GUEST_BRANCH:=tdx/fuzz-8
+GUEST_BRANCH:=kafl/fuzz-5.15-3
 
 default: syzkaller qemu guest-kernel guest-image
 
@@ -18,7 +18,7 @@ syzkaller: clean_syzkaller
 	echo PATH=${PATH}
 	echo GOPATH=${GOPATH}
 	echo GOROOT=${GOROOT}
-	wget https://dl.google.com/go/go1.14.2.linux-amd64.tar.gz
+	wget https://dl.google.com/go/go1.18.linux-amd64.tar.gz
 	tar -xf go1.14.2.linux-amd64.tar.gz
 	rm -f go1.14.2.linux-amd64.tar.gz
 	mv go goroot
@@ -44,7 +44,7 @@ clean_qemu:
 	rm -rf qemu-4.2.0
 
 guest-kernel:
-	git clone --branch ${GUEST_BRANCH} https://gitlab.devtools.intel.com/tdx/guest.git ${GUEST}
+	git clone --branch ${GUEST_BRANCH} {$LINUX_GUEST} ${GUEST}
 	cp ../guest.config ${GUEST}/.config
 	cd ${GUEST} && ./scripts/config -e CONFIG_KCOV
 	cd ${GUEST} && ./scripts/config -e CONFIG_KCOV_INSTRUMENT_ALL
