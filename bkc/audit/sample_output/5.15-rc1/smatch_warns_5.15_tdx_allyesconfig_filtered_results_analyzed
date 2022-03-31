@@ -73,15 +73,15 @@ excluded	arch/x86/mm/mem_encrypt_identity.c:526 sme_enable() error: {18174264302
 	'check_host_input' read from the host using function '__rdmsr' into a non-local variable 'sev_status';
 excluded	arch/x86/mm/mem_encrypt_identity.c:547 sme_enable() warn: {18174264302060401489}
 	'check_host_input' read from the host using function '__rdmsr' to an int type local variable 'msr', type is ullong;
-unclassified	arch/x86/mm/pat/memtype.c:250 pat_bp_init() warn: {6000267377507688302}
+trusted	arch/x86/mm/pat/memtype.c:250 pat_bp_init() warn: {6000267377507688302}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'tmp_pat', type is ullong
-	[IA32_PAT is trusted];
-unclassified	arch/x86/mm/pat/memtype.c:292 init_cache_modes() warn: {6000267377507688310}
+	[MSR_IA32_CR_PAT is native for TDX guest];
+trusted	arch/x86/mm/pat/memtype.c:292 init_cache_modes() warn: {6000267377507688310}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'pat', type is ullong
-	[IA32_PAT is trusted];
-unclassified	arch/x86/mm/pat/memtype.c:318 init_cache_modes() error: {4280087351112678850}
+	[MSR_IA32_CR_PAT is native for TDX guest];
+trusted	arch/x86/mm/pat/memtype.c:318 init_cache_modes() error: {4280087351112678850}
 	'check_host_input' propagating a tainted value from the host 'pat' into a function '__init_cache_modes'
-	[IA32_PAT is trusted];
+	[MSR_IA32_CR_PAT is native for TDX guest];
 unclassified	arch/x86/mm/testmmiotrace.c:57 do_read_test() warn: {4638534414784050766}
 	'check_host_input' empty read from the host using function 'ioread8' used inside an 'if' clause;
 unclassified	arch/x86/mm/testmmiotrace.c:61 do_read_test() warn: {5497374941896650433}
@@ -597,20 +597,21 @@ unclassified	arch/x86/events/intel/core.c:2675 intel_pmu_enable_fixed() warn: {9
 	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'ctrl_val', type is ullong;
 unclassified	arch/x86/events/intel/core.c:2678 intel_pmu_enable_fixed() warn: {10227142226755508783}
 	'check_host_input' propagating a tainted value from the host 'ctrl_val' into a function 'wrmsrl';
-unclassified	arch/x86/events/intel/core.c:2307 intel_pmu_get_status() warn: {6000267377511173097}
-	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'status', type is ullong;
-unclassified	arch/x86/events/intel/core.c:2309 intel_pmu_get_status() error: {229483019515503}
+trusted	arch/x86/events/intel/core.c:2307 intel_pmu_get_status() warn: {6000267377511173097}
+	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'status', type is ullong
+	[MSR_CORE_PERF_GLOBAL_STATUS is either #GP(0) or native];
+trusted	arch/x86/events/intel/core.c:2309 intel_pmu_get_status() error: {229483019515503}
 	'check_host_input' return an expression containing a propagated value from the host 'status'
-	[MSR MSR_CORE_PERF_GLOBAL_STATUS is #GP(0).];
-unclassified	./arch/x86/include/asm/processor.h:689 get_debugctlmsr() warn: {6000267377505462385}
+	[MSR_CORE_PERF_GLOBAL_STATUS is either #GP(0) or native];
+trusted	./arch/x86/include/asm/processor.h:689 get_debugctlmsr() warn: {6000267377505462385}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'debugctlmsr', type is ulong
-	[IA32_DEBUGCTL is trusted];
-unclassified	./arch/x86/include/asm/processor.h:691 get_debugctlmsr() error: {15009477665560893163}
+	[reading MSR_IA32_DEBUGCTLMSR is controlled by TDX module];
+trusted	./arch/x86/include/asm/processor.h:691 get_debugctlmsr() error: {15009477665560893163}
 	'check_host_input' return an expression containing a propagated value from the host 'debugctlmsr'
-	[IA32_DEBUGCTL is trusted];
-unclassified	arch/x86/events/intel/core.c:4387 intel_pmu_cpu_starting() error: {6000267377510066707}
+	[reading MSR_IA32_DEBUGCTLMSR is controlled by TDX module];
+trusted	arch/x86/events/intel/core.c:4387 intel_pmu_cpu_starting() error: {6000267377510066707}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to a member of the structure 'perf_cap.capabilities'
-	[The MSR is trusted];
+	[Reading from MSR_IA32_PERF_CAPABILITIES is either native or disabled];
 unclassified	arch/x86/events/intel/core.c:4778 check_msr() warn: {12979969255836975357}
 	'check_host_input' read from the host using function 'rdmsrl_safe' to an int type local variable 'val_old', type is ullong;
 unclassified	arch/x86/events/intel/core.c:4784 check_msr() warn: {18365348728252311542}
@@ -625,11 +626,12 @@ unclassified	arch/x86/events/intel/core.c:4801 check_msr() error: {1957728013279
 	'check_host_input' propagating a tainted value from the host 'val_old' into a function 'lbr_from_signext_quirk_wr';
 unclassified	arch/x86/events/intel/core.c:4806 check_msr() warn: {3230786820664726248}
 	'check_host_input' propagating a tainted value from the host 'val_old' into a function 'wrmsrl';
-unclassified	arch/x86/events/intel/core.c:5577 intel_pmu_init() warn: {6000267377510066738}
-	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'capabilities', type is ullong;
-unclassified	arch/x86/events/intel/core.c:5578 intel_pmu_init() error: {15487575926583102110}
+trusted	arch/x86/events/intel/core.c:5577 intel_pmu_init() warn: {6000267377510066738}
+	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'capabilities', type is ullong
+	[Reading from MSR_IA32_PERF_CAPABILITIES is either native or disabled];
+trusted	arch/x86/events/intel/core.c:5578 intel_pmu_init() error: {15487575926583102110}
 	'check_host_input' propagating read value from the host 'capabilities' into a different complex variable 'x86_pmu.intel_cap.capabilities'
-	[The MSR is trusted];
+	[Reading from MSR_IA32_PERF_CAPABILITIES is either native or disabled];
 excluded	arch/x86/events/intel/uncore_discovery.c:216 parse_discovery_table() warn: {3547811066189448999}
 	'check_host_input' read from the host using function 'pci_read_config_dword' to an int type local variable 'val', type is uint;
 excluded	arch/x86/events/intel/uncore_discovery.c:221 parse_discovery_table() warn: {5461549633621135723}
@@ -664,45 +666,51 @@ excluded	arch/x86/events/intel/uncore_discovery.c:431 intel_generic_uncore_pci_r
 	'check_host_input' read from the host using function 'pci_read_config_dword' to an int type local variable 'count', type is ullong;
 excluded	arch/x86/events/intel/uncore_discovery.c:433 intel_generic_uncore_pci_read_counter() error: {6953399510584}
 	'check_host_input' return an expression containing a propagated value from the host 'count';
-unclassified	arch/x86/events/intel/lbr.c:209 __intel_pmu_lbr_enable() warn: {6000267377505462398}
+trusted	arch/x86/events/intel/lbr.c:209 __intel_pmu_lbr_enable() warn: {6000267377505462398}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'debugctl', type is ullong
-	[MSR_IA32_DEBUGCTLMSR is trusted];
-unclassified	arch/x86/events/intel/lbr.c:210 __intel_pmu_lbr_enable() warn: {9332311372788003196}
-	'check_host_input' propagating read value from the host 'debugctl' into a different local value 'orig_debugctl';
-unclassified	arch/x86/events/intel/lbr.c:225 __intel_pmu_lbr_enable() warn: {11752669102895161398}
-	'check_host_input' propagating a tainted value from the host 'debugctl' into a function 'wrmsrl';
-unclassified	arch/x86/events/intel/lbr.c:240 __intel_pmu_lbr_disable() warn: {6000267377505462386}
+	[reading MSR_IA32_DEBUGCTLMSR is controlled by TDX module];
+trusted	arch/x86/events/intel/lbr.c:210 __intel_pmu_lbr_enable() warn: {9332311372788003196}
+	'check_host_input' propagating read value from the host 'debugctl' into a different local value 'orig_debugctl'
+	[reading MSR_IA32_DEBUGCTLMSR is controlled by TDX module];
+trusted	arch/x86/events/intel/lbr.c:225 __intel_pmu_lbr_enable() warn: {11752669102895161398}
+	'check_host_input' propagating a tainted value from the host 'debugctl' into a function 'wrmsrl'
+	[reading MSR_IA32_DEBUGCTLMSR is controlled by TDX module];
+trusted	arch/x86/events/intel/lbr.c:240 __intel_pmu_lbr_disable() warn: {6000267377505462386}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'debugctl', type is ullong
-	[MSR_IA32_DEBUGCTLMSR is trusted];
-unclassified	arch/x86/events/intel/lbr.c:242 __intel_pmu_lbr_disable() warn: {11752669102895161372}
-	'check_host_input' propagating a tainted value from the host 'debugctl' into a function 'wrmsrl';
-unclassified	arch/x86/events/intel/lbr.c:385 rdlbr_from() warn: {7714921670870159802}
+	[reading MSR_IA32_DEBUGCTLMSR is controlled by TDX module];
+trusted	arch/x86/events/intel/lbr.c:242 __intel_pmu_lbr_disable() warn: {11752669102895161372}
+	'check_host_input' propagating a tainted value from the host 'debugctl' into a function 'wrmsrl'
+	[reading MSR_IA32_DEBUGCTLMSR is controlled by TDX module];
+trusted	arch/x86/events/intel/lbr.c:385 rdlbr_from() warn: {7714921670870159802}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'val', type is ullong
-	[LBR MSRs are trusted];
-unclassified	arch/x86/events/intel/lbr.c:387 rdlbr_from() error: {8496708426088055606}
-	'check_host_input' propagating a tainted value from the host 'val' into a function 'lbr_from_signext_quirk_rd';
-sfe	arch/x86/events/intel/lbr.c:552 intel_pmu_lbr_save() error: {6000267377505393790}
+	[LBR MSRs are either #GP(0) or native];
+trusted	arch/x86/events/intel/lbr.c:387 rdlbr_from() error: {8496708426088055606}
+	'check_host_input' propagating a tainted value from the host 'val' into a function 'lbr_from_signext_quirk_rd'
+	[LBR MSRs are either #GP(0) or native];
+trusted	arch/x86/events/intel/lbr.c:552 intel_pmu_lbr_save() error: {6000267377505393790}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to a member of the structure 'task_ctx->lbr_sel'
-	[The MSR_LBR_SELECT MSR is trusted];
-unclassified	arch/x86/events/intel/lbr.c:291 intel_pmu_lbr_tos() warn: {12871724699457451497}
-	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'tos', type is ullong;
-unclassified	arch/x86/events/intel/lbr.c:292 intel_pmu_lbr_tos() error: {6385734272}
+	[LBR MSRs are either #GP(0) or native];
+trusted	arch/x86/events/intel/lbr.c:291 intel_pmu_lbr_tos() warn: {12871724699457451497}
+	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'tos', type is ullong
+	[LBR MSRs are either #GP(0) or native];
+trusted	arch/x86/events/intel/lbr.c:292 intel_pmu_lbr_tos() error: {6385734272}
 	'check_host_input' return an expression containing a propagated value from the host 'tos'
-	[MSR value is masked and constrained,];
-unclassified	arch/x86/events/intel/lbr.c:397 rdlbr_to() warn: {6885025023970335817}
+	[LBR MSRs are either #GP(0) or native];
+trusted	arch/x86/events/intel/lbr.c:397 rdlbr_to() warn: {6885025023970335817}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'val', type is ullong
-	[LBR MSRs are trusted];
-unclassified	arch/x86/events/intel/lbr.c:399 rdlbr_to() error: {6385790673}
+	[LBR MSRs are either #GP(0) or native];
+trusted	arch/x86/events/intel/lbr.c:399 rdlbr_to() error: {6385790673}
 	'check_host_input' return an expression containing a propagated value from the host 'val'
-	[LBR MSRs are trusted];
-unclassified	arch/x86/events/intel/lbr.c:409 rdlbr_info() warn: {7860006783927901362}
-	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'val', type is ullong;
-unclassified	arch/x86/events/intel/lbr.c:411 rdlbr_info() error: {6385790673}
+	[LBR MSRs are either #GP(0) or native];
+trusted	arch/x86/events/intel/lbr.c:409 rdlbr_info() warn: {7860006783927901362}
+	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'val', type is ullong
+	[LBR MSRs are either #GP(0) or native];
+trusted	arch/x86/events/intel/lbr.c:411 rdlbr_info() error: {6385790673}
 	'check_host_input' return an expression containing a propagated value from the host 'val'
-	[MSR value is used as a set of flags.];
-unclassified	arch/x86/events/intel/lbr.c:802 intel_pmu_lbr_read_32() error: {16156933454716807298}
+	[LBR MSRs are either #GP(0) or native];
+trusted	arch/x86/events/intel/lbr.c:802 intel_pmu_lbr_read_32() error: {16156933454716807298}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to a member of the structure 'msr_lastbranch.lbr'
-	[The MSR is trusted];
+	[LBR MSRs are either #GP(0) or native];
 unclassified	arch/x86/events/intel/knc.c:162 knc_pmu_disable_all() warn: {9125702198692675034}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'val', type is ullong;
 unclassified	arch/x86/events/intel/knc.c:164 knc_pmu_disable_all() warn: {4379394295675553181}
@@ -737,19 +745,19 @@ excluded	arch/x86/events/intel/uncore.c:157 uncore_mmio_read_counter() error: {4
 	'check_host_input' read from the host using function 'readq' returned as a value;
 unclassified	arch/x86/power/cpu.c:43 msr_save_context() error: {17177087669366991417}
 	'check_host_input' read from the host using function 'rdmsrl_safe' to a member of the structure 'msr->info.reg.q';
-unclassified	arch/x86/power/cpu.c:109 __save_processor_state() error: {15008896281602016462}
+trusted	arch/x86/power/cpu.c:109 __save_processor_state() error: {15008896281602016462}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to a member of the structure 'ctxt->fs_base'
 	[Native MSR];
-unclassified	arch/x86/power/cpu.c:110 __save_processor_state() error: {15008896281602017552}
+trusted	arch/x86/power/cpu.c:110 __save_processor_state() error: {15008896281602017552}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to a member of the structure 'ctxt->kernelmode_gs_base'
 	[Native MSR];
-unclassified	arch/x86/power/cpu.c:111 __save_processor_state() error: {15008896281602043689}
+trusted	arch/x86/power/cpu.c:111 __save_processor_state() error: {15008896281602043689}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to a member of the structure 'ctxt->usermode_gs_base'
 	[Native MSR];
-unclassified	arch/x86/power/cpu.c:114 __save_processor_state() error: {15008896281600749960}
+trusted	arch/x86/power/cpu.c:114 __save_processor_state() error: {15008896281600749960}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to a member of the structure 'ctxt->efer'
 	[Native MSR];
-unclassified	arch/x86/power/cpu.c:124 __save_processor_state() error: {15188012133116930149}
+trusted	arch/x86/power/cpu.c:124 __save_processor_state() error: {15188012133116930149}
 	'check_host_input' read from the host using function 'rdmsrl_safe' to a member of the structure 'ctxt->misc_enable'
 	[Native MSR];
 wrapper	arch/x86/lib/msr-smp.c:19 __rdmsr_on_cpu() warn: {18296985189725281367}
@@ -780,18 +788,18 @@ unclassified	arch/x86/lib/msr.c:74 __flip_bit() warn: {229472569482201}
 	'check_host_input' propagating read value from the host 'm' into a different local value 'm1';
 unclassified	arch/x86/lib/msr.c:83 __flip_bit() error: {14603386765462269385}
 	'check_host_input' propagating a tainted value from the host 'm1' into a function 'msr_write';
-unclassified	arch/x86/lib/insn-eval.c:683 insn_get_seg_base() warn: {15008896281602016453}
+trusted	arch/x86/lib/insn-eval.c:683 insn_get_seg_base() warn: {15008896281602016453}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'base', type is ulong
-	[MSR MSR_FS_BASE value is context switched];
-unclassified	arch/x86/lib/insn-eval.c:690 insn_get_seg_base() warn: {15008896281602043685}
+	[MSR MSR_FS_BASE value is native];
+trusted	arch/x86/lib/insn-eval.c:690 insn_get_seg_base() warn: {15008896281602043685}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'base', type is ulong
-	[MSR MSR_FS_BASE value is context switched];
-unclassified	arch/x86/lib/insn-eval.c:692 insn_get_seg_base() warn: {15008896281602017551}
+	[MSR MSR_FS_BASE value is native];
+trusted	arch/x86/lib/insn-eval.c:692 insn_get_seg_base() warn: {15008896281602017551}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'base', type is ulong
-	[MSR MSR_FS_BASE value is context switched];
-unclassified	arch/x86/lib/insn-eval.c:696 insn_get_seg_base() error: {210707384485}
+	[MSR MSR_FS_BASE value is native];
+trusted	arch/x86/lib/insn-eval.c:696 insn_get_seg_base() error: {210707384485}
 	'check_host_input' return an expression containing a propagated value from the host 'base'
-	[MSR MSR_GS_BASE value is context switched];
+	[MSR MSR_GS_BASE value is native];
 excluded	arch/x86/lib/kaslr.c:41 i8254() warn: {7572505657447936}
 	'check_host_input' read from the host using function 'inb' to an int type local variable 'status', type is ushort
 	[RDRAND is not enforced by default for TDX guest so it cannot fall back to i8254 for obtaining randomness];
@@ -1724,10 +1732,12 @@ excluded	arch/x86/kernel/msr.c:67 msr_read() error: {15406858919857137640}
 	the userspace on request. The hardening of userspace is out of scope for the TDX guest kernel hardening.];
 excluded	arch/x86/kernel/hpet.c:78 hpet_readl() error: {16140465130650778790}
 	'check_host_input' read from the host using function 'readl' returned as a value;
-unclassified	arch/x86/kernel/process.c:650 __switch_to_xtra() warn: {6000267377505462392}
-	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'debugctl', type is ulong;
-unclassified	arch/x86/kernel/process.c:654 __switch_to_xtra() warn: {11752669102895161380}
-	'check_host_input' propagating a tainted value from the host 'debugctl' into a function 'wrmsrl';
+trusted	arch/x86/kernel/process.c:650 __switch_to_xtra() warn: {6000267377505462392}
+	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'debugctl', type is ulong
+	[reading MSR_IA32_DEBUGCTLMSR is controlled by TDX module];
+trusted	arch/x86/kernel/process.c:654 __switch_to_xtra() warn: {11752669102895161380}
+	'check_host_input' propagating a tainted value from the host 'debugctl' into a function 'wrmsrl'
+	[reading MSR_IA32_DEBUGCTLMSR is controlled by TDX module];
 excluded	arch/x86/kernel/process.c:882 arch_post_acpi_subsys_init() warn: {15008896290477695319}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable '_l', type is ullong
 	[AMD specific];
@@ -1740,12 +1750,12 @@ excluded	arch/x86/kernel/process.c:882 arch_post_acpi_subsys_init() warn: {35531
 excluded	arch/x86/kernel/cpuid.c:55 cpuid_smp_cpuid() error: {15002121253246696923}
 	'check_host_input' read from the host using function 'cpuid_count' to multiple values
 	[x86 CPUID access device: cpuid regs are copied to and used by userspace];
-unclassified	arch/x86/kernel/traps.c:882 exc_debug_kernel() warn: {6000267377505462410}
+trusted	arch/x86/kernel/traps.c:882 exc_debug_kernel() warn: {6000267377505462410}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'debugctl', type is ulong
-	[MSR_IA32_DEBUGCTLMSR is trusted];
-unclassified	arch/x86/kernel/traps.c:884 exc_debug_kernel() warn: {11752669102895161396}
+	[reading MSR_IA32_DEBUGCTLMSR is controlled by TDX module];
+trusted	arch/x86/kernel/traps.c:884 exc_debug_kernel() warn: {11752669102895161396}
 	'check_host_input' propagating a tainted value from the host 'debugctl' into a function 'wrmsrl'
-	[MSR_IA32_DEBUGCTLMSR is trusted];
+	[reading MSR_IA32_DEBUGCTLMSR is controlled by TDX module];
 excluded	arch/x86/kernel/early_printk.c:39 early_vga_write() warn: {1558324940851317774}
 	'check_host_input' read from the host using function 'readw' as argument into function 'writew';
 wrapper	arch/x86/kernel/early_printk.c:99 io_serial_in() error: {9927592720136175166}
@@ -2616,56 +2626,61 @@ excluded	arch/x86/kernel/tsc_sync.c:158 tsc_store_and_check_tsc_adjust() error: 
 excluded	arch/x86/kernel/tsc_sync.c:172 tsc_store_and_check_tsc_adjust() error: {7572251756130271}
 	'check_host_input' propagating a tainted value from the host 'bootval' into a function 'tsc_sanitize_first_cpu'
 	[X86_FEATURE_TSC_ADJUST is disabled by TDX module];
-unclassified	arch/x86/kernel/process_64.c:96 __show_regs() warn: {15008896281602016459}
+trusted	arch/x86/kernel/process_64.c:96 __show_regs() warn: {15008896281602016459}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'fs', type is ulong
-	[MSR_FS_BASE is trusted];
-unclassified	arch/x86/kernel/process_64.c:97 __show_regs() warn: {15008896281602043685}
+	[MSR_FS_BASE is native];
+trusted	arch/x86/kernel/process_64.c:97 __show_regs() warn: {15008896281602043685}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'shadowgs', type is ulong
-	[MSR_KERNEL_GS_BASE is trusted];
-unclassified	arch/x86/kernel/process_64.c:98 __show_regs() warn: {11847143798198931590}
-	'check_host_input' propagating a tainted value from the host 'fs' into a function '_printk';
-unclassified	arch/x86/kernel/process_64.c:98 __show_regs() warn: {11847143798198931590}
-	'check_host_input' propagating a tainted value from the host 'shadowgs' into a function '_printk';
-unclassified	arch/x86/kernel/process_64.c:108 __show_regs() warn: {15008896281602016471}
+	[MSR_KERNEL_GS_BASE is native];
+trusted	arch/x86/kernel/process_64.c:98 __show_regs() warn: {11847143798198931590}
+	'check_host_input' propagating a tainted value from the host 'fs' into a function '_printk'
+	[MSR_FS_BASE is native];
+trusted	arch/x86/kernel/process_64.c:98 __show_regs() warn: {11847143798198931590}
+	'check_host_input' propagating a tainted value from the host 'shadowgs' into a function '_printk'
+	[MSR_KERNEL_GS_BASE is native];
+trusted	arch/x86/kernel/process_64.c:108 __show_regs() warn: {15008896281602016471}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'fs', type is ulong
-	[MSR_FS_BASE is trusted];
-unclassified	arch/x86/kernel/process_64.c:109 __show_regs() warn: {15008896281602017561}
+	[MSR_FS_BASE is native];
+trusted	arch/x86/kernel/process_64.c:109 __show_regs() warn: {15008896281602017561}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'gs', type is ulong
-	[MSR_GS_BASE is trusted];
-unclassified	arch/x86/kernel/process_64.c:110 __show_regs() warn: {15008896281602043698}
+	[MSR_GS_BASE is native];
+trusted	arch/x86/kernel/process_64.c:110 __show_regs() warn: {15008896281602043698}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'shadowgs', type is ulong
-	[MSR_KERNEL_GS_BASE is trusted];
-unclassified	arch/x86/kernel/process_64.c:117 __show_regs() warn: {11650030741717420663}
-	'check_host_input' propagating a tainted value from the host 'fs' into a function '_printk';
-unclassified	arch/x86/kernel/process_64.c:117 __show_regs() warn: {11650030741717420663}
-	'check_host_input' propagating a tainted value from the host 'gs' into a function '_printk';
-unclassified	arch/x86/kernel/process_64.c:117 __show_regs() warn: {11650030741717420663}
-	'check_host_input' propagating a tainted value from the host 'shadowgs' into a function '_printk';
-unclassified	arch/x86/kernel/process_64.c:174 __rdgsbase_inactive() warn: {15008896281602043666}
+	[MSR_KERNEL_GS_BASE is native];
+trusted	arch/x86/kernel/process_64.c:117 __show_regs() warn: {11650030741717420663}
+	'check_host_input' propagating a tainted value from the host 'fs' into a function '_printk'
+	[MSR_FS_BASE is native];
+trusted	arch/x86/kernel/process_64.c:117 __show_regs() warn: {11650030741717420663}
+	'check_host_input' propagating a tainted value from the host 'gs' into a function '_printk'
+	[MSR_GS_BASE is native];
+trusted	arch/x86/kernel/process_64.c:117 __show_regs() warn: {11650030741717420663}
+	'check_host_input' propagating a tainted value from the host 'shadowgs' into a function '_printk'
+	[MSR_KERNEL_GS_BASE is native];
+trusted	arch/x86/kernel/process_64.c:174 __rdgsbase_inactive() warn: {15008896281602043666}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'gsbase', type is ulong
-	[MSR_KERNEL_GS_BASE is trusted];
-unclassified	arch/x86/kernel/process_64.c:178 __rdgsbase_inactive() error: {229467483264970}
+	[MSR_KERNEL_GS_BASE is native];
+trusted	arch/x86/kernel/process_64.c:178 __rdgsbase_inactive() error: {229467483264970}
 	'check_host_input' return an expression containing a propagated value from the host 'gsbase'
-	[MSR_KERNEL_GS_BASE is trusted];
-unclassified	arch/x86/kernel/process_64.c:441 x86_gsbase_read_cpu_inactive() warn: {15008896281602043665}
+	[MSR_KERNEL_GS_BASE is native];
+trusted	arch/x86/kernel/process_64.c:441 x86_gsbase_read_cpu_inactive() warn: {15008896281602043665}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'gsbase', type is ulong
-	[MSR_KERNEL_GS_BASE is trusted];
-unclassified	arch/x86/kernel/process_64.c:444 x86_gsbase_read_cpu_inactive() error: {229467483264968}
+	[MSR_KERNEL_GS_BASE is native];
+trusted	arch/x86/kernel/process_64.c:444 x86_gsbase_read_cpu_inactive() error: {229467483264968}
 	'check_host_input' return an expression containing a propagated value from the host 'gsbase'
-	[MSR_KERNEL_GS_BASE is trusted];
-unclassified	./arch/x86/include/asm/fsgsbase.h:63 x86_fsbase_read_cpu() warn: {15008896281602016436}
+	[MSR_KERNEL_GS_BASE is native];
+trusted	./arch/x86/include/asm/fsgsbase.h:63 x86_fsbase_read_cpu() warn: {15008896281602016436}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'fsbase', type is ulong
-	[MSR MSR_FS_BASE is trusted];
-unclassified	./arch/x86/include/asm/fsgsbase.h:65 x86_fsbase_read_cpu() error: {229466191796994}
+	[MSR_FS_BASE is native];
+trusted	./arch/x86/include/asm/fsgsbase.h:65 x86_fsbase_read_cpu() error: {229466191796994}
 	'check_host_input' return an expression containing a propagated value from the host 'fsbase'
-	[MSR_FS_BASE is trusted];
+	[MSR_FS_BASE is native];
 unclassified	arch/x86/kernel/cpu/scattered.c:57 init_scattered_cpuid_features() warn: {495236079512798505}
 	'check_host_input' read from the host using function 'cpuid_eax' to an int type local variable 'max_level', type is uint;
 unclassified	arch/x86/kernel/cpu/scattered.c:62 init_scattered_cpuid_features() error: {11102794065912149976}
 	'check_host_input' read from the host using function 'cpuid_count' to multiple values;
-unclassified	arch/x86/kernel/cpu/bugs.c:108 check_bugs() error: {9125702198692777417}
+trusted	arch/x86/kernel/cpu/bugs.c:108 check_bugs() error: {9125702198692777417}
 	'check_host_input' read from the host using function 'paravirt_read_msr' into a non-local variable 'x86_spec_ctrl_base'
-	[MSR_IA32_SPEC_CTRL is trusted];
+	[MSR_IA32_SPEC_CTRL is native];
 excluded	arch/x86/kernel/cpu/bugs.c:448 update_srbds_msr() warn: {6000267377503160244}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'mcu_ctrl', type is ullong
 	[code is not enabled under X86_FEATURE_HYPERVISOR ];
@@ -3001,18 +3016,18 @@ unclassified	arch/x86/kernel/cpu/aperfmperf.c:66 aperfmperf_snapshot_khz() error
 unclassified	arch/x86/kernel/cpu/aperfmperf.c:66 aperfmperf_snapshot_khz() error: {1768005142856334095}
 	'check_host_input' propagating a tainted value from the host 'mperf_delta' into a function 'div64_u64'
 	[The MSR, MSR_IA32_MPERF, contains timing data.];
-unclassified	arch/x86/kernel/cpu/intel.c:332 early_init_intel() warn: {6000267377505250129}
+trusted	arch/x86/kernel/cpu/intel.c:332 early_init_intel() warn: {6000267377505250129}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'misc_enable', type is ullong
-	[IA32_MISC_ENABLE is trusted];
+	[IA32_MISC_ENABLE is native with some bits controlled by TDX module];
 unclassified	./arch/x86/include/asm/microcode_intel.h:66 intel_get_microcode_revision() warn: {16131295316533843252}
 	'check_host_input' read from the host using function '__rdmsr' to an int type local variable '__val', type is ullong
-	[The MSR, MSR_IA32_UCODE_REV, is a microcode revision number. It should be harmless.];
+	[The MSR, MSR_IA32_UCODE_REV, is a microcode revision number];
 unclassified	./arch/x86/include/asm/microcode_intel.h:66 intel_get_microcode_revision() warn: {10289865929061521657}
 	'check_host_input' propagating read value from the host '__val' into a different local value 'dummy'
-	[The MSR, MSR_IA32_UCODE_REV, is a microcode revision number. It should be harmless.];
+	[The MSR, MSR_IA32_UCODE_REV, is a microcode revision number];
 unclassified	./arch/x86/include/asm/microcode_intel.h:66 intel_get_microcode_revision() warn: {8236909181829948076}
 	'check_host_input' propagating read value from the host '__val' into a different local value 'rev'
-	[The MSR, MSR_IA32_UCODE_REV, is a microcode revision number. It should be harmless.];
+	[The MSR, MSR_IA32_UCODE_REV, is a microcode revision number];
 unclassified	./arch/x86/include/asm/microcode_intel.h:68 intel_get_microcode_revision() error: {6385651614}
 	'check_host_input' return an expression containing a propagated value from the host 'rev'
 	[MSR MSR_IA32_UCODE_REV value is only compared.];
@@ -3044,15 +3059,15 @@ unclassified	arch/x86/kernel/cpu/intel.c:639 init_intel_misc_features() warn: {6
 	'check_host_input' read from the host using function 'rdmsrl_safe' to an int type local variable 'msr', type is ullong;
 unclassified	arch/x86/kernel/cpu/intel.c:650 init_intel_misc_features() warn: {15392749980419207519}
 	'check_host_input' propagating a tainted value from the host 'msr' into a function 'wrmsrl';
-unclassified	arch/x86/kernel/cpu/intel.c:695 init_intel() warn: {6000267377505250061}
+trusted	arch/x86/kernel/cpu/intel.c:695 init_intel() warn: {6000267377505250061}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable '_l', type is ullong
-	[IA32_MISC_ENABLE is trusted];
-unclassified	arch/x86/kernel/cpu/intel.c:695 init_intel() warn: {7572552174457617}
+	[IA32_MISC_ENABLE is native with some bits controlled by TDX module];
+trusted	arch/x86/kernel/cpu/intel.c:695 init_intel() warn: {7572552174457617}
 	'check_host_input' propagating read value from the host '_l' into a different local value 'l1'
-	[IA32_MISC_ENABLE is trusted];
-unclassified	arch/x86/kernel/cpu/intel.c:695 init_intel() warn: {2853409038542220787}
+	[IA32_MISC_ENABLE is native with some bits controlled by TDX module];
+trusted	arch/x86/kernel/cpu/intel.c:695 init_intel() warn: {2853409038542220787}
 	'check_host_input' propagating read value from the host '_l' into a different local value 'l2'
-	[IA32_MISC_ENABLE is trusted];
+	[IA32_MISC_ENABLE is native with some bits controlled by TDX module];
 unclassified	arch/x86/kernel/cpu/intel.c:959 intel_detect_tlb() warn: {14614029357174489188}
 	'check_host_input' read from the host using function 'cpuid_eax' to an int type local variable 'n', type is int;
 unclassified	arch/x86/kernel/cpu/intel.c:961 intel_detect_tlb() error: {6953538501636}
@@ -3067,21 +3082,23 @@ unclassified	arch/x86/kernel/cpu/intel.c:1088 split_lock_verify_msr() warn: {912
 	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'tmp', type is ullong;
 unclassified	arch/x86/kernel/cpu/intel.c:1089 split_lock_verify_msr() error: {14982636092671434322}
 	'check_host_input' return an expression containing a propagated value from the host 'ctrl == tmp'
-	[MSR MSR_TEST_CTRL value is reset and compared.];
+	[MSR_TEST_CTRL value is reset and compared.];
 unclassified	arch/x86/kernel/cpu/intel.c:1122 __split_lock_setup() error: {9125702198692704440}
 	'check_host_input' read from the host using function 'paravirt_read_msr' into a non-local variable 'msr_test_ctrl_cache'
-	[Value read and reset.];
-unclassified	arch/x86/kernel/cpu/intel.c:1215 bus_lock_init() warn: {6000267377505462395}
-	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'val', type is ullong;
-unclassified	arch/x86/kernel/cpu/intel.c:1217 bus_lock_init() warn: {15392803551812049502}
-	'check_host_input' propagating a tainted value from the host 'val' into a function 'wrmsrl';
+	[MSR_TEST_CTRL value is read and reset.];
+trusted	arch/x86/kernel/cpu/intel.c:1215 bus_lock_init() warn: {6000267377505462395}
+	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'val', type is ullong
+	[reading MSR_IA32_DEBUGCTLMSR is controlled by TDX module];
+trusted	arch/x86/kernel/cpu/intel.c:1217 bus_lock_init() warn: {15392803551812049502}
+	'check_host_input' propagating a tainted value from the host 'val' into a function 'wrmsrl'
+	[reading MSR_IA32_DEBUGCTLMSR is controlled by TDX module];
 unclassified	arch/x86/kernel/cpu/intel.c:1312 split_lock_setup() warn: {6000267377502843350}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'ia32_core_caps', type is ullong;
 unclassified	arch/x86/kernel/cpu/intel.c:1376 get_this_hybrid_cpu_type() error: {2647622870309816373}
 	'check_host_input' read from the host using function 'cpuid_eax' returned as a part of an expression;
-unclassified	arch/x86/kernel/cpu/umwait.c:217 umwait_init() error: {6000267377502913041}
+trusted	arch/x86/kernel/cpu/umwait.c:217 umwait_init() error: {6000267377502913041}
 	'check_host_input' read from the host using function 'paravirt_read_msr' into a non-local variable 'orig_umwait_control_cached'
-	[The value of MSR_IA32_UMWAIT_CONTROL is read in, then written out];
+	[MSR_IA32_UMWAIT_CONTROL is either native or #GP(0) inside TDX guest];
 unclassified	arch/x86/kernel/cpu/mce/inject.c:308 toggle_hw_mce_inject() error: {15916422483964564785}
 	'check_host_input' read from the host using function 'rdmsr_on_cpu' to values &l and &h
 	[AMD specific.];
@@ -3609,17 +3626,18 @@ unclassified	arch/x86/kernel/cpu/common.c:912 get_cpu_cap() error: {146140293571
 	[just reads the cpuid info];
 unclassified	arch/x86/kernel/cpu/common.c:949 get_cpu_cap() error: {4294076177013990033}
 	'check_host_input' read from the host using function 'cpuid' to multiple values;
-unclassified	arch/x86/kernel/cpu/common.c:1130 x86_read_arch_cap_msr() warn: {6000267377503057870}
-	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'ia32_cap', type is ullong;
-unclassified	arch/x86/kernel/cpu/common.c:1132 x86_read_arch_cap_msr() error: {249892072398758830}
+trusted	arch/x86/kernel/cpu/common.c:1130 x86_read_arch_cap_msr() warn: {6000267377503057870}
+	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'ia32_cap', type is ullong
+	[IA32_ARCH_CAPABILITIES is controlled by TDX module];
+trusted	arch/x86/kernel/cpu/common.c:1132 x86_read_arch_cap_msr() error: {249892072398758830}
 	'check_host_input' return an expression containing a propagated value from the host 'ia32_cap'
-	[IA32_ARCH_CAPABILITIES is trusted];
-unclassified	arch/x86/kernel/cpu/common.c:1417 detect_null_seg_behavior() warn: {15008896281602016448}
+	[IA32_ARCH_CAPABILITIES is controlled by TDX module];
+trusted	arch/x86/kernel/cpu/common.c:1417 detect_null_seg_behavior() warn: {15008896281602016448}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'old_base', type is ulong
-	[IA32_FSBASE is trusted];
-unclassified	arch/x86/kernel/cpu/common.c:1420 detect_null_seg_behavior() warn: {15008896281602016451}
+	[IA32_FSBASE is native];
+trusted	arch/x86/kernel/cpu/common.c:1420 detect_null_seg_behavior() warn: {15008896281602016451}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'tmp', type is ulong
-	[IA32_FSBASE is trusted];
+	[IA32_FSBASE is native];
 unclassified	arch/x86/kernel/cpu/common.c:1423 detect_null_seg_behavior() warn: {13592501318369874813}
 	'check_host_input' propagating a tainted value from the host 'old_base' into a function 'wrmsrl';
 unclassified	arch/x86/kernel/smpboot.c:698 __inquire_remote_apic() warn: {13051838531211430955}
@@ -3654,11 +3672,12 @@ unclassified	arch/x86/kernel/smpboot.c:1310 smp_get_logical_apicid() error: {130
 unclassified	arch/x86/kernel/smpboot.c:1312 smp_get_logical_apicid() error: {13051838531205285709}
 	'check_host_input' read from the host using function 'apic_read' into a non-local variable 'cpu0_logical_apicid'
 	[Initialization of a device ID.];
-unclassified	arch/x86/kernel/smpboot.c:1849 turbo_disabled() warn: {17154149427911377112}
-	'check_host_input' read from the host using function 'rdmsrl_safe' to an int type local variable 'misc_en', type is ullong;
-unclassified	arch/x86/kernel/smpboot.c:1853 turbo_disabled() error: {2891378733893510504}
+trusted	arch/x86/kernel/smpboot.c:1849 turbo_disabled() warn: {17154149427911377112}
+	'check_host_input' read from the host using function 'rdmsrl_safe' to an int type local variable 'misc_en', type is ullong
+	[IA32_MISC_ENABLE is native with some bits controlled by TDX module];
+trusted	arch/x86/kernel/smpboot.c:1853 turbo_disabled() error: {2891378733893510504}
 	'check_host_input' return an expression containing a propagated value from the host '(misc_en & (1 << 38))'
-	[MSR MSR_IA32_MISC_ENABLE value is masked.];
+	[IA32_MISC_ENABLE is native with some bits controlled by TDX module];
 unclassified	arch/x86/kernel/smpboot.c:1860 slv_set_max_freq_ratio() error: {15509648933393975117}
 	'check_host_input' read from the host using function 'rdmsrl_safe' into a non-local variable 'base_freq'
 	[The MSR MSR_ATOM_CORE_RATIOS value is constained and masked.];
