@@ -444,20 +444,24 @@ unclassified	arch/x86/events/intel/pt.c:188 pt_pmu_hw_init() warn: {600026737750
 unclassified	arch/x86/events/intel/pt.c:189 pt_pmu_hw_init() error: {8755336312397649879}
 	'check_host_input' propagating read value from the host 'reg' into a different complex variable 'pt_pmu.max_nonturbo_ratio'
 	[The value saved is displayed but otherwise unused.];
-unclassified	arch/x86/events/intel/pt.c:224 pt_pmu_hw_init() warn: {13541382720460309094}
-	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'reg', type is ullong;
-unclassified	arch/x86/events/intel/pt.c:884 pt_handle_status() warn: {13541382720462820289}
-	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'status', type is ullong;
-unclassified	arch/x86/events/intel/pt.c:927 pt_handle_status() warn: {3842529638864849710}
-	'check_host_input' propagating a tainted value from the host 'status' into a function 'wrmsrl';
-unclassified	arch/x86/events/intel/pt.c:942 pt_read_offset() error: {13541382720462751682}
+trusted	arch/x86/events/intel/pt.c:224 pt_pmu_hw_init() warn: {13541382720460309094}
+	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'reg', type is ullong
+	[reading MSR_IA32_VMX_MISC results in GP(0) in TDX guest];
+trusted	arch/x86/events/intel/pt.c:884 pt_handle_status() warn: {13541382720462820289}
+	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'status', type is ullong
+	[MSR_IA32_RTIT_STATUS is either native or #GP(0) inside TDX guest]
+trusted	arch/x86/events/intel/pt.c:927 pt_handle_status() warn: {3842529638864849710}
+	'check_host_input' propagating a tainted value from the host 'status' into a function 'wrmsrl'
+	[MSR_IA32_RTIT_STATUS is either native or #GP(0) inside TDX guest]
+trusted	arch/x86/events/intel/pt.c:942 pt_read_offset() error: {13541382720462751682}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to a member of the structure 'pt->output_base'
-	[The MSR is trusted];
-unclassified	arch/x86/events/intel/pt.c:947 pt_read_offset() error: {13541382720462752776}
+	[MSR_IA32_RTIT_OUTPUT_BASE is either native or #GP(0) inside TDX guest];
+trusted	arch/x86/events/intel/pt.c:947 pt_read_offset() error: {13541382720462752776}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to a member of the structure 'pt->output_mask'
-	[The MSR is trusted];
-unclassified	arch/x86/events/intel/pt.c:1715 pt_init() warn: {17436497696263589776}
-	'check_host_input' read from the host using function 'rdmsrl_safe_on_cpu' to an int type local variable 'ctl', type is ullong;
+	[MSR_IA32_RTIT_OUTPUT_MASK is either native or #GP(0) inside TDX guest];
+trusted	arch/x86/events/intel/pt.c:1715 pt_init() warn: {17436497696263589776}
+	'check_host_input' read from the host using function 'rdmsrl_safe_on_cpu' to an int type local variable 'ctl', type is ullong
+	[MSR_IA32_RTIT_CTL is either native or #GP(0) inside TDX guest];
 excluded	arch/x86/events/intel/uncore_snb.c:414 icl_get_cbox_num() warn: {6000267377511181809}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'num_boxes', type is ullong
 	[uncore is disabled for TDX guest];
@@ -3593,9 +3597,9 @@ excluded	arch/x86/kernel/cpu/cacheinfo.c:340 amd_get_l3_disable_slot() warn: {53
 excluded	arch/x86/kernel/cpu/cacheinfo.c:344 amd_get_l3_disable_slot() error: {13892091956944450275}
 	'check_host_input' return an expression containing a propagated value from the host 'reg & 4095'
 	[AMD specific cache behavior.];
-unclassified	arch/x86/kernel/cpu/cacheinfo.c:643 find_num_cache_leaves() error: {5125462461191960508}
+trusted	arch/x86/kernel/cpu/cacheinfo.c:643 find_num_cache_leaves() error: {5125462461191960508}
 	'check_host_input' read from the host using function 'cpuid_count' to multiple values
-	[for Intel platforms gets its value from 0x4 leaf, which is trusted in TDX guest];
+	[for Intel platforms gets its value from 0x4 leaf, which is TDX module provided in TDX guest];
 excluded	arch/x86/kernel/cpu/cacheinfo.c:655 cacheinfo_amd_init_llc_id() warn: {3890060098002450589}
 	'check_host_input' empty read from the host using function 'cpuid_edx' used inside an 'if' clause;
 excluded	arch/x86/kernel/cpu/cacheinfo.c:693 cacheinfo_hygon_init_llc_id() warn: {3890060098002450589}
