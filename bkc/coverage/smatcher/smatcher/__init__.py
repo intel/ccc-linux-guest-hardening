@@ -41,6 +41,7 @@ SMATCH_CAT_SAFE = "safe"
 SMATCH_CAT_EXCLUDED = "excluded"
 SMATCH_CAT_WRAPPER = "wrapper"
 SMATCH_CAT_UNCLASSIFIED = "unclassified"
+SMATCH_CAT_TRUSTED = "trusted"
 
 LINECOV_FILES = ["traces/linecov.lst", "traces/smatch_match_rust.lst", "traces/smatch_match.lst", "traces/addr2line.lst"]
 KERNEL_ANALYSIS_START_FUNCS = ["start_kernel", "kernel_init"]
@@ -187,7 +188,7 @@ def start(args):
     print(IND + "Not covered smatch entries: {}".format(len(not_covered)))
     cov_non_excl = []
     not_cov_non_excl = []
-    for cl in [SMATCH_CAT_SAFE, SMATCH_CAT_CONCERN, SMATCH_CAT_WRAPPER, SMATCH_CAT_EXCLUDED, SMATCH_CAT_UNCLASSIFIED]:
+    for cl in [SMATCH_CAT_SAFE, SMATCH_CAT_CONCERN, SMATCH_CAT_WRAPPER, SMATCH_CAT_EXCLUDED, SMATCH_CAT_TRUSTED, SMATCH_CAT_UNCLASSIFIED]:
         covered_class = list(filter(lambda e: e[0] == cl, covered))
         not_covered_class = list(filter(lambda e: e[0] == cl, not_covered))
         if not cl in ["excluded", "wrapper", "unclassified"]:
