@@ -25,7 +25,7 @@ endif
 .venv:
 	sudo apt install python3-pip
 	pip install -U pipenv
-	pipenv install west
+	pipenv install
 
 install:
 ifneq ($(PIPENV_ACTIVE), 1)
