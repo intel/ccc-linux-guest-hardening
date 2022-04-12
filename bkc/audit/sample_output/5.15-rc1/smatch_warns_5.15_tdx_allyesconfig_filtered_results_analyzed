@@ -429,16 +429,18 @@ excluded	arch/x86/events/intel/cstate.c:357 cstate_pmu_read_counter() warn: {415
 excluded	arch/x86/events/intel/cstate.c:358 cstate_pmu_read_counter() error: {6385790669}
 	'check_host_input' return an expression containing a propagated value from the host 'val'
 	[Support for cstate residency counters is disabled when X86_FEATURE_HYPERVISOR is on];
-unclassified	arch/x86/events/intel/p6.c:143 p6_pmu_disable_all() warn: {6000267377504345068}
+excluded	arch/x86/events/intel/p6.c:143 p6_pmu_disable_all() warn: {6000267377504345068}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'val', type is ullong
-	[read, masked, written out];
-unclassified	arch/x86/events/intel/p6.c:145 p6_pmu_disable_all() warn: {15392759825289555087}
-	'check_host_input' propagating a tainted value from the host 'val' into a function 'wrmsrl';
-unclassified	arch/x86/events/intel/p6.c:153 p6_pmu_enable_all() warn: {6000267377504345068}
+	[Pentium pro (P6) code, not reachable in TDX guest];
+excluded	arch/x86/events/intel/p6.c:145 p6_pmu_disable_all() warn: {15392759825289555087}
+	'check_host_input' propagating a tainted value from the host 'val' into a function 'wrmsrl'
+	[Pentium pro (P6) code, not reachable in TDX guest];
+excluded	arch/x86/events/intel/p6.c:153 p6_pmu_enable_all() warn: {6000267377504345068}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'val', type is ulong
-	[read, masked, written out];
-unclassified	arch/x86/events/intel/p6.c:155 p6_pmu_enable_all() warn: {15392759825289555087}
-	'check_host_input' propagating a tainted value from the host 'val' into a function 'wrmsrl';
+	[Pentium pro (P6) code, not reachable in TDX guest];
+excluded	arch/x86/events/intel/p6.c:155 p6_pmu_enable_all() warn: {15392759825289555087}
+	'check_host_input' propagating a tainted value from the host 'val' into a function 'wrmsrl'
+	[Pentium pro (P6) code, not reachable in TDX guest];
 unclassified	arch/x86/events/intel/pt.c:188 pt_pmu_hw_init() warn: {6000267377502842252}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'reg', type is ullong;
 unclassified	arch/x86/events/intel/pt.c:189 pt_pmu_hw_init() error: {8755336312397649879}
