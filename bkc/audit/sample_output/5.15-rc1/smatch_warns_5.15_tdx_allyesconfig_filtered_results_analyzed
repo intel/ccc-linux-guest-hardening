@@ -728,19 +728,24 @@ unclassified	arch/x86/events/intel/knc.c:203 knc_pmu_get_status() warn: {9125702
 unclassified	arch/x86/events/intel/knc.c:205 knc_pmu_get_status() error: {229483019515503}
 	'check_host_input' return an expression containing a propagated value from the host 'status'
 	[MSR MSR_KNC_IA32_PERF_GLOBAL_STATUS value is compared and possibly reset.];
-unclassified	arch/x86/events/intel/p4.c:861 p4_pmu_clear_cccr_ovf() warn: {9751380104474903501}
-	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'v', type is ullong;
-unclassified	arch/x86/events/intel/p4.c:863 p4_pmu_clear_cccr_ovf() warn: {4899846659562524790}
+excluded	arch/x86/events/intel/p4.c:861 p4_pmu_clear_cccr_ovf() warn: {9751380104474903501}
+	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'v', type is ullong
+	[Pentium 4 code, not reachable in TDX guest];
+excluded	arch/x86/events/intel/p4.c:863 p4_pmu_clear_cccr_ovf() warn: {4899846659562524790}
 	'check_host_input' propagating an expression containing a tainted value from the host 'v & ~2147483648' into a function 'wrmsrl'
-	[The MSR is read, masked and reset. The lone caller is dealing with IRQs.];
-unclassified	arch/x86/events/intel/p4.c:874 p4_pmu_clear_cccr_ovf() warn: {15499686244986242214}
-	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'v', type is ullong;
-unclassified	arch/x86/events/intel/p4.c:1358 p4_pmu_init() warn: {6000267377505250030}
-	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable '_l', type is ullong;
-unclassified	arch/x86/events/intel/p4.c:1358 p4_pmu_init() warn: {249896975355468647}
-	'check_host_input' propagating read value from the host '_l' into a different local value 'low';
-unclassified	arch/x86/events/intel/p4.c:1358 p4_pmu_init() warn: {9015660427325373366}
-	'check_host_input' propagating read value from the host '_l' into a different local value 'high';
+	[Pentium 4 code, not reachable in TDX guest];
+excluded	arch/x86/events/intel/p4.c:874 p4_pmu_clear_cccr_ovf() warn: {15499686244986242214}
+	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'v', type is ullong
+	[Pentium 4 code, not reachable in TDX guest];
+excluded	arch/x86/events/intel/p4.c:1358 p4_pmu_init() warn: {6000267377505250030}
+	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable '_l', type is ullong
+	[Pentium 4 code, not reachable in TDX guest];
+excluded	arch/x86/events/intel/p4.c:1358 p4_pmu_init() warn: {249896975355468647}
+	'check_host_input' propagating read value from the host '_l' into a different local value 'low'
+	[Pentium 4 code, not reachable in TDX guest];
+excluded	arch/x86/events/intel/p4.c:1358 p4_pmu_init() warn: {9015660427325373366}
+	'check_host_input' propagating read value from the host '_l' into a different local value 'high'
+	[Pentium 4 code, not reachable in TDX guest];
 excluded	arch/x86/events/intel/uncore.c:137 uncore_msr_read_counter() warn: {4155805026538075621}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'count', type is ullong;
 excluded	arch/x86/events/intel/uncore.c:139 uncore_msr_read_counter() error: {6953399510580}
