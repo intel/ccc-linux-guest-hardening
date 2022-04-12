@@ -715,19 +715,24 @@ trusted	arch/x86/events/intel/lbr.c:411 rdlbr_info() error: {6385790673}
 trusted	arch/x86/events/intel/lbr.c:802 intel_pmu_lbr_read_32() error: {16156933454716807298}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to a member of the structure 'msr_lastbranch.lbr'
 	[LBR MSRs are either #GP(0) or native];
-unclassified	arch/x86/events/intel/knc.c:162 knc_pmu_disable_all() warn: {9125702198692675034}
-	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'val', type is ullong;
-unclassified	arch/x86/events/intel/knc.c:164 knc_pmu_disable_all() warn: {4379394295675553181}
-	'check_host_input' propagating a tainted value from the host 'val' into a function 'wrmsrl';
-unclassified	arch/x86/events/intel/knc.c:171 knc_pmu_enable_all() warn: {9125702198692675034}
-	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'val', type is ullong;
-unclassified	arch/x86/events/intel/knc.c:173 knc_pmu_enable_all() warn: {4379394295675553181}
-	'check_host_input' propagating a tainted value from the host 'val' into a function 'wrmsrl';
-unclassified	arch/x86/events/intel/knc.c:203 knc_pmu_get_status() warn: {9125702198692672856}
-	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'status', type is ullong;
-unclassified	arch/x86/events/intel/knc.c:205 knc_pmu_get_status() error: {229483019515503}
+excluded	arch/x86/events/intel/knc.c:162 knc_pmu_disable_all() warn: {9125702198692675034}
+	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'val', type is ullong
+	[Intel Xeon Phi pmu code, not reachable in TDX guest];
+excluded	arch/x86/events/intel/knc.c:164 knc_pmu_disable_all() warn: {4379394295675553181}
+	'check_host_input' propagating a tainted value from the host 'val' into a function 'wrmsrl'
+	[Intel Xeon Phi pmu code, not reachable in TDX guest];
+excluded	arch/x86/events/intel/knc.c:171 knc_pmu_enable_all() warn: {9125702198692675034}
+	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'val', type is ullong
+	[Intel Xeon Phi pmu code, not reachable in TDX guest];
+excluded	arch/x86/events/intel/knc.c:173 knc_pmu_enable_all() warn: {4379394295675553181}
+	'check_host_input' propagating a tainted value from the host 'val' into a function 'wrmsrl'
+	[Intel Xeon Phi pmu code, not reachable in TDX guest];
+excluded	arch/x86/events/intel/knc.c:203 knc_pmu_get_status() warn: {9125702198692672856}
+	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'status', type is ullong
+	[Intel Xeon Phi pmu code, not reachable in TDX guest];
+excluded	arch/x86/events/intel/knc.c:205 knc_pmu_get_status() error: {229483019515503}
 	'check_host_input' return an expression containing a propagated value from the host 'status'
-	[MSR MSR_KNC_IA32_PERF_GLOBAL_STATUS value is compared and possibly reset.];
+	[Intel Xeon Phi pmu code, not reachable in TDX guest];
 excluded	arch/x86/events/intel/p4.c:861 p4_pmu_clear_cccr_ovf() warn: {9751380104474903501}
 	'check_host_input' read from the host using function 'paravirt_read_msr' to an int type local variable 'v', type is ullong
 	[Pentium 4 code, not reachable in TDX guest];
