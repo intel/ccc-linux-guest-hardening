@@ -12,7 +12,12 @@ import os, sys, string, re, argparse
 
 smatch_pattern_name = "check_host_input"
 
-tdx_allowed_drivers = ["drivers/virtio", "drivers/block/virtio_blk.c", "drivers/net/virtio_net.c", "drivers/char/virtio_console.c", "drivers/acpi", "drivers/char/hpet.c", "drivers/pci", "drivers/rtc/rtc-mc146818-lib.c", "drivers/firmware/qemu_fw_cfg.c", "drivers/net/tun.c", "drivers/net/tap.c", "drivers/firmware/efi", "drivers/input/input.c"]
+tdx_allowed_drivers = ["drivers/virtio", "drivers/block/virtio_blk.c",
+        "drivers/net/virtio_net.c", "drivers/char/virtio_console.c",
+        "drivers/acpi", "drivers/char/hpet.c", "drivers/pci",
+        "drivers/rtc/rtc-mc146818-lib.c", "drivers/firmware/qemu_fw_cfg.c",
+        "drivers/net/tun.c", "drivers/net/tap.c", "drivers/firmware/efi",
+        "drivers/input/input.c"]
 
 def main(args):
     input_file = args.input_file
@@ -20,11 +25,11 @@ def main(args):
     print("Input file is " + input_file, file=sys.stderr)
 
     if not os.path.isfile(input_file):
-        print(f"Input file {input_file} does not exists", file=sys.stderr)
+        print(f"Error: Input file {input_file} does not exists", file=sys.stderr)
         exit(1)
 
-    if os.path.isfile(output_file):
-        print(f"Output file {output_file} already exists. Please delete this file first!", file=sys.stderr)
+    if os.path.isfile(output_file) and not args.force:
+        print(f"Error: Output file {output_file} already exists. Supply --force to overwrite.", file=sys.stderr)
         exit(1)
 
     with open(input_file, 'r') as finput:
@@ -69,8 +74,10 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Smatch result filter script. Filters out excluded subsystems from the smatch report.')
-    parser.add_argument('input_file', metavar='<input_file>', type=str, help='Smatch report file (smatch_warns.txt) to be filtered.')
-    parser.add_argument('-f', '--output_file', metavar='<output_file>', type=str, default="smatch_warns.txt.filtered",
-            help=f'Store output to specified file')
+    parser.add_argument('input_file', metavar='<input_file>', type=str, help='Smatch report to be filtered (smatch_warns.txt)')
+    parser.add_argument('-o', '--output_file', metavar='<output_file>', type=str, default="smatch_warns.txt.filtered",
+            help='Store output to specified file')
+    parser.add_argument('-f', '--force', action="store_true",
+            help='Force overwrite existing output files')
     args = parser.parse_args()
     main(args)
