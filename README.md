@@ -59,7 +59,7 @@ make -C $LINUX_GUEST prepare
 ./bkc/audit/gen_smatch_warns.sh $LINUX_GUEST
 ```
 
-## kAFL Fuzzer
+## Basic kAFL Operation
 
 ### 1. Install kAFL
 
@@ -67,7 +67,8 @@ make -C $LINUX_GUEST prepare
 - Run a [Boot Fuzzing Example](bkc/kafl/README.md#Linux-Boot-Fuzzing)
 - Familiarize yourself with [kAFL Fuzzer Status and Tools](https://github.com/IntelLabs/kAFL/#understanding-fuzzer-status)
 
-### 2. Simple Smatch Coverage Report
+### 2. Smatch Coverage Report
+
 As explained earlier, we use smatch to statically obtain points that
 potentially consume host input, which is what we want to reach through fuzzing.
 Smatch produces a file called `$LINUX_GUEST/smatch_warns.txt`.
@@ -79,53 +80,65 @@ echo $KAFL_WORKDIR
 ./bkc/kafl/fuzz.sh smatch $KAFL_WORKDIR
 ```
 
-### 3. (Optional/ More advanced) Detailed Smatch Coverage & Batch-Running Harnesses
-The above method matches your coverage against the input points identified by
-smatch. We have included a tool called [smatcher](bkf/coverage/smatcher), which
-can aggregate coverage over multiple campaigns and match it against an annotated `smatch_warns.txt`.
+## Batch-Running Campaigns and Smatch Coverage
 
-First make sure you have installed smatcher. In your kAFL virtualenv (do `make env` if you have not activate dit yet):
+For full validation of a target, we run several fuzzing harnesses and compare
+their aggregated coverage against the smatch audit list. Moreover, an annotated
+audit list based on previous manual review can be used to directly prioritize
+any gaps identified in the aggregated coverage report.
+
+### 1. Generate annotated Smatch Audit List
+
+In the following we first generate a smatch audit list (`smatch_warns.txt`) for
+a given Linux guest kernel and then transfer audit annotations from an
+existing [sample audit provided for Linux
+5.15-rc1](bkc/audit/sample_output/5.15-rc1/smatch_warns_5.15_tdx_allyesconfig_filtered_results_analyzed).
+
 ```shell
-cd bkc/coverage/smatcher && pip install .
+SMATCH_BASE=$BKC_ROOT/bkc/audit/sample_output/5.15-rc1/smatch_warns_5.15_tdx_allyesconfig_filtered_results_analyzed
+./bkc/audit/gen_smatch_warns.sh $LINUX_GUEST
+./bkc/audit/transfer_results.py $SMATCH_BASE $LINUX_GUEST/smatch_warns.txt.filtered
+mv smatch_warns.txt.analyzed $LINUX_GUEST/smatch_warns.txt
 ```
-Now you should have the `smatcher` tool installed.
 
-When using smatcher, you typically want to match against an annotated
-`smatch_warns.txt` so that you can break down the coverage by category (such as
-'trusted' or 'excluded'). You can transfer existing results to the
-`smatch_warns.txt` generated in earlier steps. In the following example we will
-transfer results from the sample file we have provided for Linux 5.15-rc1:
-`bkc/audit/sample_output/5.15-rc1/smatch_warns_5.15_tdx_allyesconfig_filtered_results_analyzed`.
+The resulting annotated audit list (`smatch_warns.txt`) is specific to the
+$LINUX\_GUEST version and configuration, but includes, as far as possible,
+automatically transferred annotations from a previous manual kernel audit.
 
+### 2. Batch-Run Campaigns with Coverage
 
-To do filtering/ processing and transfer existing smatch results:
+The included `run_experiments.py` can be used to automate the execution of
+campaigns with best-known configuration for each harness.
+
+Running all defined harnesses can take a few days, so you may want to start with
+a single test case to validate the overall process and setup first.
+
+Execution of campaigns can be parallelized using the `-p` flag, and
+automated/fast coverage collection can be enabled using `-c`.
+
+To run the configured harnesses and store the resulting data in the folder `~/results`:
+
+```shell
+./bkc/kafl/run_experiments.py run -c -p 4 $LINUX_GUEST ~/results
 ```
-export SMATCH_RESULTS=~/bkc/audit/sample_output/5.15-rc1/smatch_warns_5.15_tdx_allyesconfig_filtered_results_analyzed
-cd $LINUX_GUEST
-$BKC_ROOT/bkc/audit/scripts/process_smatch_output.py smatch_warns.txt
-$BKC_ROOT/bkc/audit/scripts/transfer_results.py $SMATCH_RESULTS smatch_warns.txt.filtered
-mv smatch_warns.txt smatch_warns.txt.bak
-mv smatch_warns.txt.analyzed smatch_warns.txt
-```
-You should now have a `smatch_warns.txt` with the annotated/ audited entries for your target kernel.
 
-After doing these steps, it is now possible to generate a detailed report of your campaign using smatcher:
+### 3. Generate Aggregated Smatch Coverage Report
+
+The [smatcher](bkc/coverage/smatcher) tool aggregates coverage over multiple
+campaigns and matches it against an annotated audit list. Install smatcher to
+your python environment like this:
+
+```shell
+make env    # enable virtualenv if not active
+pip install ./bkc/coverage/smatcher
+```
+
+To generate a smatch coverage report for a single campaign:
 ```shell
 smatcher -s $LINUX_GUEST/smatch_warns.txt $KAFL_WORKDIR
 ```
 
-
-For convenience, we have included a script `bkc/kafl/run_experiments.py`, which can
-automatically run large-scale experiments for all our harnesses.
-
-To run all harnesses and store the resulting data in the folder `results` do:
-```shell
-bkc/kafl/run_experiments.py run $LINUX_GUEST results
-```
-Hint: you can parallelize the campaigns using the `-p` flag. To have the script
-gather the coverage for you after finishing the campaigns, set the `-c` flag.
-
-To summarize the aggregated results of your campaign, do something like:
+To generate an aggregated report, use something like:
 ```shell
 smatcher -s $LINUX_GUEST/smatch_warns.txt --combine-cov-files results/*
 ```
