@@ -14,16 +14,16 @@ import os, sys, string, re, argparse
 def main(args):
     input_analyzed = args.input_analyzed
     input_new = args.input_new
-    output_file = args.f
+    output_file = args.output_file
 
     if not os.path.isfile(input_new):
-        print(f"New input file {input_new} does not exists", file=sys.stderr)
+        print(f"Error: New input file {input_new} does not exist.", file=sys.stderr)
         exit(1)
     if not os.path.isfile(input_analyzed):
-        print(f"Analyzed input file {input_analyzed} does not exists", file=sys.stderr)
+        print(f"Error: Analyzed input file {input_analyzed} does not exist.", file=sys.stderr)
         exit(1)
-    if os.path.isfile(output_file):
-        print(f"Output file {output_file} already exists. Please remove the file first or use -f flag!", file=sys.stderr)
+    if os.path.isfile(output_file) and not args.force:
+        print(f"Error: Output file {output_file} already exists. Supply --force to overwrite.", file=sys.stderr)
         exit(1)
 
     with open(input_analyzed, 'r') as fanalysed:
@@ -117,11 +117,15 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Smatch result transfer script. Transfer previous audit results to a new kernel version.')
-    parser.add_argument('input_analyzed', metavar='<input_analyzed>', type=str, help='File containing already analyzed smatch results which you want to transfer to a new version')
-    parser.add_argument('input_new', metavar='<input_new>', type=str, help='New input file / transfer target (smatch_warns.txt). Generate using path_to_smatch/smatch_scripts/test_kernel.sh')
-    parser.add_argument('-f', metavar='<output_file>', type=str, default="smatch_warns.txt.analyzed",
-            help=f'Store output to specified file')
+    parser.add_argument('input_analyzed', metavar='<input_analyzed>', type=str,
+            help='Previously annotated smatch results to be tranferred to new results')
+    parser.add_argument('input_new', metavar='<input_new>', type=str,
+            help='New generated smatch results (e.g. smatch_warns.txt).')
+    parser.add_argument('-o', '--output_file', metavar='<output_file>', type=str, default="smatch_warns.txt.analyzed",
+            help='Store output to specified file')
+    parser.add_argument('-f', '--force', action="store_true",
+            help=f'Force overwrite existing output files')
     parser.add_argument('-t', action="store_true",
-            help=f'Store temporary/ auxiliary files (.tmp.new, .tmp.old). Useful for debugging.')
+            help='Store intermediate files for debugging (.tmp.new, .tmp.old).')
     args = parser.parse_args()
     main(args)

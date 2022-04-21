@@ -50,13 +50,13 @@ for introduction to west.
 
 This generates a file `smatch_warns.txt` in the target folder, containing the
 list of code locations found to consume potentially malicious input by an
-untrusted hypervisor. This list should be generated for the desired Linux kernel
-code and configuration to be audited or fuzzed:
+untrusted hypervisor. This list should be generated once for the desired Linux
+kernel code and configuration to be audited or fuzzed:
 
 ```shell
 cp ./bkc/kafl/linux_kernel_tdx_guest.config $LINUX_GUEST/.config
 make -C $LINUX_GUEST prepare
-./bkc/audit/gen_smatch_warns.sh $LINUX_GUEST
+make -C ./bkc/audit
 ```
 
 ## Basic kAFL Operation
@@ -73,7 +73,9 @@ As explained earlier, we use smatch to statically obtain points that
 potentially consume host input, which is what we want to reach through fuzzing.
 Smatch produces a file called `$LINUX_GUEST/smatch_warns.txt`.
 
-If you have succesfully ran a fuzzing campaign, you can gather the coverage and match this coverage against smatch using the following commands:
+If you have successfully ran a fuzzing campaign, you can gather the coverage and
+match this coverage against smatch using the following commands:
+
 ```shell
 echo $KAFL_WORKDIR
 ./bkc/kafl/fuzz.sh cov $KAFL_WORKDIR
@@ -89,21 +91,21 @@ any gaps identified in the aggregated coverage report.
 
 ### 1. Generate annotated Smatch Audit List
 
-In the following we first generate a smatch audit list (`smatch_warns.txt`) for
-a given Linux guest kernel and then transfer audit annotations from an
-existing [sample audit provided for Linux
+If not already done, generate an annotated smatch report for your desired Linux
+guest kernel version and configuration.  The following script automatically
+generates a report for the kernel located `$LINUX_GUEST` and transfers
+annotations from a [previously performed manual audit for Linux
 5.15-rc1](bkc/audit/sample_output/5.15-rc1/smatch_warns_5.15_tdx_allyesconfig_filtered_results_analyzed).
+For additional background, see [applying code audit results](https://intel.github.io/ccc-linux-guest-hardening-docs/tdx-guest-hardening.html#applying-code-audit-results-to-different-kernel-trees).
 
 ```shell
-SMATCH_BASE=$BKC_ROOT/bkc/audit/sample_output/5.15-rc1/smatch_warns_5.15_tdx_allyesconfig_filtered_results_analyzed
-./bkc/audit/gen_smatch_warns.sh $LINUX_GUEST
-./bkc/audit/transfer_results.py $SMATCH_BASE $LINUX_GUEST/smatch_warns.txt.filtered
-mv smatch_warns.txt.analyzed $LINUX_GUEST/smatch_warns.txt
+make -C $LINUX_GUEST prepare
+make -C ./bkc/audit
+mv smatch_warns_annotated.txt $LINUX_GUEST/smatch_warns.txt
 ```
 
-The resulting annotated audit list (`smatch_warns.txt`) is specific to the
-$LINUX\_GUEST version and configuration, but includes, as far as possible,
-automatically transferred annotations from a previous manual kernel audit.
+Note that the `annotated` smatch report is moved to `smatch_warns.txt`,
+where it will be picked up by fuzzer and coverage analysis tools.
 
 ### 2. Batch-Run Campaigns with Coverage
 
