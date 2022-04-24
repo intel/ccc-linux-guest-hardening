@@ -227,7 +227,7 @@ function cov()
 		--kernel $TARGET_BIN \
 		--work-dir $WORK_DIR \
 		--sharedir $SHARE_DIR \
-		--input $WORK_DIR --log_hprintf $*
+		--input $WORK_DIR --log-hprintf $*
 }
 
 function smatch()
