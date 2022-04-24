@@ -18,8 +18,7 @@
 set -e
 
 USE_GHIDRA="${USE_GHIDRA:-0}"
-	
-KAFL_ROOT=$(west path kafl)
+
 KAFL_TOOLS=$(realpath $KAFL_ROOT/scripts/)
 
 
@@ -71,7 +70,7 @@ if test $USE_GHIDRA -gt 0  && test ! -f $ADDR_LIST; then
 	GHIDRA_DUMP_LOG=$WORK_DIR/traces/ghidra_dump.log
 	REACHED_LOG=$WORK_DIR/traces/reached_addrs.lst
 
-	$KAFL_TOOLS/ghidra_run.sh $WORK_DIR $TARGET_ELF $KAFL_TOOLS/ghidra_dump_blocks.py > $GHIDRA_DUMP_LOG 2>&1
+	$KAFL_TOOLS/ghidra_run.sh $WORK_DIR $TARGET_ELF $KAFL_TOOLS/ghidra_dump_blocks.py > $GHIDRA_DUMP_LOG
 	#grep ERROR $GHIDRA_DUMP_LOG && fatal "Ghidra run failed, please check $GHIDRA_DUMP_LOG"
 	grep reached $GHIDRA_DUMP_LOG |sed -e 's/reached: //' -e 's/\ .*//'  > $ADDR_LIST
 
