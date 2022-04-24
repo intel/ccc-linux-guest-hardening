@@ -1,6 +1,5 @@
 # kAFL configuration for SDV/TDX guest setup
 #
-foobar: asd
 qemu_path: $QEMU_ROOT/x86_64-softmmu/qemu-system-x86_64
 ptdump_path: $LIBXDC_ROOT/build/ptdump_static
 radamsa_path: $RADAMSA_ROOT/bin/radamsa

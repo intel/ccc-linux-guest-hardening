@@ -122,6 +122,9 @@ To run the configured harnesses and store the resulting data in the folder `~/re
 ./bkc/kafl/run_experiments.py run -c -p 4 $LINUX_GUEST ~/results
 ```
 
+Note: Coverage collection uses Ghidra to reconstruct full traces from PT dumps.
+Install Ghidra using kAFL helper script: `$KAFL_ROOT/scripts/ghidra_install.sh`.
+
 ### 3. Generate Aggregated Smatch Coverage Report
 
 The [smatcher](bkc/coverage/smatcher) tool aggregates coverage over multiple
