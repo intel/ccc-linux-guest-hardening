@@ -1,0 +1,927 @@
+From 3fecaa5f941ac2df3768df566aca1ea8876f98a5 Mon Sep 17 00:00:00 2001
+From: Elena Reshetova <elena.reshetova@intel.com>
+Date: Mon, 7 Mar 2022 11:27:46 +0200
+Subject: [PATCH 1/2] check_host_input: add a pattern
+
+check_host_input pattern helps identifying locations
+where a guest kernel can take a potentially malicious
+input from the untrusted host in a confidential computing
+threat model. The output of the pattern helps to
+facilitate manual code audit and cross verify fuzzing
+coverage.
+
+Signed-off-by: Elena Reshetova <elena.reshetova@intel.com>
+---
+ check_host_input.c | 886 +++++++++++++++++++++++++++++++++++++++++++++
+ check_list.h       |   2 +
+ 2 files changed, 888 insertions(+)
+ create mode 100644 check_host_input.c
+
+diff --git a/check_host_input.c b/check_host_input.c
+new file mode 100644
+index 00000000..dc18ab34
+--- /dev/null
++++ b/check_host_input.c
+@@ -0,0 +1,886 @@
++/*
++ * Smatch pattern to facilitate the hardening of the Linux guest kernel
++ * for Confidential Cloud Computing threat model. 
++ * In this model the Linux guest kernel cannot trust the values
++ * it obtains using low level IO functions because they can be provided
++ * by a potentially malicious host or VMM. Instead it needs to make
++ * sure the code that handles processing of such values is hardened,
++ * free of memory safety issues and other potential security issues. 
++ *
++ * This smatch pattern helps to indentify such places.
++ * Currently it covers most of MSR, portIO, MMIO and cpuid reading primitives.
++ * The full list of covered functions is stored in host_input_funcs array.
++ * The output of the pattern can be used to facilitate code audit, as
++ * well as to verify that utilized fuzzing strategy can reach all the
++ * code paths that can take a low-level input from a potentially malicious host.
++ *
++ * When ran, the pattern produces two types of findings: errors and warnings.
++ * This is done to help prioritizing the issues for the manual code audit.
++ * However if time permits all locations reported by the pattern should be checked. 
++ *
++ * Written based on existing smatch patterns.
++ * 
++ * Author: Elena Reshetova <elena.reshetova@intel.com>
++ * Copyright (c) 2021-22, Intel Corporation
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2, as
++ * published by the Free Software Foundation.
++ *
++ */
++#include "smatch.h"
++#include "smatch_slist.h"
++#include "smatch_extra.h"
++#include <math.h>
++
++static int my_id;
++
++STATE(local_variables);
++STATE(local_from_host);
++STATE(tainted_from_host);
++STATE(called_funcs);
++
++static const char* pattern_name = "check_host_input";
++
++/* The below functions are all low level functions
++ * as well as their higher level wrappers that can take
++ * an input from a host/VMM. */
++const char *host_input_funcs[] = {
++    "inb", "inw", "inl", "inb_p", "inw_p", "inl_p", "insb", "insw", "insl", "get_dma_residue", "ioread8", "ioread16", "ioread32",
++    "ioread16be", "ioread32be", "ioread64_lo_hi", "ioread64_hi_lo", "ioread64be_lo_hi", "ioread64be_hi_lo", "ioread8_rep",
++    "ioread16_rep", "ioread32_rep", "__ioread32_copy", "iomap_readq", "iomap_readb", "iomap_readw", "iomap_readl", "memcpy_fromio",
++    "mmio_insb", "mmio_insw", "mmio_insl", "readb", "readw", "readl", "readq", "readsb", "readsw", "readsl", "readsq", "__readb", "__readw",
++    "__readl", "__readq", "__readsb", "__readsw", "__readsl", "__readsq", "__raw_readb", "__raw_readw", "__raw_readl", "__raw_readq",
++    "lo_hi_readq", "hi_lo_readq", "lo_hi_readq_relaxed", "hi_lo_readq_relaxed", "readb_relaxed", "readw_relaxed", "readl_relaxed",
++    "readq_relaxed", "native_read_msr", "native_read_msr_safe", "__rdmsr", "rdmsrl", "rdmsrl_safe", "rdmsr_on_cpu", "rdmsrl_on_cpu",
++    "rdmsr_on_cpus", "rdmsr_safe_on_cpu", "rdmsrl_safe_on_cpu", "paravirt_read_msr", "paravirt_read_msr_safe", "read_msr", "msr_read",
++    "native_apic_msr_read", "native_apic_mem_read", "native_apic_icr_read", "apic_read", "apic_icr_read", "native_x2apic_icr_read",
++    "io_apic_read", "native_io_apic_read", "__ioapic_read_entry", "ioapic_read_entry", "vp_ioread8", "vp_ioread16", "vp_ioread32",
++    "__virtio_cread_many", "virtio_cread", "virtio_cread_le", "virtio_cread8", "virtio_cread16", "virtio_cread32", "virtio_cread64",
++    "virtio_cread_bytes", "virtio16_to_cpu", "virtio32_to_cpu", "virtio64_to_cpu", "__virtio16_to_cpu", "__virtio32_to_cpu",
++    "__virtio64_to_cpu", "virtqueue_get_buf", "vringh16_to_cpu", "vringh32_to_cpu", "vringh64_to_cpu", "tap16_to_cpu", "tun16_to_cpu",
++    "read_pci_config", "read_pci_config_byte", "read_pci_config_16", "raw_pci_read", "pci_read", "pci_read_config_byte",
++    "pci_read_config_word", "pci_read_config_dword", "pci_bus_read_config_byte", "pci_bus_read_config_word",
++    "pci_bus_read_config_dword", "pci_generic_config_read", "pci_generic_config_read32", "pci_user_read_config_byte",
++    "pci_user_read_config_word", "pci_user_read_config_dword", "pcie_capability_read_word", "pcie_capability_read_dword",
++    "pci_read_vpd", "serial8250_early_in", "serial_dl_read", "serial8250_in_MCR", "serial_in", "serial_port_in", "serial_icr_read",
++    "serial8250_rx_chars", "dw8250_readl_ext", "udma_readl", "sio_read_reg", "irq_readl_be", "irq_reg_readl", "fw_cfg_read_blob",
++    "acpi_os_read_iomem", "acpi_os_read_port", "acpi_hw_read_multiple", "acpi_hw_read", "acpi_hw_read_port", "acpi_hw_register_read",
++    "acpi_hw_gpe_read", "apei_read", "acpi_read", "__apei_exec_read_register", "cpc_read", "hv_get_register", "iosf_mbi_read",
++    "cpuid", "cpuid_count", "cpuid_eax", "cpuid_ebx", "cpuid_ecx", "cpuid_edx"
++};
++
++
++/* The below functions are 'write' counterpart of the
++ * above 'read' primitives. Report them as warnings
++ * since we dont care if the potentially malicious input
++ * from the host is given back to the host for a 'write'.
++ * TODO: write a full list */ 
++static const char* out_func_table[] = {
++                "outb","outw","outl","outb_p","outw_p","outl_p","outsb","outsw","outsl",
++                "iowrite8","iowrite16","iowrite32","iowrite16be","iowrite32be",
++                "iowrite64be","iowrite64","iowrite64_lo_hi","iowrite64_hi_lo",
++                "iowrite64be_lo_hi","iowrite64be_hi_lo", "pio_write64_lo_hi","pio_write64_hi_lo",
++                "iowrite8_rep","iowrite16_rep","iowrite32_rep",
++                "pio_write64be_lo_hi","pio_write64be_hi_lo",  "mmio_outb","mmio_outw","mmio_outl",
++                "writeb","writew","writel","writeq","__raw_writeb","__raw_writebw", "__raw_writel",
++                "__raw_writeq", "native_write_msr_safe", "writesb","writesw","writesl","writesq",
++                "wrmsrl", "wrmsrl_safe", "paravirt_write_msr", "wrmsrl_safe_on_cpu", "apic_write"
++            };
++
++static const char* host_macros[] = {
++                "virtio_cread_le"
++            };
++
++/* The below functions are printing primitives.
++ * Report them as warnings since they have much
++ * lower probability to contain problems. */
++static const char* safe_func_table[] = {
++                "printk", "_printk", "dev_printk", "_dev_err", "_dev_warn", "_dev_notice",
++                "_dev_info", "_dev_alert", "_dev_crit", "_dev_emerg", "dev_dbg",
++                "__dynamic_dev_dbg", "__dynamic_pr_debug", "sysfs_emit"
++            };
++
++static const char* cpuid_func_table[] = {
++                "cpuid", "cpuid_count", "cpuid_eax", "cpuid_ebx", "cpuid_ecx", "cpuid_edx"
++            };
++
++static const unsigned long untrusted_cpuids[] = {
++                0x2, 0x5, 0x6, 0x9, 0xb, 0xc, 0xf, 0x10, 0x16, 0x17, 0x18, 0x1a, 0x1b, 0x1f,
++                0x80000002, 0x80000003, 0x80000004, 0x80000005, 0x80000006, 0x80000007
++            };
++
++/* This struct contains functions from
++ * host_input_funcs array that do not return the value
++ * read from the host directly (i.e. via return value),
++ * but pass it via arguments.
++ * This helps the pattern to fecth the correct
++ * arguments in such cases and taint them for further
++ * analysis. */
++typedef struct {
++       const char* func_name;
++       uint arg_bitmask;
++} in_func_args;
++
++static const in_func_args func_args[] = {
++    /* argument 1 only */
++    { "memcpy_fromio",              0x1 },
++    { "apei_read",                  0x1 },
++    { "acpi_hw_read",               0x1 },
++    { "__ioread32_copy",            0x1 },
++    /* argument 2 only */
++    { "readsb",                     0x2 },
++    { "readsw",                     0x2 },
++    { "readsl",                     0x2 },
++    { "readsq",                     0x2 },
++    { "acpi_os_read_iomem",         0x2 },
++    { "acpi_os_read_port",          0x2 },
++    { "ioread8_rep",                0x2 },
++    { "ioread16_rep",               0x2 },
++    { "ioread32_rep",               0x2 },
++    { "rdmsrl_safe",                0x2 },
++    { "msr_read",                   0x2 },
++    { "fw_cfg_read_blob",           0x2 },
++    { "acpi_hw_read_port",          0x2 },
++    { "acpi_hw_register_read",      0x2 },
++    /* argument 3 only */
++    { "rdmsrl_on_cpu",              0x4 },
++    { "rdmsr_on_cpus",              0x4 },
++    { "rdmsrl_safe_on_cpu",         0x4 },
++    { "__virtio_cread_many",        0x4 },
++    { "virtio_cread_bytes",         0x4 },
++    { "pci_read_config_byte",       0x4 },
++    { "pci_read_config_word",       0x4 },
++    { "pci_read_config_dword",      0x4 },
++    { "pcie_capability_read_word",  0x4 },
++    { "pcie_capability_read_dword", 0x4 },
++    { "pci_user_read_config_word",  0x4 },
++    { "pci_user_read_config_byte",  0x4 },
++    { "pci_user_read_config_dword", 0x4 },
++    { "cpc_read",                   0x4 },
++    /* argument 4 only */
++    { "pci_bus_read_config_byte",   0x8 },
++    { "pci_bus_read_config_word",   0x8 },
++    { "pci_bus_read_config_dword",  0x8 },
++    { "pci_read_vpd",               0x8 },
++    { "iosf_mbi_read",              0x8 },
++    /* arguments 3 and 4  */
++    { "rdmsr_on_cpu",               0xC },
++    { "rdmsr_safe_on_cpu",          0xC },
++    /* argument 5 only */
++    { "pci_read",                   0x10 },
++    { "pci_generic_config_read",    0x10 },
++    { "pci_generic_config_read32",  0x10 },
++    /* argument 6 only */
++    { "raw_pci_read",               0x20 },
++    /* arguments 2-5 */
++    { "cpuid",                      0x36 },
++    /* arguments 3-6 */
++    { "cpuid_count",                0x74 },
++
++};
++
++/* Obtain the line number where a current function
++ * starts. Used to calculate a relative offset for
++ * the pattern findings. */
++static int get_func_start_lineno(char* func_name)
++{
++    struct sm_state *sm;
++    
++    if (!func_name)
++        return -1;
++
++    FOR_EACH_MY_SM(my_id, __get_cur_stree(), sm) {
++        if ( (sm->sym) && (strstr(func_name, sm->name) != NULL) 
++        && (slist_has_state(sm->possible, &called_funcs)))
++            return sm->sym->pos.line;
++    } END_FOR_EACH_SM(sm);
++    return -1;
++}
++
++/* Calculate djb2 hash */
++unsigned long djb2_hash(const char *str, int num)
++{
++        unsigned long hash = 5381;
++        int c;
++
++        while ((c = *str++))
++            hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
++        return ((hash << 5) + hash) + num;
++}
++
++/* Produce the djb2 hash from a given expression.
++ * Used in order to generate unique identifies for each
++ * reported issue. These identifiers are used then
++ * to automatically transfer previously seen results. */
++unsigned long produce_expression_hash(struct expression *expr)
++{
++
++    unsigned long hash = 0;
++    int line_offset = get_lineno() - get_func_start_lineno(get_function());
++    const char *str = expr_to_str(expr);
++
++    /* for non-parsable exressions and expressions
++     * contatining temp variables (like __UNIQUE_ID_*, $expr_), it is
++     * more stable to use a fix string for hasing together
++     * with line offset to avoid many results that do not
++     * automatically transfer between the audits on different
++     * versions */
++
++    if (str && !(strstr(str, "__UNIQUE_ID_")) && !(strstr(str, "$expr_")))
++        hash = djb2_hash(str, line_offset);
++    else
++        hash = djb2_hash("complex", line_offset);
++    return hash;
++
++}
++
++/* Helper utility to remove various operands
++ * to get a clean expression */
++static struct expression* strip_pre_post_ops(struct expression *expr)
++{
++
++    while (expr) {
++        if((expr->type == EXPR_PREOP) || (expr->type == EXPR_POSTOP)) {
++            expr = expr->unop;
++        } else if ((expr->type == EXPR_CAST) || (expr->type == EXPR_FORCE_CAST)
++            || (expr->type == EXPR_IMPLIED_CAST)) {
++            expr = expr->cast_expression;
++        } else {
++            // Done if we can't strip anything more
++            break;
++        }
++    }
++
++    return expr; 
++
++}
++
++/* Helper to check whenever a function is either output function
++ * or printing function. For such functions we can only raise
++ * warning (and not error) when a tainted value from the host
++ * is passed into it.
++ * TODO: need to add checking arguments for these functions */
++static bool is_safe_function(struct expression *fn)
++{
++    for (int i = 0; i < ARRAY_SIZE(out_func_table); i++) {
++        if (sym_name_is(out_func_table[i], fn))
++            return true;
++    }
++
++    for (int i = 0; i < ARRAY_SIZE(safe_func_table); i++) {
++        if (sym_name_is(safe_func_table[i], fn))
++            return true;
++    }
++
++    return false;
++}
++
++static bool is_host_macro(const char *macro)
++{
++    for (int i = 0; i < ARRAY_SIZE(host_macros); i++) {
++        if (strcmp(host_macros[i], macro) == 0)
++            return true;
++    }
++    return false;
++}
++
++
++/* Helper to store the info on called functions.
++ * Used to calculate the line number in get_func_start_lineno() */
++static void match_function_def(struct symbol *sym)
++{
++    set_state(my_id, sym->ident->name, sym, &called_funcs);
++}
++
++/* Helper to check if a given symbol contains
++ * (either directly or via propagation) a value
++ * received from the host.*/
++static int is_symbol_tainted(struct expression *expr)
++{
++    struct sm_state *sm;
++    
++    sm = get_sm_state_expr(my_id, expr);
++    if (!sm)
++        return 0;
++    if (!slist_has_state(sm->possible, &local_from_host) &&
++        !slist_has_state(sm->possible, &tainted_from_host))
++        return 0;
++    return 1;
++}
++
++/* Helper to check if a given symbol is local
++ * in the given function */
++static int is_symbol_local(struct expression *expr)
++{
++    struct sm_state *sm;
++    
++    sm = get_sm_state_expr(my_id, expr);
++
++    if (!sm)
++        return 0;
++    if (!slist_has_state(sm->possible, &local_variables) &&
++    !slist_has_state(sm->possible, &local_from_host))
++        return 0;
++    return 1;
++}
++
++/* Helper to check if a given expression contains
++ * (either directly or via propagation) a value
++ * received from the host.*/
++static int is_expression_tainted(struct expression *expr)
++{
++    struct sm_state *sm;
++
++    if (!expr)
++        return 0;
++
++    expr = strip_pre_post_ops(expr);
++
++    if (expr->type == EXPR_CALL){
++        /* calls are handled in match_call, no need to parse */
++        return 0;
++    }
++    
++    if((expr->type == EXPR_BINOP) || (expr->type == EXPR_COMPARE)
++        || (expr->type == EXPR_COMMA) || (expr->type == EXPR_LOGICAL)
++        || (expr->type == EXPR_ASSIGNMENT)) {
++        /* need to check both left and right expressions */
++        if (is_expression_tainted(expr->left))
++            return 1;
++        if (is_expression_tainted(expr->right))
++            return 1;
++        return 0;
++    }
++
++    if((expr->type == EXPR_CONDITIONAL) || (expr->type == EXPR_SELECT)) {
++        /* need to check each part */
++        if (is_expression_tainted(expr->conditional))
++            return 1;
++        if (is_expression_tainted(expr->cond_true))
++            return 1;
++        if (is_expression_tainted(expr->cond_false))
++            return 1;
++        return 0;
++    }
++
++    if ((expr->type == EXPR_SYMBOL) || (expr->type == EXPR_DEREF)) {
++        if (is_symbol_tainted(expr))
++            return 1;
++        return 0;
++    }
++
++    if (!expr_to_str(expr)) {
++        sm_error("expression was not parsed.");
++        return 0;
++    }
++
++    /* the below matching has a small number of false 
++     * positives when a tainted symbol from host happens
++     * to match another symbol. ntimer (tainted) vs. hpetp->hp_ntimer
++     * to be fixed later */ 
++
++    FOR_EACH_MY_SM(my_id, __get_cur_stree(), sm) {
++        if ((strstr(expr_to_str(expr),sm->name) != NULL) 
++            && (slist_has_state(sm->possible, &local_from_host)
++            || slist_has_state(sm->possible, &tainted_from_host)))
++                return 1;
++    } END_FOR_EACH_SM(sm);
++    
++    return 0;
++}
++
++
++/* Builds a list of local vars inside a function */
++static void match_declarations(struct symbol *sym)
++{
++    if (!sym)
++        return;
++    set_state(my_id, sym->ident->name, sym, &local_variables);
++}
++
++/* Checks all return expressions for tainted values */
++static void match_return(struct expression *ret_value)
++{
++    unsigned long hash;
++
++    if (!ret_value)
++        return;
++
++    if (is_expression_tainted(ret_value)) {
++        hash = produce_expression_hash(ret_value);
++        sm_error("{%lu}\n\t'%s' return an expression containing a propagated value from the host '%s';",
++                    hash, pattern_name, expr_to_str(ret_value));
++    }
++}
++
++
++/* Checks all STMT_ITERATOR expressions for tainted values.
++ * Also catch virtio_cread_le macro invocation here and mark the correct tainted arg */
++static void match_statement(struct statement *stmt)
++{
++    unsigned long hash;
++    struct expression *expr = NULL, *arg;
++    const char *macro;
++
++    if (!stmt)
++        return;
++
++    /* virtio_cread_le macro needs a special handling, otherwise we miss results */
++    macro = get_macro_name(stmt->pos);
++    if ((macro) && (is_host_macro(macro)) && (stmt->type == STMT_EXPRESSION)) {
++        if ((stmt->expression) && (stmt->expression->type == EXPR_CALL)) {
++            if (strstr(expr_to_str(stmt->expression->fn), "vdev->config->get") != 0) {
++                    arg = get_argument_from_call_expr(stmt->expression->args, 2);
++                    arg = strip_pre_post_ops(arg);
++                    set_state(my_id, arg->symbol->ident->name, arg->symbol, &tainted_from_host);
++            }
++        }
++    }
++
++    if (stmt->type != STMT_ITERATOR)
++        return;
++
++    if ((stmt->iterator_pre_statement) && (stmt->iterator_pre_statement->type == STMT_EXPRESSION) 
++        && (stmt->iterator_pre_statement->expression) 
++        && (is_expression_tainted(stmt->iterator_pre_statement->expression)))
++        expr = stmt->iterator_pre_statement->expression;
++
++    if ((stmt->iterator_post_statement) && (stmt->iterator_post_statement->type == STMT_EXPRESSION)
++        && (stmt->iterator_post_statement->expression)
++        && (is_expression_tainted(stmt->iterator_post_statement->expression)))
++        expr = stmt->iterator_post_statement->expression;
++
++    if ((stmt->iterator_pre_condition) && (is_expression_tainted(stmt->iterator_pre_condition)))
++        expr = stmt->iterator_pre_condition;
++
++    if ((stmt->iterator_post_condition) && (is_expression_tainted(stmt->iterator_post_condition)))
++        expr = stmt->iterator_post_condition;
++
++    /* The above logic only stores the latest tainted expr.
++     * This is ok since one warning per line is enough */
++    if (expr) {
++        hash = produce_expression_hash(expr);
++        sm_error("{%lu}\n\t'%s' an expression containing a propagated value from the host '%s' used in iterator;",
++                hash, pattern_name, expr_to_str(expr));
++    }
++
++}
++
++/* Helper to check if a given function returns
++ * a value from the host via one of its arguments.
++ * If positive, returns also the respected argument
++ * in **arg. For multiple arguments only produces
++ * the smatch finding (very rare case now). */ 
++static bool is_special_arg(struct expression *expr, const char *fn, unsigned long hash, struct expression **arg)
++{
++    uint arg_bitmask = 0;
++    struct expression *texpr = NULL;
++
++    if ((!expr) || (!fn))
++        return false;
++
++    for (int i = 0; i < ARRAY_SIZE(func_args); i++) {
++        if (sym_name_is(func_args[i].func_name, expr->fn)){
++            arg_bitmask = func_args[i].arg_bitmask;
++            break;
++        }
++    }
++
++    if (!arg_bitmask)
++        return false;
++
++    *arg = get_argument_from_call_expr(expr->args, (uint)log2(arg_bitmask));
++
++    if (arg_bitmask == 0xC) {
++        /* function returns values via 3 and 4 args */
++        texpr = get_argument_from_call_expr(expr->args, (uint)log2(arg_bitmask) - 1);
++        sm_error("{%lu}\n\t'%s' read from the host using function '%s' to values %s and %s;", 
++                hash, pattern_name, fn, expr_to_str(texpr), expr_to_str(*arg));
++        *arg = NULL;
++    }
++
++    if ((arg_bitmask == 0x36) || (arg_bitmask == 0x74)){
++        /* function returns values via multiple args */
++        sm_error("{%lu}\n\t'%s' read from the host using function '%s' to multiple values;", 
++                hash, pattern_name, fn);
++        *arg = NULL;
++    }
++   
++    return true;
++}
++
++static struct expression* match_expression(struct expression *host_input_expression, struct expression *checked)
++{
++    if (!checked)
++        return NULL;
++
++    if (checked->type != EXPR_ASSIGNMENT)
++        return NULL;
++
++    if ((checked->left) == host_input_expression)
++        return checked->right;
++    if ((checked->right) == host_input_expression)
++        return checked->left;
++    return NULL;
++}
++
++/* This function parses the iterator statement and, if sucessful,
++ * returns the symbol where the host input assigment went into */  
++static bool handle_iterator_statement(struct statement *stmt, struct expression *host_input_expression,
++                                    struct expression **left_return)
++{
++    struct expression *condition = NULL;
++    struct expression *left = NULL, *right = NULL;
++    *left_return = NULL;
++
++    if (!stmt)
++        return false;
++
++    if (stmt->iterator_pre_condition)
++        condition = stmt->iterator_pre_condition;
++    else if (stmt->iterator_post_condition)
++        condition = stmt->iterator_post_condition;
++    else
++        return false;
++
++    if (condition->type == EXPR_COMPARE) {
++        left = strip_expr(condition->left);
++        right = strip_expr(condition->right);
++
++        *left_return = match_expression(host_input_expression, left);
++        if (*left_return)
++            return true;
++        *left_return = match_expression(host_input_expression, right);
++        if (*left_return)
++            return true;
++    }
++
++    return false;
++
++}
++
++static bool is_untrusted_cpuid(unsigned long long value)
++{
++    if ((value > 0x40000001) && (value <= 0x400000FF))
++        return true; /* sw defined cpuid excluding KVM cpuids and identification string */
++    for (int i = 0; i < ARRAY_SIZE(untrusted_cpuids); i++)
++        if (untrusted_cpuids[i] == value)
++            return true;
++    return false;
++}
++
++/* Main routine */
++static void host_input_check(const char *fn, struct expression *expr, void *data)
++{
++    struct statement *stmt = NULL;
++    struct expression *left = NULL, *cpuid_op = NULL, *stmt_expr_clean = NULL;
++    struct symbol *left_sym = NULL;
++    unsigned long hash;
++    bool is_cpuid_func = false;
++
++    if ((!expr) || (!fn) || (!expr_to_str(expr->fn)))
++        return;
++    
++    for (int i = 0; i < ARRAY_SIZE(cpuid_func_table); i++) {
++        if (sym_name_is(cpuid_func_table[i], expr->fn)) {
++            is_cpuid_func = true;
++            break;
++        }
++    }
++
++    if (is_cpuid_func) {
++        cpuid_op = get_argument_from_call_expr(expr->args, 0);
++        if ((cpuid_op->type == EXPR_VALUE) && (!is_untrusted_cpuid(cpuid_op->value)))
++            return;
++    }
++
++    stmt = last_ptr_list((struct ptr_list *)big_statement_stack);
++
++    if (unreachable())
++        return;
++
++    hash = produce_expression_hash(expr);
++
++    if (is_special_arg(expr, fn, hash, &left)) {
++        if (!left) 
++        /* Special case of multi-argument host input functions.
++         * Very rare case, just report them in is_special_arg() for now */
++            return;
++    } else if (stmt->type == STMT_EXPRESSION) {
++
++        if ((!stmt->expression) || (stmt->expression == expr)
++            || (!expr_to_str(stmt->expression))) {
++            sm_warning("{%lu}\n\t'%s' empty read from the host using function '%s';",
++                hash, pattern_name, fn);
++            return;
++        }
++
++        stmt_expr_clean = strip_pre_post_ops(stmt->expression);
++
++        if (strstr(expr_to_str(stmt_expr_clean), expr_to_str(expr->fn)) == NULL) {
++            /* stmt expr normally includes analyzed host input func
++             * report these cases as unsure for now*/
++            sm_warning("{%lu}\n\t'%s' potential read from the host using function '%s';",
++                hash, pattern_name, fn);
++            return;
++        }
++
++        if (stmt_expr_clean->type == EXPR_CALL) {
++            if (is_safe_function(stmt_expr_clean->fn))
++                sm_warning("{%lu}\n\t'%s' read from the host using function '%s' as argument into function '%s';",
++                    hash, pattern_name, fn, expr_to_str(stmt_expr_clean->fn));
++            else
++                sm_error("{%lu}\n\t'%s' read from the host using function '%s' as argument into function '%s';",
++                    hash, pattern_name, fn, expr_to_str(stmt_expr_clean->fn));                
++            return;
++        }
++
++        if ((stmt_expr_clean->type != EXPR_BINOP) &&
++            (stmt_expr_clean->type != EXPR_ASSIGNMENT)) {
++            sm_warning("{%lu}\n\t'%s' no assigment read from the host using function '%s';",
++                hash, pattern_name, fn);
++            return;
++        }
++        left = strip_expr(stmt_expr_clean->left);
++    } else if (stmt->type == STMT_RETURN) {
++            if (stmt->expression == expr)
++                sm_error("{%lu}\n\t'%s' read from the host using function '%s' returned as a value;",
++                    hash, pattern_name, fn);
++            else
++                sm_error("{%lu}\n\t'%s' read from the host using function '%s' returned as a part of an expression;",
++                 hash, pattern_name, fn);
++            return;
++    } else if (stmt->type == STMT_IF) {
++            sm_warning("{%lu}\n\t'%s' empty read from the host using function '%s' used inside an 'if' clause;",
++             hash, pattern_name, fn);
++            return;
++    } else if (stmt->type == STMT_ITERATOR) {
++            /* report usage within an iterator as errors
++             * because it migth be used as bound or index for memory
++             * access. We dont have too many of them in filtered
++             * output so it is ok not to parse this deeper */
++            if (!handle_iterator_statement(stmt, expr, &left)){
++                sm_error("{%lu}\n\t'%s' empty read from the host using function '%s' used inside a condition for iteration;",
++             hash, pattern_name, fn);
++                return; 
++            }
++    } else if (stmt->type == STMT_SWITCH) {
++            sm_warning("{%lu}\n\t'%s' read from the host using function '%s' used inside a 'switch' clause;",
++             hash, pattern_name, fn);
++            return;
++    } else if (stmt->type == STMT_DECLARATION) {
++                FOR_EACH_PTR(stmt->declaration, left_sym) {
++                    /* we are going to take the last declaration */
++                    ;
++                } END_FOR_EACH_PTR(left_sym);
++                goto symb;
++    } else if (stmt->type == STMT_COMPOUND) {
++        sm_error("{%lu}\n\t'%s' read from the host using function '%s' into a compound statement;",
++            hash, pattern_name, fn);
++        return;            
++    } else {
++        sm_error("{%lu}\n\t'%s' not covered statement type when reading from the host using function '%s';",
++            hash, pattern_name, fn);
++        return;
++    }
++
++preop:
++
++    left = strip_pre_post_ops(left);
++
++    if (left->type == EXPR_DEREF) {
++        sm_error("{%lu}\n\t'%s' read from the host using function '%s' to a member of the structure '%s';",
++            hash, pattern_name, fn, expr_to_str(left));
++        return;           
++    }
++
++    if (left->type == EXPR_BINOP) {
++        /* trying to extract the leftmost symbol from this expression */
++        /* we have a case like foo[smth1][smth2] +- number = ... here */
++        /* strip the right element of the binop in order to unfold the leftmost symbol foo*/
++        left = left->left;
++        goto preop;
++    }
++
++    if (left->type != EXPR_SYMBOL) {
++        sm_error("{%lu}\n\t'%s' read from the host using function '%s' to a complex expression '%s', type is %d;",
++            hash, pattern_name, fn, expr_to_str(left), left->type);
++        return;
++    }
++
++    if (!left->symbol) {
++        /* this is the case when we have cast like (void)readl(addr); */
++        sm_warning("{%lu}\n\t'%s' empty read from the host using function '%s';",
++            hash, pattern_name, fn);
++        return;
++    }
++
++    left_sym = left->symbol;
++
++    if (!is_symbol_local(left))
++        sm_error("{%lu}\n\t'%s' read from the host using function '%s' into a non-local variable '%s';",
++                hash, pattern_name, fn, left_sym->ident->name);
++    else {
++
++symb:
++        if (!left_sym) {
++            sm_error("Empty left_sym. Abort");
++            return;
++        }
++
++        if (!is_int_type(left_sym->ctype.base_type)) {
++            sm_error("{%lu}\n\t'%s' read from the host using function '%s' to a non int type local variable '%s', type is %s;",
++                    hash, pattern_name, fn, left_sym->ident->name, type_to_str(left_sym->ctype.base_type));        
++        } else {
++            sm_warning("{%lu}\n\t'%s' read from the host using function '%s' to an int type local variable '%s', type is %s;",
++                        hash, pattern_name, fn, left_sym->ident->name, type_to_str(left_sym->ctype.base_type));
++        }
++        set_state(my_id, left_sym->ident->name, left_sym, &local_from_host);
++    }
++
++    return; 
++}
++
++static struct expression *top_level_left_assign = NULL;
++unsigned long top_level_left_hash = 0;
++
++/* Tracks propagation of the values received from the host.
++ * Currently only limited to a single function. */
++static void match_assign(struct expression *expr)
++{
++    struct expression *current = expr;
++
++    if (!expr)
++        return;
++
++    if (current->type == EXPR_ASSIGNMENT) {
++        /* this is a top level call, need to store expr
++         * for further processing */
++        top_level_left_hash = produce_expression_hash(expr);
++        top_level_left_assign = current->left;
++        top_level_left_assign = strip_pre_post_ops(top_level_left_assign);
++        current = strip_expr(current->right);
++        if (current->type == EXPR_CALL) {
++            /* nothing to do here, will be handled by match_call */
++            return;
++        }
++    } 
++
++    current = strip_pre_post_ops(current);
++
++    if (current->type == EXPR_GENERIC) {
++        current = strip_expr(current->control);
++    } 
++    
++    if (current->type == EXPR_SYMBOL) {
++
++        if (!is_symbol_tainted(current))
++            return;
++
++        if (!top_level_left_assign)
++            return;
++
++        if (top_level_left_assign->type != EXPR_SYMBOL) {
++            sm_error("{%lu}\n\t'%s' propagating read value from the host '%s' into a different complex variable '%s';",
++                            top_level_left_hash, pattern_name, expr_to_str(current), expr_to_str(top_level_left_assign));
++            return;        
++        }
++
++        if ((strstr(expr_to_str(top_level_left_assign), "__sm_fake_") != NULL) ||
++            (strstr(expr_to_str(top_level_left_assign), "__fake_param") != NULL)) {
++            /* we are handling a fake variable/expression here, don't do anything for now */
++            return;
++        }
++
++        if (current->symbol->ident == top_level_left_assign->symbol->ident)
++            return;
++
++        if (is_symbol_local(top_level_left_assign)) 
++            sm_warning("{%lu}\n\t'%s' propagating read value from the host '%s' into a different local value '%s';",
++                    top_level_left_hash, pattern_name, expr_to_str(current), expr_to_str(top_level_left_assign));               
++        else
++            sm_error("{%lu}\n\t'%s' propagating read value from the host '%s' into a different non-local value '%s';",
++                    top_level_left_hash, pattern_name, expr_to_str(current), expr_to_str(top_level_left_assign));
++
++        set_state(my_id, top_level_left_assign->symbol->ident->name,
++                        top_level_left_assign->symbol, &tainted_from_host);
++        top_level_left_assign = NULL;           
++    }
++    
++    if (current->type == EXPR_BINOP) {  
++        /* here we need to match against both left or right
++         * expressions since both of them can match.
++         * So start unwrapping both parts until we reach symbols */ 
++        match_assign(current->left);
++        match_assign(current->right);
++    }
++
++    return;
++}
++
++/* Catches cases when a (tainted) value from the host is
++ * used as argument to another function. */ 
++static void match_call(struct expression *expr)
++{
++    struct expression *arg;
++    bool is_safe_func = false;
++    const char *message, *function_name;
++    unsigned long hash;
++
++    if ((!expr) || (!expr->fn))
++        return;
++
++    if (parse_error)
++        return;
++
++    if (is_impossible_path())
++        return;
++
++    hash = produce_expression_hash(expr);
++    is_safe_func = is_safe_function(expr->fn);
++
++    FOR_EACH_PTR(expr->args, arg) {
++        arg = strip_pre_post_ops(arg);
++        if ((arg->type != EXPR_BINOP) && (arg->type != EXPR_SYMBOL)) {
++            /* we only care of the above two types because
++             * they are the ones that can contain tainted values
++             * from the host */
++            continue;
++        }
++        
++        if ((arg->type == EXPR_BINOP) && !is_expression_tainted(arg))
++            continue;
++        if ((arg->type == EXPR_SYMBOL) && !is_symbol_tainted(arg))
++            continue;
++
++        if (!expr->fn->symbol_name)
++            function_name = expr_to_str(expr);
++        else
++            function_name = expr->fn->symbol_name->name;
++
++        if (arg->type == EXPR_BINOP) 
++            message = "{%lu}\n\t'%s' propagating an expression containing a tainted value from the host '%s' into a function '%s';";
++        else
++            message = "{%lu}\n\t'%s' propagating a tainted value from the host '%s' into a function '%s';";
++
++        if (is_safe_func)
++            sm_warning(message, hash, pattern_name, expr_to_str(arg), function_name);         
++        else
++            sm_error(message, hash, pattern_name, expr_to_str(arg), function_name);
++
++    } END_FOR_EACH_PTR(arg);
++}
++
++void check_host_input(int id)
++{
++    my_id = id;
++    for (int i = 0; i < ARRAY_SIZE(host_input_funcs); i++) 
++        add_function_hook(host_input_funcs[i], host_input_check, NULL);
++    add_hook(&match_declarations, DECLARATION_HOOK);
++    add_hook(&match_assign, ASSIGNMENT_HOOK);
++    add_hook(&match_call, FUNCTION_CALL_HOOK);
++    add_hook(&match_return, RETURN_HOOK);
++    add_hook(match_statement, STMT_HOOK);
++    add_hook(&match_function_def, AFTER_DEF_HOOK);
++}
+diff --git a/check_list.h b/check_list.h
+index 97856dcf..7fab4147 100644
+--- a/check_list.h
++++ b/check_list.h
+@@ -179,6 +179,8 @@ CK(register_param_bits_clear)
+ CK(check_do_while_loop_limit)
+ 
+ /* <- your test goes here */
++CK(check_host_input)
++
+ /* CK(register_template) */
+ 
+ /* kernel specific */
+-- 
+2.25.1
+
