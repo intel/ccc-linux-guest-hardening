@@ -18,6 +18,8 @@
 set -e
 
 USE_GHIDRA="${USE_GHIDRA:-0}"
+
+
 KAFL_TOOLS=$(realpath $KAFL_ROOT/scripts/)
 
 
