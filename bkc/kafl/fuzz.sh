@@ -130,7 +130,7 @@ function run()
 		--kernel $TARGET_BIN \
 		--work-dir $WORK_DIR \
 		--sharedir $SHARE_DIR \
-		$KAFL_OPTS $*
+		$KAFL_OPTS "$@"
 }
 
 function debug()
@@ -151,7 +151,7 @@ function debug()
 		--kernel $TARGET_BIN \
 		--work-dir $WORK_DIR \
 		--sharedir $SHARE_DIR \
-		--action gdb --input $TARGET_PAYLOAD $*
+		--action gdb --input $TARGET_PAYLOAD "$@"
 }
 
 function single()
@@ -173,7 +173,7 @@ function single()
 		--kernel $TARGET_BIN \
 		--work-dir $WORK_DIR \
 		--sharedir $SHARE_DIR \
-		--action single -n 1 --input $TARGET_PAYLOAD $*
+		--action single -n 1 --input $TARGET_PAYLOAD "$@"
 }
 
 function noise()
@@ -200,7 +200,7 @@ function noise()
 		--kernel $TARGET_BIN \
 		--work-dir $WORK_DIR \
 		--sharedir $SHARE_DIR \
-		--action noise -n 1000 --input $TARGET_PAYLOAD $*
+		--action noise -n 1000 --input $TARGET_PAYLOAD "$@"
 }
 
 function cov()
@@ -227,7 +227,7 @@ function cov()
 		--kernel $TARGET_BIN \
 		--work-dir $WORK_DIR \
 		--sharedir $SHARE_DIR \
-		--input $WORK_DIR --log-hprintf $*
+		--input $WORK_DIR --log-hprintf "$@"
 }
 
 function smatch()
@@ -286,28 +286,28 @@ test -d $SHARE_DIR || mkdir -p $SHARE_DIR
 case $ACTION in
 	"full")
 		KAFL_OPTS=$KAFL_FULL_OPTS
-		run $*
+		run "$@"
 		;;
 	"run")
 		KAFL_OPTS=$KAFL_QUICK_OPTS
-		run $*
+		run "$@"
 		;;
 	"single")
-		single $*
+		single "$@"
 		echo
 		;;
 	"debug")
-		debug $*
+		debug "$@"
 		echo
 		;;
 	"cov")
-		cov $*
+		cov "$@"
 		;;
 	"smatch")
-		smatch $*
+		smatch "$@"
 		;;
 	"noise")
-		noise $*
+		noise "$@"
 		echo
 		;;
 	"ranges")
