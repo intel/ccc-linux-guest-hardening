@@ -22,6 +22,7 @@ from datetime import timedelta
 from threading import Thread, Lock
 import threading, queue
 import multiprocessing
+import yaml
 
 
 FUZZ_SH_PATH = os.path.expandvars("$BKC_ROOT/bkc/kafl/fuzz.sh")
@@ -149,6 +150,13 @@ def name_to_harness(s):
 
     return HARNESS_PREFIX + s
 
+def get_kafl_config_boot_params():
+    conf_file = os.environ.get("KAFL_CONFIG_FILE")
+    with open(conf_file) as conf_yaml_file:
+        conf = yaml.load(conf_yaml_file, Loader=yaml.FullLoader)
+        default_append = conf.get("qemu_append", "")
+        return default_append
+
 
 
 def get_work_parallelism():
@@ -268,11 +276,14 @@ def run_setup(campaign_name, setup, linux_source, global_storage_dir, debug=Fals
     print(f"Running campaign {workdir_path} with seeds '{seeds_dir}'")
     dry_run_flags = "--abort-exec=10000" if dry_run else ""
     timeout = HARNESS_TIMEOUT_OVERRIDES.get(harness, DEFAULT_TIMEOUT_HOURS)
-    kernel_boot_params = BOOT_PARAM_HARNESSES.get(harness, "")
+    kafl_config_boot_params = get_kafl_config_boot_params()
+    kernel_boot_params = kafl_config_boot_params + " " + BOOT_PARAM_HARNESSES.get(harness, "")
+    if len(kernel_boot_params) > 0:
+        kernel_boot_params = f"--append=\'{kernel_boot_params}\'"
     kafl_harness_extra_params = KAFL_PARAM_HARNESSES.get(harness, "")
     try:
 
-        exc_cmd = f"KAFL_WORKDIR={workdir_path} KERNEL_BOOT_PARAMS=\"{kernel_boot_params}\" {FUZZ_SH_PATH} full {kernel_build_path} --abort-time={timeout} --cpu-offset={cpu_offset} {seed_str} {KAFL_EXTRA_FLAGS} {kafl_harness_extra_params} {dry_run_flags}"
+        exc_cmd = f"KAFL_WORKDIR={workdir_path} {FUZZ_SH_PATH} full {kernel_build_path} --abort-time={timeout} --cpu-offset={cpu_offset} {seed_str} {KAFL_EXTRA_FLAGS} {kafl_harness_extra_params} {dry_run_flags} {kernel_boot_params}"
         command_log.append(exc_cmd)
         #with open(os.path.join(workdir_path, "cmd"), "w") as f:
         #    print(exc_cmd, file=f)
@@ -330,8 +341,12 @@ def do_cov(args):
             continue
 
         ncpu = args.work_parallelism * args.p
-        kernel_boot_params = BOOT_PARAM_HARNESSES.get(harness, "")
-        cmd_cov = f"KERNEL_BOOT_PARAMS=\"{kernel_boot_params}\" {FUZZ_SH_PATH} cov {d} -p {ncpu}"
+        kafl_config_boot_params = get_kafl_config_boot_params()
+        kernel_boot_params = kafl_config_boot_params + " " + BOOT_PARAM_HARNESSES.get(harness, "")
+        if len(kernel_boot_params) > 0:
+            kernel_boot_params = f"--append=\'{kernel_boot_params}\'"
+
+        cmd_cov = f"{FUZZ_SH_PATH} cov {d} -p {ncpu} {kernel_boot_params}"
         cmd_smatch = f"USE_GHIDRA=1 {FUZZ_SH_PATH} smatch {d}"
         print(f"Gathering coverage for '{d}' with -p {ncpu}")
         subprocess.run(cmd_cov, shell=True, stdout=out_stdout, stderr=out_stderr)
@@ -422,7 +437,10 @@ def do_run(args):
             if harness in args.skip_harness:
                 continue
             kernel_boot_params = BOOT_PARAM_HARNESSES.get(harness, "")
-            cmd_cov = f"KERNEL_BOOT_PARAMS=\"{kernel_boot_params}\" {FUZZ_SH_PATH} cov {d} -p {ncpu}"
+            if len(kernel_boot_params) > 0:
+                kernel_boot_params = f"--append=\'{kernel_boot_params}\'"
+
+            cmd_cov = f"{FUZZ_SH_PATH} cov {d} -p {ncpu} {kernel_boot_params}"
             cmd_smatch = f"USE_GHIDRA=1 {FUZZ_SH_PATH} smatch {d}"
             print(f"Gathering coverage for '{d}' with -p {ncpu}")
             try:
@@ -457,14 +475,14 @@ def parse_args():
     cov_parser = subparsers.add_parser("cov", help="collect coverage")
     run_parser = subparsers.add_parser("run", help="run campaigns")
 
-    cov_parser.add_argument('storage_dir', metavar='<dir>', type=str,
+    cov_parser.add_argument('storage_dir', metavar='<storage_dir>', type=str,
             help='target dir containing the results of prior fuzzing run')
     cov_parser.add_argument('--rerun', action="store_true",
             help='Force rerun of coverage gathering')
 
-    run_parser.add_argument('linux_src', metavar='<dir>', type=parse_as_dir,
+    run_parser.add_argument('linux_src', metavar='<linux_src>', type=parse_as_dir,
             help='path to your linux kernel tree')
-    run_parser.add_argument('storage_dir', metavar='<dir>', type=parse_as_path,
+    run_parser.add_argument('storage_dir', metavar='<storage_dir>', type=parse_as_path,
             help='target dir to store the results. will be created / must not exist.')
 
     run_parser.add_argument('--allow-existing-dir', action="store_true",
@@ -496,6 +514,10 @@ def main():
     if not os.path.exists(FUZZ_SH_PATH):
         print("Could not find kAFL launcher in %s. Exit" % FUZZ_SH_PATH)
         return
+
+    if not "KAFL_CONFIG_FILE" in os.environ:
+        print("KAFL_CONFIG_FILE not in environment. Have you setup the right kAFL environment (make env)?")
+        sys.exit(1)
 
     if args.action == "cov":
         do_cov(args)
