@@ -115,7 +115,7 @@ function run()
 	echo "Collecting target info from ${TARGET_ROOT}.."
 	pushd $TARGET_ROOT > /dev/null
 		cp .config $WORK_DIR/target/config
-		test -f filtered_smatch_warns && cp filtered_smatch_warns $WORK_DIR/target/smatch_warns.txt
+		test -f smatch_warns.txt && cp smatch_warns.txt $WORK_DIR/target/smatch_warns.txt
 		git log --pretty=oneline -4 > $WORK_DIR/target/repo_log
 		git diff > $WORK_DIR/target/repo_diff
 	popd  > /dev/null
