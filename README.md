@@ -101,7 +101,7 @@ For additional background, see [applying code audit results](https://intel.githu
 ```shell
 make -C $LINUX_GUEST prepare
 make -C ./bkc/audit
-mv smatch_warns_annotated.txt $LINUX_GUEST/smatch_warns.txt
+mv $LINUX_GUEST/smatch_warns_annotated.txt $LINUX_GUEST/smatch_warns.txt
 ```
 
 Note that the `annotated` smatch report is moved to `smatch_warns.txt`,
