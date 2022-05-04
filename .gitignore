@@ -1,4 +1,5 @@
 .env
+.venv/
 .pipenv
 .west/
 Pipfile
@@ -9,3 +10,6 @@ linux-guest/
 linux-host/
 tdvf/
 smatch/
+fuzz.sh
+TDVF.fd
+initrd.cpio.gz
