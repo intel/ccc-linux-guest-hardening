@@ -121,7 +121,7 @@ automated/fast coverage collection can be enabled using `-c`.
 To run the configured harnesses and store the resulting data in the folder `~/results`:
 
 ```shell
-./bkc/kafl/run_experiments.py run -c -p 4 $LINUX_GUEST ~/results
+./bkc/kafl/run_experiments.py -p 4 run -c $LINUX_GUEST ~/results
 ```
 
 Note: Coverage collection uses Ghidra to reconstruct full traces from PT dumps.
