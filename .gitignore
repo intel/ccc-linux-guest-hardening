@@ -14,3 +14,6 @@ smatch/
 fuzz.sh
 TDVF.fd
 initrd.cpio.gz
+
+# IDE
+.vscode/
