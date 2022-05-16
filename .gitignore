@@ -2,6 +2,7 @@
 .venv/
 .pipenv
 .west/
+venv/
 Pipfile
 Pipfile.lock
 manifest/
