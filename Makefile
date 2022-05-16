@@ -3,7 +3,7 @@
 
 export PIPENV_VENV_IN_PROJECT := 1
 
-.PHONY: env update install
+.PHONY: env update install deploy
 
 env: .env .west
 ifeq ($(PIPENV_ACTIVE), 1)
@@ -46,3 +46,11 @@ else
 	west update -k
 	pipenv run bash ./manifest/create_env.sh > .env
 endif
+
+deploy: venv
+	venv/bin/ansible-playbook -i 'localhost,' -c local site.yml
+
+venv:
+	python3 -m venv venv
+	venv/bin/pip install wheel
+	venv/bin/pip install -r requirements.txt
