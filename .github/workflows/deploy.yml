@@ -1,0 +1,24 @@
+name: Deployment
+
+# trigger build on every pull request activity against master branch
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: actions/checkout@v2
+
+
+      - name: Setup ansible
+        run: |
+          apt update && apt install -y make python3-venv
+          make venv
+
+      # skip tags related to non-existent hardware/configuration in the CI runner environment
+      - name: Test deployment
+        run: make deploy -- --skip-tags "hardware_check,kvm_device"
