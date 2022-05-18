@@ -10,3 +10,7 @@
         kafl_revision: kafl_tdx
         qemu_revision: kafl_stable_tdx
         libxdc_revision: kafl_stable_tdx
+
+    - role: tdvf
+      tags:
+        - tdvf

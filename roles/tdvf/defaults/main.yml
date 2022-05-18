@@ -1,0 +1,3 @@
+tdvf_url: https://github.com/IntelLabs/kafl.edk2
+tdvf_revision: TDVF_SDV
+tdvf_root: "{{ install_root }}/tdvf"
