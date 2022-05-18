@@ -48,6 +48,7 @@ else
 endif
 
 deploy: venv
+	venv/bin/ansible-galaxy install -r requirements.yml
 	venv/bin/ansible-playbook -i 'localhost,' -c local site.yml
 
 venv:

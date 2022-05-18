@@ -1,4 +1,8 @@
 - hosts: all
-  tasks:
-    - name: test ping
-      ping:
+  vars_files:
+    - vars.yml
+
+  roles:
+    - role: wenzel.kafl.kafl
+      tags:
+        - kafl
