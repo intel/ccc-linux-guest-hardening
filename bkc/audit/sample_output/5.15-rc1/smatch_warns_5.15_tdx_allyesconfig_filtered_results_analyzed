@@ -5139,11 +5139,12 @@ excluded	drivers/virtio/virtio_input.c:269 virtinput_probe() error: {75722517561
 	'check_host_input' read from the host using function '__virtio_cread_many' to a non int type local variable 'virtio_cread_v', type is <type 13>;
 excluded	drivers/virtio/virtio_input.c:269 virtinput_probe() error: {7572251756130288}
 	'check_host_input' propagating read value from the host 'virtio_cread_v' into a different complex variable 'vi->idev->id.version';
-unclassified	drivers/virtio/virtio_mmio.c:113 vm_get_features() warn: {18267881297206390205}
+excluded	drivers/virtio/virtio_mmio.c:113 vm_get_features() warn: {18267881297206390205}
+	'check_host_input' read from the host using function 'readl' to an int type local variable 'features', type is ullong
+	[virtio-mmio is disabled inside TDX guest];
+excluded	drivers/virtio/virtio_mmio.c:117 vm_get_features() warn: {18267881297206390209}
 	'check_host_input' read from the host using function 'readl' to an int type local variable 'features', type is ullong;
-unclassified	drivers/virtio/virtio_mmio.c:117 vm_get_features() warn: {18267881297206390209}
-	'check_host_input' read from the host using function 'readl' to an int type local variable 'features', type is ullong;
-unclassified	drivers/virtio/virtio_mmio.c:119 vm_get_features() error: {249888085663772304}
+excluded	drivers/virtio/virtio_mmio.c:119 vm_get_features() error: {249888085663772304}
 	'check_host_input' return an expression containing a propagated value from the host 'features';
 wrapper	drivers/virtio/virtio_mmio.c:161 vm_get() error: {4417018409408395267}
 	'check_host_input' read from the host using function 'readb' to a non int type local variable 'ptr', type is uchar*
@@ -5182,51 +5183,51 @@ wrapper	drivers/virtio/virtio_mmio.c:182 vm_get() error: {16060594774146836316}
 	'check_host_input' propagating a tainted value from the host 'l' into a function '__memcpy';
 wrapper	drivers/virtio/virtio_mmio.c:182 vm_get() error: {14761094172245126056}
 	'check_host_input' propagating read value from the host 'l' into a different complex variable 'buf + 4';
-unclassified	drivers/virtio/virtio_mmio.c:239 vm_generation() error: {12544272449106386000}
+excluded	drivers/virtio/virtio_mmio.c:239 vm_generation() error: {12544272449106386000}
 	'check_host_input' read from the host using function 'readl' returned as a value
 	[affects the config generation counter. Used in __virtio_cread_many as a condition for looping
 	--> endless loops possible];
-unclassified	drivers/virtio/virtio_mmio.c:246 vm_get_status() error: {12544272449105056328}
+excluded	drivers/virtio/virtio_mmio.c:246 vm_get_status() error: {12544272449105056328}
 	'check_host_input' read from the host using function 'readl' returned as a part of an expression;
-unclassified	drivers/virtio/virtio_mmio.c:292 vm_interrupt() warn: {18267881297206677704}
+excluded	drivers/virtio/virtio_mmio.c:292 vm_interrupt() warn: {18267881297206677704}
 	'check_host_input' read from the host using function 'readl' to an int type local variable 'status', type is ulong;
-unclassified	drivers/virtio/virtio_mmio.c:293 vm_interrupt() warn: {3172276009427672586}
+excluded	drivers/virtio/virtio_mmio.c:293 vm_interrupt() warn: {3172276009427672586}
 	'check_host_input' propagating a tainted value from the host 'status' into a function 'writel';
-unclassified	drivers/virtio/virtio_mmio.c:329 vm_del_vq() warn: {18267881297206572079}
+excluded	drivers/virtio/virtio_mmio.c:329 vm_del_vq() warn: {18267881297206572079}
 	'check_host_input' read from the host using function 'readl' to an int type local variable '__ret_warn_on', type is int;
-unclassified	drivers/virtio/virtio_mmio.c:329 vm_del_vq() error: {1893244882247518462}
+excluded	drivers/virtio/virtio_mmio.c:329 vm_del_vq() error: {1893244882247518462}
 	'check_host_input' propagating a tainted value from the host '__ret_warn_on' into a function '__builtin_expect';
-unclassified	drivers/virtio/virtio_mmio.c:366 vm_setup_vq() warn: {15781677685066845394}
+excluded	drivers/virtio/virtio_mmio.c:366 vm_setup_vq() warn: {15781677685066845394}
 	'check_host_input' empty read from the host using function 'readl' used inside an 'if' clause;
-unclassified	drivers/virtio/virtio_mmio.c:379 vm_setup_vq() warn: {18267881297206529622}
+excluded	drivers/virtio/virtio_mmio.c:379 vm_setup_vq() warn: {18267881297206529622}
 	'check_host_input' read from the host using function 'readl' to an int type local variable 'num', type is uint;
-unclassified	drivers/virtio/virtio_mmio.c:387 vm_setup_vq() error: {13145307802686070000}
+excluded	drivers/virtio/virtio_mmio.c:387 vm_setup_vq() error: {13145307802686070000}
 	'check_host_input' propagating a tainted value from the host 'num' into a function 'vring_create_virtqueue';
-unclassified	drivers/virtio/virtio_mmio.c:450 vm_setup_vq() warn: {18267881297206572164}
+excluded	drivers/virtio/virtio_mmio.c:450 vm_setup_vq() warn: {18267881297206572164}
 	'check_host_input' read from the host using function 'readl' to an int type local variable '__ret_warn_on', type is int;
-unclassified	drivers/virtio/virtio_mmio.c:450 vm_setup_vq() error: {1893244882247518547}
+excluded	drivers/virtio/virtio_mmio.c:450 vm_setup_vq() error: {1893244882247518547}
 	'check_host_input' propagating a tainted value from the host '__ret_warn_on' into a function '__builtin_expect';
-unclassified	drivers/virtio/virtio_mmio.c:511 vm_get_shm_region() warn: {12544272449105276312}
+excluded	drivers/virtio/virtio_mmio.c:511 vm_get_shm_region() warn: {12544272449105276312}
 	'check_host_input' read from the host using function 'readl' to an int type local variable 'len', type is ullong;
-unclassified	drivers/virtio/virtio_mmio.c:512 vm_get_shm_region() warn: {12544272449105305716}
+excluded	drivers/virtio/virtio_mmio.c:512 vm_get_shm_region() warn: {12544272449105305716}
 	'check_host_input' read from the host using function 'readl' to an int type local variable 'len', type is ullong;
-unclassified	drivers/virtio/virtio_mmio.c:514 vm_get_shm_region() error: {5114266956404025468}
+excluded	drivers/virtio/virtio_mmio.c:514 vm_get_shm_region() error: {5114266956404025468}
 	'check_host_input' propagating read value from the host 'len' into a different complex variable 'region->len';
-unclassified	drivers/virtio/virtio_mmio.c:523 vm_get_shm_region() warn: {12544272449105310083}
+excluded	drivers/virtio/virtio_mmio.c:523 vm_get_shm_region() warn: {12544272449105310083}
 	'check_host_input' read from the host using function 'readl' to an int type local variable 'addr', type is ullong;
-unclassified	drivers/virtio/virtio_mmio.c:524 vm_get_shm_region() warn: {12544272449105314440}
+excluded	drivers/virtio/virtio_mmio.c:524 vm_get_shm_region() warn: {12544272449105314440}
 	'check_host_input' read from the host using function 'readl' to an int type local variable 'addr', type is ullong;
-unclassified	drivers/virtio/virtio_mmio.c:526 vm_get_shm_region() error: {16408904595973545408}
+excluded	drivers/virtio/virtio_mmio.c:526 vm_get_shm_region() error: {16408904595973545408}
 	'check_host_input' propagating read value from the host 'addr' into a different complex variable 'region->addr';
-unclassified	drivers/virtio/virtio_mmio.c:581 virtio_mmio_probe() warn: {4466517873126460630}
+excluded	drivers/virtio/virtio_mmio.c:581 virtio_mmio_probe() warn: {4466517873126460630}
 	'check_host_input' read from the host using function 'readl' to an int type local variable 'magic', type is ulong;
-unclassified	drivers/virtio/virtio_mmio.c:583 virtio_mmio_probe() warn: {16625762662728038446}
+excluded	drivers/virtio/virtio_mmio.c:583 virtio_mmio_probe() warn: {16625762662728038446}
 	'check_host_input' propagating a tainted value from the host 'magic' into a function '_dev_warn';
-unclassified	drivers/virtio/virtio_mmio.c:588 virtio_mmio_probe() error: {4466517873126464993}
+excluded	drivers/virtio/virtio_mmio.c:588 virtio_mmio_probe() error: {4466517873126464993}
 	'check_host_input' read from the host using function 'readl' to a member of the structure 'vm_dev->version';
-unclassified	drivers/virtio/virtio_mmio.c:595 virtio_mmio_probe() error: {4466517873126469356}
+excluded	drivers/virtio/virtio_mmio.c:595 virtio_mmio_probe() error: {4466517873126469356}
 	'check_host_input' read from the host using function 'readl' to a member of the structure 'vm_dev->vdev.id.device';
-unclassified	drivers/virtio/virtio_mmio.c:603 virtio_mmio_probe() error: {18267881297206385887}
+excluded	drivers/virtio/virtio_mmio.c:603 virtio_mmio_probe() error: {18267881297206385887}
 	'check_host_input' read from the host using function 'readl' to a member of the structure 'vm_dev->vdev.id.vendor';
 excluded	drivers/virtio/virtio_ring.c:381 vring_unmap_one_split_indirect() warn: {3987825871983191338}
 	'check_host_input' read from the host using function 'virtio16_to_cpu' to an int type local variable 'flags', type is ushort
