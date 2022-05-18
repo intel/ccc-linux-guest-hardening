@@ -9,7 +9,7 @@ manifest/
 kafl/
 linux-guest/
 linux-host/
-tdvf/
+/tdvf/
 smatch/
 fuzz.sh
 TDVF.fd
