@@ -17,3 +17,9 @@
     - role: guest
       tags:
         - guest
+
+  post_tasks:
+    - name: Install env file
+      template:
+        src: env.j2
+        dest: "{{ install_root }}/.env"
