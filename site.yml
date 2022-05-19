@@ -20,6 +20,9 @@
     - role: smatch
       tags:
         - smatch
+    - role: nyx_packer
+      tags:
+        - nyx_packer
 
   post_tasks:
     - name: Install env file

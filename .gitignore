@@ -11,6 +11,7 @@ linux-guest/
 linux-host/
 /tdvf/
 /smatch/
+/packer/
 fuzz.sh
 TDVF.fd
 initrd.cpio.gz
