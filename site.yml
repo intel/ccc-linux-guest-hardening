@@ -17,6 +17,9 @@
     - role: guest
       tags:
         - guest
+    - role: smatch
+      tags:
+        - smatch
 
   post_tasks:
     - name: Install env file

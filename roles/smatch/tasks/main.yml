@@ -1,0 +1,47 @@
+- name: Install smatch build dependencies
+  package:
+    name:
+      - libsqlite3-dev
+      - libssl-dev
+    state: present
+  become: yes
+
+- name: Clone smatch repo
+  git:
+    repo: "{{ smatch_url }}"
+    dest: "{{ smatch_root }}"
+    version: "{{ smatch_revision | default(omit) }}"
+    force: yes
+
+- name: Upload check_host_input-add-a-pattern patch to remote node
+  copy:
+    src: files/0001-check_host_input-add-a-pattern.patch
+    dest: "{{ install_root }}/smatch.patch"
+
+- name: Check whether git committer identity is configured
+  command: git config user.email
+  register: git_config
+  ignore_errors: yes
+
+- name: Configure git committer identity if not set
+  command: "{{ item }}"
+  with_items:
+    - git config --global user.email "ansible@ansible.com"
+    - git config --global user.name "Ansible"
+  when: git_config.rc != 0
+
+- name: Apply smatch patch
+  command: git am "{{ install_root }}/smatch.patch"
+  args:
+    chdir: "{{ smatch_root }}"
+
+- name: Build smatch
+  make:
+    chdir: "{{ smatch_root }}"
+    params:
+      --jobs: "{{ ansible_processor_nproc }}"
+
+- name: Delete patch file
+  file:
+    path: "{{ install_root }}/smatch.patch"
+    state: absent

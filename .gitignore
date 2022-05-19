@@ -10,7 +10,7 @@ kafl/
 linux-guest/
 linux-host/
 /tdvf/
-smatch/
+/smatch/
 fuzz.sh
 TDVF.fd
 initrd.cpio.gz
