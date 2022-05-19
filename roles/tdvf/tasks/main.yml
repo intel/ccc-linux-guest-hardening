@@ -13,6 +13,7 @@
     repo: "{{ tdvf_url }}"
     dest: "{{ tdvf_root }}"
     version: "{{ tdvf_revision | default(omit) }}"
+    depth: "{{ git_clone_depth | default(omit) }}"
     force: yes
 
 - name: Build BaseTools
