@@ -36,8 +36,10 @@ def main(args):
     result_lines = data.split('\n')
     data_clean = ""
     for line in result_lines:
-            if (not re.search(r"\{([A-Za-z0-9_]+)\}", line)) and (smatch_pattern_name not in line):
-                    continue		
+            if (not re.search(r"\{([A-Za-z0-9_]+)\}", line)) and (smatch_pattern_name not in line) and ("spectre" not in line):
+                    continue
+            if ("spectre" in line):
+            	line = line + ";"
             data_clean = data_clean + line + "\n"
     #print("data_clean: " + data_clean)
     result_list = data_clean.split(';')
