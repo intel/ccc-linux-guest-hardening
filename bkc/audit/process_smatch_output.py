@@ -16,7 +16,7 @@ tdx_allowed_drivers = ["drivers/virtio", "drivers/block/virtio_blk.c",
         "drivers/net/virtio_net.c", "drivers/char/virtio_console.c",
         "drivers/acpi", "drivers/pci", "drivers/rtc/rtc-mc146818-lib.c",
         "drivers/net/tun.c", "drivers/net/tap.c", "drivers/firmware/efi",
-        "drivers/input/input.c"]
+        "drivers/input/input.c", "drivers/tty/hvc/hvc_console.c"]
 
 def main(args):
     input_file = args.input_file
