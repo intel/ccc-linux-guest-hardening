@@ -1,31 +1,5 @@
-- name: Install TDVF build dependencies
-  package:
-    name:
-      - nasm
-      - iasl
-      - uuid-dev
-      - python
-    state: present
-  become: yes
-
-- name: Clone TDVF repo
-  git:
-    repo: "{{ tdvf_url }}"
-    dest: "{{ tdvf_root }}"
-    version: "{{ tdvf_revision | default(omit) }}"
-    depth: "{{ git_clone_depth | default(omit) }}"
-    force: yes
-
-- name: Build BaseTools
-  make:
-    chdir: "{{ tdvf_root }}/BaseTools"
-    params:
-      --jobs: "{{ ansible_processor_nproc }}"
-
-- name: Build TDVF
-  shell: >
-    source edksetup.sh --reconfig &&
-    build -n $(nproc) -p OvmfPkg/OvmfPkgX64.dsc -t GCC5 -a X64 -D TDX_EMULATION_ENABLE=FALSE -D DEBUG_ON_SERIAL_PORT=TRUE
-  args:
-    executable: /bin/bash
-    chdir: "{{ tdvf_root }}"
+- name: Download TDVF binary
+  get_url:
+    url: https://github.com/IntelLabs/kafl.edk2/releases/download/tdvf-sdv-v0.1/TDVF_sdv_1G.fd
+    dest: "{{ install_root }}/TDVF.fd"
+    checksum: sha256:12fb25c9338065fcfaac5311e0e72a0fcef7292bb4e470fe4af5d29aca1bba62
