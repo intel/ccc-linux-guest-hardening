@@ -19,7 +19,6 @@
   copy:
     src: "{{ playbook_dir }}/bkc/kafl/linux_kernel_tdx_guest.config"
     dest: "{{ guest_root }}/.config"
-    remote_src: yes
 
 - name: Enable Virtio harness
   command: "{{ item }}"
