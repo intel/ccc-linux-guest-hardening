@@ -1,4 +1,4 @@
-From 3fecaa5f941ac2df3768df566aca1ea8876f98a5 Mon Sep 17 00:00:00 2001
+From edc345bc5243eec1ca42c41e536b356c9e70e7fc Mon Sep 17 00:00:00 2001
 From: Elena Reshetova <elena.reshetova@intel.com>
 Date: Mon, 7 Mar 2022 11:27:46 +0200
 Subject: [PATCH 1/2] check_host_input: add a pattern
@@ -19,7 +19,7 @@ Signed-off-by: Elena Reshetova <elena.reshetova@intel.com>
 
 diff --git a/check_host_input.c b/check_host_input.c
 new file mode 100644
-index 00000000..dc18ab34
+index 00000000..8ce76051
 --- /dev/null
 +++ b/check_host_input.c
 @@ -0,0 +1,886 @@
@@ -301,7 +301,7 @@ index 00000000..dc18ab34
 +    return false;
 +}
 +
-+static bool is_host_macro(const char *macro)
++static bool is_expr_host_macro(const char *macro)
 +{
 +    for (int i = 0; i < ARRAY_SIZE(host_macros); i++) {
 +        if (strcmp(host_macros[i], macro) == 0)
@@ -453,7 +453,7 @@ index 00000000..dc18ab34
 +
 +    /* virtio_cread_le macro needs a special handling, otherwise we miss results */
 +    macro = get_macro_name(stmt->pos);
-+    if ((macro) && (is_host_macro(macro)) && (stmt->type == STMT_EXPRESSION)) {
++    if ((macro) && (is_expr_host_macro(macro)) && (stmt->type == STMT_EXPRESSION)) {
 +        if ((stmt->expression) && (stmt->expression->type == EXPR_CALL)) {
 +            if (strstr(expr_to_str(stmt->expression->fn), "vdev->config->get") != 0) {
 +                    arg = get_argument_from_call_expr(stmt->expression->args, 2);
@@ -910,10 +910,10 @@ index 00000000..dc18ab34
 +    add_hook(&match_function_def, AFTER_DEF_HOOK);
 +}
 diff --git a/check_list.h b/check_list.h
-index 97856dcf..7fab4147 100644
+index 1f82cae5..cc4e4a0c 100644
 --- a/check_list.h
 +++ b/check_list.h
-@@ -179,6 +179,8 @@ CK(register_param_bits_clear)
+@@ -185,6 +185,8 @@ CK(register_param_bits_clear)
  CK(check_do_while_loop_limit)
  
  /* <- your test goes here */
