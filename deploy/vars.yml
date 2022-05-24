@@ -1,1 +1,0 @@
-install_root: "{{ ansible_env.HOME }}/.local/ccc"

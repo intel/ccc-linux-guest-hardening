@@ -1,6 +1,6 @@
 - hosts: all
-  vars_files:
-    - vars.yml
+  vars:
+    install_root: "{{ playbook_dir | dirname if ansible_connection == 'local' else ansible_env.HOME + '/ccc'}}"
 
   roles:
     - role: wenzel.kafl.kafl
@@ -10,6 +10,9 @@
         kafl_revision: kafl_tdx
         qemu_revision: kafl_stable_tdx
         libxdc_revision: kafl_stable_tdx
+        # install kafl in its own subdir
+        # can't reuse install_root because of jinja templating recursion issue
+        kafl_install_root: "{{ playbook_dir | dirname if ansible_connection == 'local' else ansible_env.HOME + '/ccc'}}/kafl"
 
     - role: tdvf
       tags:
