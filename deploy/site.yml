@@ -3,11 +3,11 @@
     install_root: "{{ playbook_dir | dirname if ansible_connection == 'local' else ansible_env.HOME + '/ccc'}}"
 
   roles:
-    - role: wenzel.kafl.kafl
+    - role: wenzel.kafl.fuzzer
       tags:
-        - kafl
+        - fuzzer
       vars:
-        kafl_revision: kafl_tdx
+        fuzzer_revision: kafl_tdx
         qemu_revision: kafl_stable_tdx
         libxdc_revision: kafl_stable_tdx
         # install kafl in its own subdir

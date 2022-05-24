@@ -1,4 +1,4 @@
 collections:
   - name: wenzel.kafl
-    source: git+https://github.com/Wenzel/kAFL#/wenzel/,workspace_deployment
+    source: git+https://github.com/Wenzel/kAFL#/deploy/wenzel/,workspace_deployment
     type: git
