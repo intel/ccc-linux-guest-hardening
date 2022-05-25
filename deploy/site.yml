@@ -3,7 +3,7 @@
     install_root: "{{ playbook_dir | dirname if ansible_connection == 'local' else ansible_env.HOME + '/ccc'}}"
 
   roles:
-    - role: wenzel.kafl.fuzzer
+    - role: intellabs.kafl.fuzzer
       tags:
         - fuzzer
       vars:
