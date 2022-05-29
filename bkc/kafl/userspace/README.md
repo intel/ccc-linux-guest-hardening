@@ -89,7 +89,6 @@ git am $BKC_ROOT/bkc/kafl/userspace/buildroot/0002-new-package-perf_fuzzer.patch
 ```shell
 cp $BKC_ROOT/bkc/kafl/userspace/buildroot/buildroot.config .config
 cp $BKC_ROOT/bkc/kafl/userspace/buildroot/busybox.config package/busybox/.config
-make prepare
 #make menuconfig            # optional
 #make busybox-menuconfig    # optional
 make source                 # download packages up front
