@@ -11,7 +11,7 @@
         qemu_revision: kafl_stable_tdx
         libxdc_revision: kafl_stable_tdx
         kernel_deb_urls:
-          - https://github.com/IntelLabs/kafl.linux/releases/download/kafl%2Fsdv-5.6-rc1/linux-image-5.6.0-rc1-tdfl+_5.6.0-rc1-tdfl+-7_amd64.deb
+          - https://github.com/IntelLabs/kafl.linux/releases/download/sdv-nyx-5.6-rc1-v2/linux-image-5.6.0-rc1-tdfl+_5.6.0-rc1-tdfl+-15_amd64.deb
         kernel_grub_default: 'gnulinux-advanced-49764e08-5aba-4fc8-ab39-e9d3b268e429>gnulinux-5.6.0-rc1-sdv-kafl-tdfl+-advanced-49764e08-5aba-4fc8-ab39-e9d3b268e429'
         # install kafl in its own subdir
         # can't reuse install_root because of jinja templating recursion issue
