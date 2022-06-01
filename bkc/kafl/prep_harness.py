@@ -1,0 +1,322 @@
+#!/usr/bin/env python3
+
+# 
+# Copyright (C)  2022  Intel Corporation. 
+#
+# This software and the related documents are Intel copyrighted materials, and your use of them is governed by the express license under which they were provided to you ("License"). Unless the License provides otherwise, you may not use, modify, copy, publish, distribute, disclose or transmit this software or the related documents without Intel's prior written permission.
+# This software and the related documents are provided as is, with no express or implied warranties, other than those that are expressly stated in the License.
+#
+# SPDX-License-Identifier: MIT
+
+import re
+import os
+import sys
+import shutil
+import subprocess as p
+import argparse
+import yaml
+
+initcall_harnesses = [
+        "DOINITCALLS_LEVEL_3",
+        "DOINITCALLS_LEVEL_4",
+        "DOINITCALLS_LEVEL_5",
+        "DOINITCALLS_LEVEL_6",
+        "DOINITCALLS_LEVEL_7"]
+
+bph_harnesses = [
+        "BPH_ACPI_INIT",
+        "BPH_VP_MODERN_PROBE",
+        "BPH_VIRTIO_CONSOLE_INIT",
+        "BPH_P9_VIRTIO_PROBE",
+        "BPH_PCI_SUBSYS_INIT",
+        "BPH_HANDLE_CONTROL_MESSAGE",
+        "BPH_VIRTIO_PCI_PROBE",
+        "BPH_PCIBIOS_FIXUP_IRQS"]
+
+base_harnesses = [
+        "POST_TRAP",
+        "EARLYBOOT",
+        "DOINITCALLS_PCI",
+        "DOINITCALLS_VIRTIO",
+        "DOINITCALLS_ACPI",
+        "FULL_BOOT",
+        "REST_INIT",
+        "VIRTIO_BLK_PROBE",
+        "START_KERNEL",
+        "DO_BASIC",
+        "ACPI_EARLY_INIT"]
+
+user_harnesses = [
+        "US_DHCP",
+        "US_RESUME_SUSPEND", # Requires input seeds. e.g., from FULL_BOOT
+        ]
+
+HARNESSES = base_harnesses + initcall_harnesses + bph_harnesses + user_harnesses
+
+# Harnesses that run FULL_BOOT with extra kernel boot params
+BOOT_PARAM_HARNESSES = {
+        "BPH_ACPI_INIT": "fuzzing_func_harness=acpi_init",
+        "BPH_VP_MODERN_PROBE": "fuzzing_func_harness=vp_modern_probe fuzzing_disallow=virtio_pci_find_capability",
+        "BPH_VIRTIO_CONSOLE_INIT": "fuzzing_func_harness=init",
+        "BPH_VIRTIO_PCI_PROBE": "fuzzing_func_harness=virtio_pci_probe",
+        "BPH_P9_VIRTIO_PROBE": "fuzzing_func_harness=p9_virtio_probe",
+        "BPH_PCI_SUBSYS_INIT": "fuzzing_func_harness=pci_subsys_init",
+        # TODO: kprobes not avail, do manual harness
+        # "BPH_EARLY_PCI_SERIAL": "fuzzing_func_harness=setup_early_printk earlyprintk=pciserial,force,00:18.1,115200",
+        "BPH_PCIBIOS_FIXUP_IRQS": "fuzzing_func_harness=pcibios_fixup_irqs acpi=noirq",
+        "BPH_HANDLE_CONTROL_MESSAGE": "fuzzing_func_harness=handle_control_message fuzzing_disallow=virtio_pci_find_capability,pci_read_config_dword",
+        #"FULL_BOOT": "tsc_early_khz=2600",
+        }
+
+KAFL_CONFIG_DEFAULTS = [
+        "abort_time: 2",
+        #"timeout: 8",
+        #"timeout_soft: 3",
+        #"timeout_check: True",
+        "trace: True",
+        "log_crashes: True",
+        #"kickstart: 16",
+]
+
+KAFL_CONFIG_HARNESSES = {
+        "FULL_BOOT":           ["abort_time: 24", "timeout: 8", "timeout_soft: 3"],
+        "DOINITCALLS_LEVEL_6": ["abort_time: 24"],
+        "DOINITCALLS_LEVEL_4": ["abort_time: 24"],
+        "DO_BASIC":            ["abort_time: 24"],
+        }
+
+default_config_options = {"CONFIG_TDX_FUZZ_KAFL_DETERMINISTIC": "y",
+        "CONFIG_TDX_FUZZ_KAFL_DISABLE_CPUID_FUZZ": "y",
+        "CONFIG_TDX_FUZZ_KAFL_SKIP_IOAPIC_READS": "n",
+        "CONFIG_TDX_FUZZ_KAFL_SKIP_ACPI_PIO": "n",
+        "CONFIG_TDX_FUZZ_KAFL_SKIP_RNG_SEEDING": "y",
+        "CONFIG_TDX_FUZZ_KAFL_SKIP_MSR": "n",
+        "CONFIG_TDX_FUZZ_KAFL_SKIP_PARAVIRT_REWRITE": "n",
+        }
+
+harness_config_options = {
+        "CONFIG_TDX_FUZZ_HARNESS_EARLYBOOT": {"CONFIG_TDX_FUZZ_KAFL_SKIP_PARAVIRT_REWRITE": "n"},
+        "CONFIG_TDX_FUZZ_HARNESS_DOINITCALLS": {"CONFIG_TDX_FUZZ_KAFL_SKIP_IOAPIC_READS": "y", "CONFIG_TDX_FUZZ_KAFL_SKIP_ACPI_PIO": "y"},
+        "CONFIG_TDX_FUZZ_HARNESS_FULL_BOOT": {"CONFIG_TDX_FUZZ_KAFL_SKIP_PARAVIRT_REWRITE": "y"},
+        "CONFIG_TDX_FUZZ_HARNESS_POST_TRAP": {"CONFIG_TDX_FUZZ_KAFL_SKIP_ACPI_PIO": "y", "CONFIG_TDX_FUZZ_KAFL_SKIP_PARAVIRT_REWRITE": "y"},
+        "DOINITCALLS_LEVEL_7": {"CONFIG_TDX_FUZZ_KAFL_VIRTIO": "y"},
+        "DOINITCALLS_LEVEL_6": {"CONFIG_TDX_FUZZ_KAFL_VIRTIO": "y"},
+        "CONFIG_TDX_FUZZ_HARNESS_DOINITCALLS_VIRTIO": {"CONFIG_TDX_FUZZ_KAFL_VIRTIO": "y"},
+        "BPH_VIRTIO_CONSOLE_INIT": {"CONFIG_TDX_FUZZ_KAFL_VIRTIO": "y"},
+        "CONFIG_TDX_FUZZ_HARNESS_DOINITCALLS_PCI": {"CONFIG_TDX_FUZZ_KAFL_SKIP_ACPI_PIO": "y"},
+        "CONFIG_TDX_FUZZ_HARNESS_DOINITCALLS_VIRTIO": {"CONFIG_TDX_FUZZ_KAFL_VIRTIO": "y"},
+        "CONFIG_TDX_FUZZ_HARNESS_START_KERNEL": {"CONFIG_TDX_FUZZ_KAFL_SKIP_ACPI_PIO": "y"},
+        "US_RESUME_SUSPEND": {"CONFIG_PM": "y", "CONFIG_PM_DEBUG": "y", "CONFIG_PM_ADVANCED_DEBUG": "y", "CONFIG_SUSPEND": "y", "CONFIG_HIBERNATE": "y", "CONFIG_PM_AUTOSLEEP": "n", "CONFIG_PM_WAKELOCKS": "n", "CONFIG_PM_TRACE_RTC": "n", "CONFIG_ACPI_TAD": "n", "CONFIG_FW_CACHE": "y"},
+        }
+
+def userspace_script_for_harness(harness):
+    if not harness.startswith("US_"):
+        print("userspace_script_for_harness called for non US_ harness")
+        return None
+
+    us_name = harness[len("US_"):]
+    us_script = os.path.expandvars(f"$BKC_ROOT/bkc/kafl/userspace/harnesses/{us_name}.sh")
+    return us_script
+
+def get_kafl_config_boot_params():
+    conf_file = os.environ.get("KAFL_CONFIG_FILE")
+    with open(conf_file) as conf_yaml_file:
+        conf = yaml.load(conf_yaml_file, Loader=yaml.FullLoader)
+        default_append = conf.get("qemu_append", "")
+        return default_append
+
+def generate_setups(harnesses, pattern):
+    for harness in harnesses:
+        if pattern not in harness:
+            continue
+        req_conf = ((harness, "y"),)
+        if harness.startswith("DOINITCALLS_LEVEL"):
+            level = harness[len("DOINITCALLS_LEVEL_"):]
+            req_conf = req_conf + (("CONFIG_TDX_FUZZ_HARNESS_DOINITCALLS", "y"), ("CONFIG_TDX_FUZZ_HARNESS_DOINITCALLS_LEVEL", level),)
+        elif harness.startswith("BPH_") or harness.startswith("US_"):
+            req_conf = req_conf + (("CONFIG_TDX_FUZZ_HARNESS_NONE", "y"),)
+        req_conf = req_conf + tuple(default_config_options.items())
+        harness_options = harness_config_options.get(harness, None)
+        if harness_options:
+            req_conf = req_conf + tuple(harness_options.items())
+        return req_conf
+    return None
+
+def select_seed_root(seed_dir, harness):
+    harness_dir = os.path.join(seed_dir, harness)
+    generic_dir = os.path.join(seed_dir, "generic")
+
+    if os.path.isdir(harness_dir):
+        #print(f"Using harness-specific seeds in {harness_dir}")
+        return harness_dir
+    if os.path.isdir(generic_dir):
+        #print(f"Using fallback seeds in {generic_dir}")
+        return generic_dir
+    #print(f"No harness-specific seeds detected, using all of {seed_dir}")
+    return seed_dir
+
+def linux_config(args, setup):
+    shutil.copy(args.template, args.configs['linux'])
+
+    for conf,val in setup:
+        # if setup has repeated entries, the last setting is adopted
+        p.run(f"{args.config_helper} --file {args.configs['linux']} --set-val {conf} {val}", shell=True, stdout=p.DEVNULL, stderr=None)
+
+    if not args.quiet:
+        print("Linux config overrides:")
+        for conf,val in setup:
+            print(f"  {conf}={val}")
+        print("")
+
+def kafl_config(args, sharedir):
+    yaml=""
+
+    ## add default and harness-specific options (timeout, funky,..)
+    yaml = yaml + "\n".join(KAFL_CONFIG_DEFAULTS)
+    yaml = yaml + "\n".join(KAFL_CONFIG_HARNESSES.get(args.harness, [])) + "\n"
+
+    if sharedir:
+        yaml += f"sharedir: {sharedir}\n"
+
+    # select seed_dir
+    if args.seeds:
+        seed_dir = select_seed_root(args.seeds, args.harness)
+        yaml += f"seed_dir: {seed_dir}\n"
+
+    # set any custom boot params
+    harness_boot_params = BOOT_PARAM_HARNESSES.get(args.harness, None)
+    if harness_boot_params:
+        default_boot_params = get_kafl_config_boot_params()
+        full_boot_params = default_boot_params + " " + harness_boot_params
+        yaml += f"qemu_append: {full_boot_params}\n"
+
+    if not args.quiet and len(yaml) > 0:
+        print("kAFL config overrides:")
+        for line in yaml.splitlines():
+            print(f"  {line}")
+        print("")
+
+    with open(args.configs['kafl'], 'w') as f:
+        f.write(yaml)
+
+def kafl_sharedir(args):
+    SHAREDIR_PATH = os.path.expandvars("$BKC_ROOT/sharedir")
+    INITRD_FILE = os.path.expandvars("$BKC_ROOT/initrd.cpio.gz")
+
+    if not os.path.isdir(SHAREDIR_PATH):
+        print(f"Sharedir '{SHAREDIR_PATH}' does not exists. Please do `make sharedir`.")
+        sys.exit(1)
+    if not os.path.isfile(INITRD_FILE):
+        print(f"'{INITRD_FILE}' does not exists. Please do `make initrd.cpio.gz`.")
+        sys.exit(1)
+
+    userspace_harness_script = userspace_script_for_harness(args.harness)
+    if not userspace_harness_script:
+        return None
+
+    print(f"Using sharedir template at {SHAREDIR_PATH}.\nStage 2 init.sh: {userspace_harness_script}")
+    sharedir = shutil.copytree(SHAREDIR_PATH, os.path.join(args.output, "sharedir"))
+    shutil.copy(userspace_harness_script, os.path.join(sharedir, "init.sh"))
+    return sharedir
+
+def process_args(args):
+
+    def parse_as_path(pathname):
+        return os.path.abspath(
+                os.path.expanduser(
+                    os.path.expandvars(pathname)))
+
+    def parse_as_file(filename):
+        expanded = parse_as_path(filename)
+        if not os.path.exists(expanded):
+            raise argparse.ArgumentTypeError("Failed to find file %s (expanded: %s)" % (filename, expanded))
+        return expanded
+
+    def parse_as_dir(dirname):
+        expanded = parse_as_path(dirname)
+        if not os.path.isdir(expanded):
+            raise argparse.ArgumentTypeError(f"Failed to find directory {dirname} (expanded: {expanded})")
+        return expanded
+
+    # resolve config file template is required, actually
+    args.template = parse_as_file(args.template)
+    args.config_helper = parse_as_file(args.config_helper)
+
+    # seeds are not required, but notify in case of config error
+    if not args.seeds:
+        print('No seeds directory defined via "--seeds"')
+    else:
+        args.seeds = parse_as_dir(args.seeds)
+
+    # prepare files in --output directory or die trying
+    args.output = parse_as_path(args.output)
+    if os.path.isdir(args.output):
+        raise argparse.ArgumentTypeError(f"Refuse to work on existing output directory ({args.output})")
+
+    os.makedirs(args.output)
+    args.configs = {
+            'linux': os.path.join(args.output, "linux.config"),
+            'kafl': os.path.join(args.output, "kafl_config.yaml")
+            }
+
+    # test-create destination files in output folder
+    for fname in args.configs.values():
+        with open(fname, 'w') as f:
+            f.truncate(0)
+
+def parse_args():
+
+    parser = argparse.ArgumentParser(description='kAFL TDX kernel config generator.')
+    parser.add_argument('harness', metavar='<harness>', type=str,
+            help='target configuration to generate (try `list`)')
+    parser.add_argument('output', metavar='<directory>', type=str,
+            help='output directory (will be created/overwritten as needed)')
+    parser.add_argument('--config', '-c', metavar='<file>', dest='template', type=str,
+            default="$LINUX_GUEST/.config",
+            help='kernel .config template (default: $LINUX_GUEST/.config)')
+    #parser.add_argument('--speed', '-s', action="store_true",
+    #        help='optimize for execution speed')
+    #parser.add_argument('--debug', '-d', action="store_true",
+    #        help='optimize for bug detection')
+    parser.add_argument('--seeds', '-s', metavar='<dir>', type=str,
+            help='root seeds directory, containing a subfolder <harness> or "generic"')
+    parser.add_argument('--quiet', '-q', action="store_true", help='suppress outputs')
+    parser.add_argument('--config_helper', metavar='<file>', type=str, default="$LINUX_GUEST/scripts/config",
+            help='path to Linux kernel config helper (default: $LINUX_GUEST/scripts/config)')
+
+    args = parser.parse_args()
+
+    # help if the requested harness is not recognized
+    if args.harness not in HARNESSES:
+        if args.harness not in ["help", "list"]:
+            print(f"Error: unrecognized harness `{args.harness}`.")
+        print("Supported harnesses:")
+        for h in HARNESSES:
+            print(f"  {h}")
+        return None
+
+    # harness is real, process all other args..
+    try:
+        process_args(args)
+    except (OSError,argparse.ArgumentTypeError) as e:
+        print(f"Error: {e}")
+        parser.print_help()
+        return None
+
+    return args
+
+def main():
+    args = parse_args()
+    if not args:
+        sys.exit(1)
+
+    print(f"Writing {args.harness} configs to {args.output}..")
+    setup = generate_setups(HARNESSES, args.harness)
+    linux_config(args, setup)
+    sharedir = kafl_sharedir(args)
+    kafl_config(args, sharedir)
+
+    sys.exit(0)
+
+if __name__ == "__main__":
+    main()
