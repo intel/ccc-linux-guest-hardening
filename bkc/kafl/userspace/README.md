@@ -104,9 +104,10 @@ execute a `init.sh` from the host kAFL `sharedir`.
 Bless and rebuild the image, then copy or link it for use by fuzz.sh:
 
 ```shell
-$BKC_ROOT/bkc/kafl/userspace/bless_initrd.sh BUILDROOT_VERSION/output/target/
-make -C $BKC_ROOT/$BUILDROOT_VERSION
-ln -sf  $BKC_ROOT/$BUILDROOT_VERSION/output/images/rootfs.cpio.gz $BKC_ROOT/initrd.cpio.gz
+cd $BKC_ROOT
+./bkc/kafl/userspace/bless_initrd.sh $BUILDROOT_VERSION/output/target/
+make -C $BUILDROOT_VERSION
+ln -sf  $BUILDROOT_VERSION/output/images/rootfs.cpio.gz $BKC_ROOT/initrd.cpio.gz
 ```
 
 ## Sharedir Setup
