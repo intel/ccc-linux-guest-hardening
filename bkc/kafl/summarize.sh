@@ -8,9 +8,19 @@ dir=$1
 
 cd $dir
 
-find */logs -name crash_\* > crash.lst
-find */logs -name timeo_\* > timeo.lst
-find */logs -name kasan_\* > kasan.lst
+LOGS_CRASH="logs_crash.lst"
+LOGS_KASAN="logs_kasan.lst"
+LOGS_TIMEO="logs_timeo.lst"
+
+find */logs -name crash_\* > $LOGS_CRASH
+find */logs -name kasan_\* > $LOGS_KASAN
+find */logs -name timeo_\* > $LOGS_TIMEO
+	
+num_crash=$(cat $LOGS_CRASH|wc -l)
+num_kasan=$(cat $LOGS_KASAN|wc -l)
+num_timeo=$(cat $LOGS_TIMEO|wc -l)
+
+SCAN_LOGS="$LOGS_CRASH $LOGS_KASAN"
 
 declare -A tag2log
 declare -A tag2msg
@@ -22,14 +32,14 @@ register_issue() {
 	tag=$(echo "$msg"|cksum -|cut -b -6)
 	if test -z "${tag2msg[$tag]}"; then
 		tag2msg[$tag]="$msg"
-		tag2log[$tag]="\t$log"
+		tag2log[$tag]="$log"
 	else
-		tag2log[$tag]="${tag2log[$tag]},\n\t$log"
+		tag2log[$tag]="${tag2log[$tag]},$log"
 	fi
 	#echo -e "$tag;$msg;$log"
 }
 
-for log in $(cat crash.lst kasan.lst); do
+for log in $(cat $SCAN_LOGS); do
 	## catch-all for common panic(??) handler, where RIP is shown shortly after error type + "SMP KASAN NOPTI" string
 	msg=$(grep -v '^ \? \|^Call Trace:' $log|grep -A 2 'KASAN NOPTI$'|grep '^RIP:\|KASAN NOPTI$'|sed s/'SMP KASAN NOPTI'//|tr -d '\n')
 	if test -n "$msg"; then
@@ -46,27 +56,39 @@ for log in $(cat crash.lst kasan.lst); do
 	fi
 
 	register_issue "unclassified" "$log"
-	#echo -e "00000000;TODO;$log"
-	#tag2msg[000000]="TODO"
-	#tag2log[000000]="$log"
 done
 
-rm crash.lst
-rm timeo.lst
-rm kasan.lst
+rm $LOGS_CRASH
+rm $LOGS_KASAN
+rm $LOGS_TIMEO
 
 
 for tag in ${!tag2msg[*]}; do
-	echo -e "[$tag] ${tag2msg[$tag]};\n${tag2log[$tag]}"
-done > summary.txt
+	echo -e "$tag;${tag2msg[$tag]};${tag2log[$tag]};"
+done > summary.csv
 
-#for tag in ${!tag2msg[*]}; do
-#	echo '<p>'
-#	echo -e "[$tag] ${tag2msg[$tag]};"
-#	logs="$(echo "${tag2log[$tag]}"|tr -d '\n\t'|tr ',' ' ')"
-#	logs="$(echo $logs|tr -d '\\n\\t'|tr ',' ' ')"
-#	for log in $logs; do
-#		echo "\t<a href="$log">$log</a>"
-#	done
-#	echo '</p>'
-#done > summary.html
+(
+	echo "Scanned $num_crash crash logs, $num_kasan sanitizer logs, $num_timeo timeouts"
+	echo "Identified ${#tag2msg[*]} issues: ${!tag2msg[@]}"
+	for tag in ${!tag2msg[*]}; do
+		logs="$(echo "${tag2log[$tag]}"|sed 's/,/,\n\t/g')"
+		echo -e "[$tag] ${tag2msg[$tag]}\n\t$logs\n"
+	done
+) > summary.txt
+
+(
+	echo '<pre>'
+	echo "Scanned logs: $num_crash crashes, $num_kasan sanitizer, $num_timeo timeouts"
+	echo "Identified ${#tag2msg[*]} issues: ${!tag2msg[@]}"
+	for tag in ${!tag2msg[*]}; do
+		echo "<p>"
+		echo -e "[$tag] ${tag2msg[$tag]}"
+		logs="$(echo "${tag2log[$tag]}"|sed 's/,/\n/g')"
+		for log in $logs; do
+			echo -e "\t<a href="$log">$log</a>"
+		done
+	done
+	echo '</pre>'
+) > summary.html
+
+
