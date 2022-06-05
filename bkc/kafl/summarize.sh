@@ -16,7 +16,7 @@ SCAN_LOGS="$LOGS_KASAN $LOGS_CRASH"
 SCAN_LOGS="$LOGS_KASAN $LOGS_CRASH $LOGS_TIMEO"
 
 # order of bug classes to print (will only print these!)
-CLASSES_ORDER="KASAN CRASH WARN HANG"
+CLASSES_ORDER="KASAN CRASH WARNS HANGS"
 
 # identify panic handler reason based on build config :-/
 PANIC_STRING='SMP KASAN NOPTI$'
@@ -83,24 +83,24 @@ for log in $(cat $SCAN_LOGS); do
 
 	## catch unchecked MSR access
 	msg=$(grep -m 1 '^unchecked MSR access error:' $log)
-	register_issue "$msg" "$log" "WARN" && continue
+	register_issue "$msg" "$log" "WARNS" && continue
 
 	## catch WARNING: and BUG:, - look at first two RIPs in case there is some useful output in between
 	msg=$(grep -v '^CPU:\|^Modules linked in:' $log|grep -m 2 '^WARNING:\|^BUG:'|sed s/'SMP KASAN NOPTI'//)
 	msg=$(echo "$msg"|grep -v '^ ? \|^Call Trace:\|^Code:\|^CR2:\|^CS:\|^FS:\|^R13:\|^R10:\|^RBP:\|^RDX:\|^RSP:')
-	register_issue "$msg" "$log" "WARN" && continue
+	register_issue "$msg" "$log" "WARNS" && continue
 
 	## fallback: look 2-3 lines backward from RIP extract any other issues
 	# look at first 2 RIP matches and remove CPU/stack info
 	#msg=$(grep -v '^ ? \|^Call Trace:' $log|grep -m 1 -B 2 ^RIP:|sed s/\(.*//)
 	msg=$(grep -v '^CPU:\|^Modules linked in:' $log| grep -m 2 -B 1 ^RIP:|sed s/\(.*//)
 	msg=$(echo "$msg"|grep -v '^ ? \|^Call Trace:\|^Code:\|^CR2:\|^CS:\|^FS:\|^R13:\|^R10:\|^RBP:\|^RDX:\|^RSP:')
-	register_issue "$msg" "$log" "WARN" && continue
+	register_issue "$msg" "$log" "WARNS" && continue
 
 	if grep -q $log $LOGS_TIMEO; then
-		register_issue "Unclassified HANG" "$log" "HANG"
+		register_issue "Unclassified HANGS" "$log" "HANGS"
 	else
-		register_issue "Unclassified CRASH" "$log" "WARN"
+		register_issue "Unclassified CRASH" "$log" "WARNS"
 	fi
 done
 
@@ -134,12 +134,25 @@ done > summary.csv
 	echo "Scanned logs: $SCAN_LOGS ($SCAN_LOGS_NUM logs total)"
 	echo "Identified ${#tag2msg[*]} issues:"
 	for class in $CLASSES_ORDER; do
-		[ -n "${class2tag[$class]}" ] && echo -e "\t$class: ${class2tag[$class]}"
+		[ -z "${class2tag[$class]}" ] && continue
+		num_issues=$(echo ${class2tag[$class]}|wc -w)
+		printf "\t%8s: ${class2tag[$class]}\n" "$num_issues $class"
 	done
+	echo "<p>"
 	for class in $CLASSES_ORDER; do
+		[ -z "${class2tag[$class]}" ] && continue
+		case $class in
+			"KASAN"|"CRASH")
+				echo "<details open>"
+				;;
+			*)
+				echo "<details>"
+				;;
+		esac
+		num_issues=$(echo ${class2tag[$class]}|wc -w)
+		echo "<summary><b>Category $class ($num_issues items)</b></summary>"
 		for tag in ${class2tag[$class]}; do
-			echo "<p>"
-			echo -e "<b>[$tag] ${tag2msg[$tag]}</b>"
+			echo -e "  <b>[$tag] ${tag2msg[$tag]}</b>"
 			logs="$(echo "${tag2log[$tag]}"|sed 's/,/\n/g')"
 			for log in $logs; do
 				# check for some extra warnings/errors to spot different logs
@@ -147,7 +160,9 @@ done > summary.csv
 				[ -n "$note" ] && note=$(echo "<i>last error:</i> $note"|sed 's/+0x[0-9,a-f,x,/]*//g')
 				printf "\t<a href=\"$log\"%-62s %s\n" ">$log</a>" "$note"
 			done
+			echo "<p />"
 		done
+		echo "</details>"
 	done
 	echo '</pre>'
 ) > summary.html
