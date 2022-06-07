@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Quick summary of findings
 #
 # Scan all logs for some crash/issue identifier, e.g. "RIP:" or KASAN: string.
@@ -21,9 +23,9 @@ CLASSES_ORDER="KASAN CRASH WARNS HANGS"
 # identify panic handler reason based on build config :-/
 PANIC_STRING='SMP KASAN NOPTI$'
 
-find */logs -name crash_\* > $LOGS_CRASH
-find */logs -name kasan_\* > $LOGS_KASAN
-find */logs -name timeo_\* > $LOGS_TIMEO
+find */logs -name crash_\*log > $LOGS_CRASH
+find */logs -name kasan_\*log > $LOGS_KASAN
+find */logs -name timeo_\*log > $LOGS_TIMEO
 
 declare -A tag2msg
 declare -A tag2log
@@ -37,9 +39,12 @@ register_issue() {
 
 	if test -n "$msg"; then
 		msg=$(echo "$msg"|grep -v '^ \? \|^Call Trace:\|^CPU:\|^Code:\|^CR2:\|^CS:\|^FS:\|^R13:\|^R10:\|^RBP:\|^RDX:\|^RSP:')
-		# shorten #GP, remove line offsets, and stuck-at detail
-		msg=$(echo "$msg"|sed -e 's/general protection fault/#GF/' -e 's/+0x[0-9,a-f,x,/]*//g' -e 's/stuck for [0-9]*s.*/stuck for N secs/' -e 's/RIP: 0010:/RIP: /')
-		msg=$(echo "$msg"|tr '\n' ' '|sed 's/general protection fault/#GP/')
+		# shorten output strings and remove detailed line offsets and address details
+		msg=$(echo "$msg"|sed -e 's/general protection fault/#GP/' -e 's/+0x[0-9,a-f,x,/]*//g' -e 's/RIP: 0010:/RIP: /')
+		msg=$(echo "$msg"|sed -e 's/stuck for [0-9]*s.*/stuck for [s] secs/' -e 's/for address 0x[0-9,a-f]*:/for address [n]:/')
+		msg=$(echo "$msg"|sed -e 's/in range \[0x[0-9,a-f]*-0x[0-9,a-f]*\]/in range [x-y]/')
+		msg=$(echo "$msg"|sed -e 's/of size [0-9]* at addr/of size N at addr/')
+		msg=$(echo "$msg"|tr '\n' ' ')
 		tag=$(echo "$msg,$class"|cksum -|cut -b -$TAGLEN)
 
 		if ! echo "$CLASSES_ORDER"|grep -q $class; then
@@ -156,9 +161,10 @@ done > summary.csv
 			logs="$(echo "${tag2log[$tag]}"|sed 's/,/\n/g')"
 			for log in $logs; do
 				# check for some extra warnings/errors to spot different logs
-				note=$(tac $log|grep -i -m 1 "error\|fatal\|warn\|fail")
-				[ -n "$note" ] && note=$(echo "<i>last error:</i> $note"|sed 's/+0x[0-9,a-f,x,/]*//g')
-				printf "\t<a href=\"$log\"%-62s %s\n" ">$log</a>" "$note"
+				NOTE=$(tac $log|grep -i -m 1 "error\|fatal\|warn\|fail")
+				[ -n "$NOTE" ] && NOTE=$(echo "<i>last error:</i> $NOTE"|sed 's/+0x[0-9,a-f,x,/]*//g')
+				[ -f ${log}.txt ] && DECODED="<a href=\"$log.txt\">[decoded]</a>" || DECODED=""
+				printf "\t<a href=\"$log\"%-62s $NOTE $DECODED\n" ">$log</a>"
 			done
 			echo "<p />"
 		done
