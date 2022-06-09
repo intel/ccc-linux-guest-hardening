@@ -1,4 +1,5 @@
 collections:
   - name: intellabs.kafl
-    source: git+https://github.com/Wenzel/kAFL#/deploy/intellabs/,workspace_deployment
+    source: git+https://github.com/IntelLabs/kAFL#/deploy/intellabs/
     type: git
+    version: master
