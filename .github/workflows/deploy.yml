@@ -34,10 +34,9 @@ jobs:
       # shallow clone for CI
       - name: Test deployment
         run: >
-          make deploy_local --
+          make deploy --
           --skip-tags "hardware_check,kvm_device"
           --extra-vars "@parameters.json"
-        working-directory: deploy
 
   remote:
     runs-on: ubuntu-20.04
@@ -76,7 +75,7 @@ jobs:
           ansible_user=root
           ansible_ssh_pass=toor
           ansible_ssh_common_args="-o StrictHostKeyChecking=no"'
-          >> inventory
+          > inventory
         working-directory: deploy
 
       - name: Install Python3 on service container
@@ -91,5 +90,4 @@ jobs:
           make deploy --
           --skip-tags "hardware_check,kvm_device,update_grub,reboot_kernel"
           --extra-vars "@parameters.json"
-        working-directory: deploy
   
