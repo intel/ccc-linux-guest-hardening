@@ -8,20 +8,18 @@
   </a>
 </p>
 
-This project contains tools, scripts, and best-known-configurtion (BKC) for
+This project contains tools, scripts, and _best-known-configuration_ (BKC) for
 Linux guest kernel hardening in the context of Confidential Cloud Computing threat
 model.
 
-Project overview:
+## Project overview:
 
-```
-- bkc/
-  - audit/           # threat surface enumaration using static analysis
-  - kafl/            # configs and tools for Linux fuzzing with kAFL
-  - syzkaller/       # configs and tools for generating guest activity with Syzkaller
-  - coverage/        # tools for matching coverage and trace data against audit list
-- manifest/west.yml  # manifest of required sub-components
-```
+In the [`bkc`](https://github.com/intel/ccc-linux-guest-hardening/tree/master/bkc) directory, you will find:
+
+- [`audit`](https://github.com/intel/ccc-linux-guest-hardening/tree/master/bkc/audit): threat surface enumaration using static analysis
+- [`kafl`](https://github.com/intel/ccc-linux-guest-hardening/tree/master/bkc/kafl): configs and tools for Linux fuzzing with kAFL
+- [`syzkaller`](https://github.com/intel/ccc-linux-guest-hardening/tree/master/bkc/syzkaller): configs and tools for generating guest activity with Syzkaller
+- [`coverage`](https://github.com/intel/ccc-linux-guest-hardening/tree/master/bkc/coverage): tools for matching coverage and trace data against audit list
 
 
 ## Getting Started
