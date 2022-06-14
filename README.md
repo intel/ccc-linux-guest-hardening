@@ -1,7 +1,15 @@
-# Linux Security Hardening for Confidential Compute
+<h1 align="center">
+  <br>Linux Security Hardening for Confidential Compute</br>
+</h1>
+
+<p align="center">
+  <a href="https://github.com/Wenzel/ccc-linux-guest-hardening/actions/workflows/deploy.yml">
+    <img src="https://github.com/Wenzel/ccc-linux-guest-hardening/actions/workflows/deploy.yml/badge.svg" alt="CI">
+  </a>
+</p>
 
 This project contains tools, scripts, and best-known-configurtion (BKC) for
-Linux guest kernel hardening in context of Confidential Cloud Computing threat
+Linux guest kernel hardening in the context of Confidential Cloud Computing threat
 model.
 
 Project overview:
