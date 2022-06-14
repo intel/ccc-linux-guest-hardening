@@ -1,10 +1,17 @@
-name: Deployment
+name: CI
 
 # trigger build on every pull request activity against master branch
 on:
-  pull_request:
+  push:
     branches:
-      - master
+      - 'master'
+    tags:
+      - '*'
+    paths-ignore:
+      - '**/README.md'
+  pull_request:
+    paths-ignore:
+      - '**/README.md'
 
 jobs:
   local:
