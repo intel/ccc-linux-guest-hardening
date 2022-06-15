@@ -6,11 +6,17 @@
 # Then reverse-sort to get a mapping of unique identifiers to logs per harness
 # Also report any crash logs that could not be associated to a crash identifier
 
-dir=$(realpath $1)
+usage() {
+	test -n "$1" && echo "Error: $1"
+	echo
+	echo "Scan crash logs in target campaign folder and summarize."
+	echo "Usage: $1 <path/to/campaigns>"
+	exit
+}
 
-LOGS_CRASH="logs_crash.lst"
-LOGS_KASAN="logs_kasan.lst"
-LOGS_TIMEO="logs_timeo.lst"
+LOGS_CRASH=$(mktemp)
+LOGS_KASAN=$(mktemp)
+LOGS_TIMEO=$(mktemp)
 
 # which logs to scan? timeout logs can be crappy
 SCAN_LOGS="$LOGS_KASAN $LOGS_CRASH"
@@ -22,24 +28,33 @@ CLASSES_ORDER="KASAN CRASH WARNS HANGS"
 # identify panic handler reason based on build config :-/
 PANIC_STRING='SMP KASAN NOPTI$'
 
-DECODE_STACKTRACE=$LINUX_GUEST/scripts/decode_stacktrace.sh
+DECODE_SCRIPT="$LINUX_GUEST/scripts/decode_stacktrace.sh"
 
-# files to decode
-DECODE_LIST=stack_decode.lst
-REPRO_LIST=reproducer.lst
+# output files (relative to $DIR)
+DECODE_LIST="stack_decode.lst" # job file for missing decoded logs
+REPRO_LIST="reproducer.lst"    # job file for missing reproducer logs
+OUTPUT_HTML="summary.html"
+OUTPUT_TEXT="summary.txt"
+OUTPUT_CSV="summary.csv"
 
-if ! cd $dir; then
-	echo "Could not enter $dir - exit."
+if ! test -d "$1"; then
+	usage
+fi
+
+DIR="$(realpath "$1" || usage "Failed to find path >>$1<<")"
+
+if ! cd "$DIR"; then
+	echo "Could not enter $DIR - exit."
 	exit
 fi
 
-if ! test -x $SCRIPT; then
-	echo "Could not find $SCRIPT - exit."
+if ! test -x "$DECODE_SCRIPT"; then
+	echo "Could not find "$DECODE_SCRIPT" - exit."
 	exit
 fi
 
-test -f $DECODE_LIST && rm $DECODE_LIST
-test -f $REPRO_LIST && rm $REPRO_LIST
+truncate -s 0 $DECODE_LIST
+truncate -s 0 $REPRO_LIST
 
 find */logs -name crash_\*log > $LOGS_CRASH
 find */logs -name kasan_\*log > $LOGS_KASAN
@@ -99,12 +114,12 @@ register_issue() {
 get_workdir_from_logname() {
 	log=$1
 	# logs are in parent
-	DIR1="$(realpath --relative-to $dir "$(dirname $log)/..")"
+	DIR1="$(realpath --relative-to $DIR "$(dirname $log)/..")"
 	if test -f "$DIR1/stats"; then
 		echo "$DIR1"
 	else
 		# triage logs are in parent^2
-		DIR1="$(realpath --relative-to $dir "$(dirname $log)/../..")"
+		DIR1="$(realpath --relative-to $DIR "$(dirname $log)/../..")"
 		echo "$DIR1"
 	fi
 }
@@ -153,11 +168,11 @@ decode_log() {
 		echo "Warning: Could not find ELF image for $ELF - skipping decode..." >&2
 	else
 		if test -f "$log.txt"; then
-			echo "$log.txt exists, skip decoding.." >&2
+			#echo "$log.txt exists, skip decoding.." >&2
 			echo "$log.txt"
 		else
-			echo "$DECODE_STACKTRACE $ELF < $log ..." >&2
-			$DECODE_STACKTRACE $ELF < "$log" > "$log.txt"
+			echo "Decoding $log ..." >&2
+			$DECODE_SCRIPT $ELF < "$log" > "$log.txt"
 			echo "$log"
 		fi
 	fi
@@ -219,11 +234,10 @@ decode_unique_logs
 
 for tag in ${!tag2msg[*]}; do
 	echo -e "$tag;${tag2msg[$tag]};${tag2log[$tag]};"
-done > summary.csv
+done > "$OUTPUT_CSV"
 
 (
-	echo "Scanned logs: $SCAN_LOGS ($SCAN_LOGS_NUM logs total)"
-	echo "Identified ${#tag2msg[*]} issues:"
+	echo "Identified ${#tag2msg[*]} issues out of $SCAN_LOGS_NUM logs:"
 	for class in $CLASSES_ORDER; do
 		[ -n "${class2tag[$class]}" ] && echo -e "\t$class: ${class2tag[$class]}"
 	done
@@ -234,7 +248,7 @@ done > summary.csv
 			echo -e "[$tag] ${tag2msg[$tag]}\n\t$logs\n"
 		done
 	done
-) > summary.txt
+) > "$OUTPUT_TEXT"
 
 get_best_stackdump() {
 	log=$1
@@ -249,23 +263,23 @@ get_best_stackdump() {
 	stacklog="$(find $workdir/triage/repro_*_${cksum}_*\+ -name stacks.log 2>/dev/null |head -1)"
 	if test -n "$stacklog" -a -f "$stacklog"; then
 		if test -f $stacklog.txt; then
+			# return existing decoded log
 			echo $stacklog.txt
 		else
-			# do not decode stacks.log inline since they can be quite big
+			# no decoded logs, record item to jobs file and link the raw log
+			#decode_log "$stacklog" # immediately decode stack logs?
 			echo "$stacklog" >> $DECODE_LIST
-			#decode_log "$stacklog" # returns the generated output file
 			echo $stacklog
 		fi
 	else
-		# log missing reproducers
+		# no reproducer info, record item to 'jobs' file
 		echo "$workdir,$cksum" >> $REPRO_LIST
 	fi
 }
 
 (
 	echo '<pre>'
-	echo "Scanned logs: $SCAN_LOGS ($SCAN_LOGS_NUM logs total)"
-	echo "Identified ${#tag2msg[*]} issues:"
+	echo "Identified ${#tag2msg[*]} issues out of $SCAN_LOGS_NUM logs:"
 	for class in $CLASSES_ORDER; do
 		[ -z "${class2tag[$class]}" ] && continue
 		num_issues=$(echo ${class2tag[$class]}|wc -w)
@@ -311,6 +325,10 @@ get_best_stackdump() {
 		echo "</details>"
 	done
 	echo '</pre>'
-) > summary.html
+) > "$OUTPUT_HTML"
 
+decode_jobs=$(wc -l $DECODE_LIST|awk '{print $1}')
+repro_jobs=$(wc -l $REPRO_LIST|awk '{print $1}')
 
+test "$decode_jobs" -gt 0 && echo "Recorded $decode_jobs missing stack decode jobs in $DIR/$DECODE_LIST"
+test "$repro_jobs" -gt 0 && echo "Recorded $repro_jobs missing reproducer jobs in $DIR/$DECODE_LIST"
