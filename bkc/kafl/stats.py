@@ -8,6 +8,8 @@ import sys
 import glob
 import msgpack
 import argparse
+import subprocess
+
 from pathlib import Path
 from pprint import pprint
 
@@ -21,35 +23,55 @@ def msgpack_read(pathname):
     with open(pathname, 'rb') as f:
         return msgpack.unpackb(f.read(), strict_map_key=False)
 
-def stats_print(stats):
+def stats_print(stats, plotfile, workdir):
 
-    last = dict()
-    days_limit = 60*60*24*2
-    runtime = stats['runtime']
-    stop_time = stats['start_time'] + runtime
-    last_time = stats['aggregate']['last_found']
-    favs_done = stats['favs_total']-stats['favs_pending']
+    def pprint_last_findings(stats):
+        last = dict()
+        stop_time = stats['start_time'] + stats['runtime']
+        last_time = stats['aggregate']['last_found']
+        for exit in ['regular', 'crash', 'kasan', 'timeout']:
+            if last_time[exit] == 0:
+                last[exit] = "N/A"
+            else:
+                last[exit] = timedelta(
+                        seconds=int(stop_time-last_time[exit]))
+        return last
 
-    for exit in ['regular', 'crash', 'kasan', 'timeout']:
-        if last_time[exit] == 0:
-            last[exit] = "N/A"
-        else:
-            last[exit] = timedelta(
-                    seconds=int(stop_time-last_time[exit]))
-    
-    print(f"<tr><th align=left>{stats['name']}</th></tr>")
+    last_find = pprint_last_findings(stats)
+    num_favs  = stats['favs_total']
+    num_norms = stats['findings']['regular'] - stats['favs_total']
+
+    if stats['total_execs'] == 0 or num_favs + num_norms == 0:
+        print(f"No execs or no path found for {workdir}. Skipping..", file=sys.stderr)
+        return
+
+    if num_favs > 0:
+        done_favs = 100*stats['aggregate']['fav_states'].get('final', 0) / num_favs
+    else:
+        done_favs = 100
+    if num_norms > 0:
+        done_norms = 100*stats['aggregate']['norm_states'].get('final', 0) / num_norms
+    else:
+        done_norms = 100
+    crash_fraction = (stats['paths_total']-stats['findings']['regular'])/stats['paths_total']*100
+    done_total = 0.7*done_favs + 0.2*done_norms + 0.1*crash_fraction
+
+    print("<table><tr><th align=left>%s</th></tr>" % stats['name'])
     print("<tr><td><pre>")
-    print("  Runtime: " + humanize.naturaldelta(timedelta(seconds=runtime)))
-    print("    Execs: " + humanize.intword(stats['total_execs']))
-    print("    Avg:   " + humanize.intcomma(stats['execs']))
-    print("")
-    print(f"  Paths: " + humanize.intcomma(stats['paths_total']))
-    print(f"    regular:   {stats['findings']['regular']}\t(last: {last['regular']})")
-    print(f"    crashes:   {stats['findings']['crash']}  \t(last: {last['crash']})")
-    print(f"    sanitizer: {stats['findings']['kasan']}  \t(last: {last['kasan']})")
-    print(f"    timeout:   {stats['findings']['timeout']}\t(last: {last['timeout']})")
-    print("")
-    print(f"  Queue Status")
+    print("Total runtime:    " + humanize.naturaldelta(timedelta(seconds=stats['runtime'])))
+    print("Total executions: " + humanize.intword(stats['total_execs']))
+    print("Edges in bitmap:  " + humanize.intcomma(stats['bytes_in_bitmap']))
+    print("Estimated done:    ~%d%%" % done_total)
+    print("\nPerformance")
+    print("  Avg. exec/s:  " + humanize.intcomma(stats['execs']))
+    print("  Timeout rate: %3.2f%%" % (stats['num_timeout']/stats['total_execs']*100))
+    print("  Funky rate:   %3.2f%%" % (stats['num_funky']/stats['total_execs']*100))
+    print("  Reload rate:  %3.2f%%" % (stats['num_reload']/stats['total_execs']*100))
+    print("\nCorpus (%s paths)" % humanize.intcomma(stats['paths_total']))
+    print("  regular:   %4d (last: %s)" % (stats['findings']['regular'], last_find['regular']))
+    print("  crashes:   %4d (last: %s)" % (stats['findings']['crash'], last_find['crash']))
+    print("  sanitizer: %4d (last: %s)" % (stats['findings']['kasan'], last_find['kasan']))
+    print("  timeout:   %4d (last: %s)" % (stats['findings']['timeout'], last_find['timeout']))
 
     queue_stages = {
             'initial': 'init',
@@ -58,21 +80,27 @@ def stats_print(stats):
             'havoc': 'havoc',
             'final': 'final' }
 
-    print("    %5s  %4s    %4s" % ("Stage", "Favs", "Norm"))
+    print("\nQueue Progress")
+    print("  %5s  %4s    %4s" % ("Stage", "Favs", "Norm"))
     for stage in queue_stages:
-        print("    %5s: %4d  / %4d" % (queue_stages[stage],
+        print("  %5s: %4d  / %4d" % (queue_stages[stage],
                                   stats['aggregate']['fav_states'].get(stage, 0),
                                   stats['aggregate']['norm_states'].get(stage, 0)))
 
-    num_favs  = stats['favs_total']
-    num_norms = stats['findings']['regular'] - stats['favs_total']
-    done_favs  = 100*stats['aggregate']['fav_states'].get('final', 0) / num_favs
-    done_norms = 100*stats['aggregate']['norm_states'].get('final', 0) / num_norms
+    print("\nMutation Yields")
+    for method, num in stats['aggregate']['yield'].items():
+        print("  %12s: %4d" % (method, num))
 
-    print("     %s: %3d%%  / %3d%%" % ("Done", done_favs, done_norms))
     print("</pre></td><td>")
-    print(f"<img width=500 src=\"./{stats['name']}/stats.png\">")
+    if plotfile.is_file():
+        print(f"<img width=700 src=\"{plotfile.relative_to(workdir.parent)}\">")
+
     print("</td></tr>")
+
+    #print("<tr><td><details><summary>kAFL config</summary><pre>")
+    #pprint(msgpack_read(workdir/"config"))
+    #print("</pre></details></td></tr>")
+    print("</table>")
 
 def stats_aggregate(stats):
 
@@ -80,6 +108,41 @@ def stats_aggregate(stats):
             "fav_states": {},
             "norm_states": {},
             "last_found": {"regular": 0, "crash": 0, "kasan": 0, "timeout": 0},
+            "yield": {},
+            }
+
+    methods = {
+            'import': "seed/import",
+            'kickstart': "kickstart",
+            'calibrate': "calibrate",
+            'trim': "trim",
+            'trim_center': "trim_center",
+            'stream_color': "stream_color",
+            'stream_zero': "stream_zero",
+            'redq_color': "redq_color",
+            'redq_mutate': "redq_mutate",
+            'redq_dict': "redq_dict",
+            'grim_infer': "grim_infer",
+            'grim_havoc': "grim_havoc",
+            'afl_arith_1': "afl_arith",
+            'afl_arith_2': "afl_arith",
+            'afl_arith_4': "afl_arith",
+            'afl_flip_1/1': "afl_flip",
+            'afl_flip_2/1': "afl_flip",
+            'afl_flip_8/1': "afl_flip",
+            'afl_flip_8/2': "afl_flip",
+            'afl_flip_8/4': "afl_flip",
+            'afl_int_1': "afl_int",
+            'afl_int_2': "afl_int",
+            'afl_int_4': "afl_int",
+            'afl_havoc': "afl_havoc",
+            'afl_splice': "afl_splice",
+            'radamsa': "radamsa",
+            'trim_funky': "funky",
+            'stream_funky': "funky",
+            'validate_bits': "funky",
+            'fixme': "funky",
+            'redq_trace': "funky",
             }
 
     for node in stats['nodes'].values():
@@ -96,7 +159,29 @@ def stats_aggregate(stats):
 
             ret[fav][state] = ret[fav].get(state, 0) + 1
 
+    for method, num in stats['yield'].items():
+        name=methods[method]
+        ret['yield'][methods[method]] = num
+
     stats['aggregate'] = ret
+
+def generate_plots(workdir):
+    GNUPLOT_SCRIPT=Path(os.environ.get("BKC_ROOT"))/"bkc"/"kafl"/"stats.plot"
+    STATS_INPUT=workdir/"stats.csv"
+    STATS_OUTPUT=workdir/"stats.png"
+
+    if not STATS_OUTPUT.is_file():
+        cmd = [ "gnuplot",
+                "-e", f'set terminal png size 900,800 enhanced; set output "{STATS_OUTPUT}"',
+                "-c", f"{GNUPLOT_SCRIPT}",
+                f"{STATS_INPUT}"]
+
+        p = subprocess.run(cmd, text=True, capture_output=True, timeout=10)
+        if p.returncode != 0:
+            print(f"Failed to execute: {cmd}. Output:", file=sys.stderr)
+            print(p.stderr, file=sys.stderr)
+
+    return STATS_OUTPUT
 
 def process_workdir(workdir):
     workers = dict()
@@ -139,9 +224,8 @@ def main():
     for c in sorted(candidates):
         stats = process_workdir(c.parent)
         stats_aggregate(stats)
-        print("<table>")
-        stats_print(stats)
-        print("</table>")
+        plotfile = generate_plots(c.parent)
+        stats_print(stats, plotfile, c.parent)
 
 
 if __name__ == "__main__":
