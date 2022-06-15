@@ -2,13 +2,15 @@
 
 Scripts and example results for Smatch static analysis of the Linux kernel.
 
-## Installation 
+## Setup
 
-1. Download smatch source code from  [smatch repo](https://repo.or.cz/w/smatch.git)
-2. Apply `./0001-check_host_input-add-a-pattern.patch` to the source code
-tree.
-3. Follow the instructions in [smatch documentation](https://repo.or.cz/smatch.git/blob/HEAD:/Documentation/smatch.txt) to install
-smatch dependencies and compile smatch.
+Ensure you sourced the environment:
+
+```shell
+source ../../.env
+```
+
+If the environment file is missing, check the main [README](https://github.com/intel/ccc-linux-guest-hardening/blob/master/README.md) for installation instructions.
 
 ## Usage
 
@@ -17,5 +19,3 @@ follow the instructions in [Our documentation](https://intel.github.io/ccc-linux
 to perform a smatch run for your kernel source tree and filter the results
 using `./bkc/audit/process_smatch_output.py` and `./bkc/audit/transfer_results.py`
 scripts.
-
-
