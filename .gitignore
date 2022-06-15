@@ -6,7 +6,7 @@ venv/
 Pipfile
 Pipfile.lock
 manifest/
-kafl/
+/kafl/
 linux-guest/
 linux-host/
 /tdvf/
