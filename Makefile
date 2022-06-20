@@ -4,7 +4,7 @@
 # Makefile recipies for managing kAFL workspace
 
 # declare all targets in this variable
-ALL_TARGETS:=deploy clean env
+ALL_TARGETS:=deploy clean env sharedir
 # declare all target as PHONY
 .PHONY: $(ALL_TARGETS)
 
@@ -31,3 +31,11 @@ env: SHELL:=bash
 env: env.sh
 	@echo "Entering environment in sub-shell. Exit with 'Ctrl-d'."
 	@PROMPT_COMMAND='source env.sh; unset PROMPT_COMMAND' $(SHELL)
+
+sharedir: SHELL:=bash
+sharedir:
+	source env.sh && $$BKC_ROOT/bkc/kafl/userspace/gen_sharedir.sh $$BKC_ROOT/sharedir
+
+initrd.cpio.gz: SHELL:=bash
+initrd.cpio.gz:
+	source env.sh && $$BKC_ROOT/bkc/kafl/userspace/gen_buildroot.sh initrd.cpio.gz
