@@ -34,6 +34,12 @@
         - nyx_packer
 
   post_tasks:
+    - name: Copy bkc folder
+      copy:
+        src: "{{ playbook_dir }}/../bkc"
+        dest: "{{ install_root }}/"
+      when: ansible_connection != 'local'
+
     - name: Install env file
       template:
         src: env.j2
