@@ -27,6 +27,7 @@ import yaml
 
 FUZZ_SH_PATH = os.path.expandvars("$BKC_ROOT/bkc/kafl/fuzz.sh")
 SHAREDIR_PATH = os.path.expandvars("$BKC_ROOT/sharedir")
+INITRD_FILE = os.path.expandvars("$BKC_ROOT/initrd.cpio.gz")
 DEFAULT_TIMEOUT_HOURS=2
 DEFAULT_COV_TIMEOUT_HOURS=2
 REPEATS=1
@@ -387,6 +388,20 @@ def do_cov(args):
         print(f"DONE Gathering coverage for '{d}' with -p {ncpu}\n")
 
 
+def do_pre_build_checks(setups):
+    contains_userspace_setup = False
+    for setup in setups:
+        harness = normalize_harness_name(setup[0][0])
+        if harness.startswith("US_"):
+            contains_userspace_setup  = True
+
+    if contains_userspace_setup:
+        if not os.path.isdir(SHAREDIR_PATH):
+            print(f"Sharedir '{SHAREDIR_PATH}' does not exists. Please do `make sharedir`.")
+            sys.exit(1)
+        if not os.path.isfile(INITRD_FILE):
+            print(f"'{INITRD_FILE}' does not exists. Please do `make initrd.cpio.gz`.")
+            sys.exit(1)
 
 
 def do_run(args):
@@ -419,6 +434,8 @@ def do_run(args):
         print(f"Requesting more threads than cores available ({args.processes} * {args.jobs} > {multiprocessing.cpu_count()})!! If you really want this, specify --overcommit")
         sys.exit(1)
 
+    # Check that system is OK to run setups
+    do_pre_build_checks(setups)
 
     start = timer()
 
