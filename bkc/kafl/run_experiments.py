@@ -72,7 +72,8 @@ BPH_HARNESSES = [
 
 # UserSpace harnesses
 US_HARNESSES = [
-        "US_DHCP"
+        "US_DHCP",
+        "US_RESUME_SUSPEND", # Requires input seeds. e.g., from FULL_BOOT
         ]
 
 HARNESSES = HARNESSES + BPH_HARNESSES + US_HARNESSES
@@ -131,6 +132,7 @@ harness_config_options = {
         "CONFIG_TDX_FUZZ_HARNESS_DOINITCALLS_PCI": {"CONFIG_TDX_FUZZ_KAFL_SKIP_ACPI_PIO": "y"},
         "CONFIG_TDX_FUZZ_HARNESS_DOINITCALLS_VIRTIO": {"CONFIG_TDX_FUZZ_KAFL_VIRTIO": "y"},
         "CONFIG_TDX_FUZZ_HARNESS_START_KERNEL": {"CONFIG_TDX_FUZZ_KAFL_SKIP_ACPI_PIO": "y"},
+        "US_RESUME_SUSPEND": {"CONFIG_PM": "y", "CONFIG_PM_DEBUG": "y", "CONFIG_PM_ADVANCED_DEBUG": "y", "CONFIG_SUSPEND": "y", "CONFIG_HIBERNATE": "y", "CONFIG_PM_AUTOSLEEP": "n", "CONFIG_PM_WAKELOCKS": "n", "CONFIG_PM_TRACE_RTC": "n", "CONFIG_ACPI_TAD": "n", "CONFIG_FW_CACHE": "y"},
         }
 
 config_options_dependencies = {}
