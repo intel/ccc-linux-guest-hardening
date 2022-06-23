@@ -209,7 +209,7 @@ properly, modifications should be mostly limited to the sharedir folder:
 cd ~/tdx
 ln -s bkc/kafl/fuzz.sh
 ln -sf buildroot-2021.08/output/images/rootfs.cpio.gz initrd.cpio.gz
-./fuzz.sh linux-guest -p 1 -sharedir ~/sharedir
+./fuzz.sh linux-guest -p 1 --sharedir ~/sharedir
 ```
 
 Fuzzing complex user stimulus like `lspci` or `ping` may suffer from significant
