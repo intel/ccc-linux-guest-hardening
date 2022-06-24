@@ -1,0 +1,3 @@
+smatch_url: https://github.com/error27/smatch
+smatch_revision: ac3cf4a16a25ee83972ea728362ce4eb8f27ac74
+smatch_root: "{{ install_root }}/smatch"

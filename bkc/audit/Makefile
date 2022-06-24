@@ -36,11 +36,8 @@ all: $(REPORTS)
 
 smatch: $(SMATCH_BIN)
 
-$(SMATCH_BIN): $(SMATCH_ROOT)/
-	@echo "[*] Attempting to build Smatch..."
-	sudo apt install libsqlite3-dev
-	git -C $(SMATCH_ROOT) am $(BKC_ROOT)/bkc/audit/0001-check_host_input-add-a-pattern.patch
-	make -C $(SMATCH_ROOT) -j $(nproc)
+$(SMATCH_BIN):
+	make -C $(BKC_ROOT) deploy -- --tags smatch
 
 $(SMATCH_WARNS): $(SMATCH_BIN) $(LINUX_GUEST)/.config
 	@echo "[*] Analysing the kernel. This can take some time.."

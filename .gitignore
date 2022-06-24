@@ -2,14 +2,19 @@
 .venv/
 .pipenv
 .west/
+venv/
 Pipfile
 Pipfile.lock
 manifest/
-kafl/
+/kafl/
 linux-guest/
 linux-host/
-tdvf/
-smatch/
+/tdvf/
+/smatch/
+/packer/
 fuzz.sh
 TDVF.fd
 initrd.cpio.gz
+
+# IDE
+.vscode/

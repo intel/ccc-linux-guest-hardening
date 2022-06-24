@@ -1,0 +1,3 @@
+guest_url: https://github.com/IntelLabs/kafl.linux
+guest_revision: kafl/fuzz-5.15-3
+guest_root: "{{ install_root }}/linux-guest"

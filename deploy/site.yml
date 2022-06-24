@@ -1,0 +1,48 @@
+- hosts: all
+  environment:
+    http_proxy: "{{ proxy_env.http_proxy | default(lookup('env', 'HTTP_PROXY')) }}"
+    https_proxy: "{{ proxy_env.https_proxy | default(lookup('env', 'HTTPS_PROXY')) }}"
+  vars:
+    install_root: "{{ playbook_dir | dirname if ansible_connection == 'local' else ansible_env.HOME + '/ccc'}}"
+
+  roles:
+    - role: intellabs.kafl.fuzzer
+      tags:
+        - fuzzer
+      vars:
+        fuzzer_revision: kafl_tdx
+        qemu_revision: kafl_stable_tdx
+        libxdc_revision: kafl_stable_tdx
+        kernel_deb_urls:
+          - https://github.com/IntelLabs/kafl.linux/releases/download/sdv-nyx-5.6-rc1-v2/linux-image-5.6.0-rc1-tdfl+_5.6.0-rc1-tdfl+-15_amd64.deb
+        kernel_grub_default: 'gnulinux-advanced-49764e08-5aba-4fc8-ab39-e9d3b268e429>gnulinux-5.6.0-rc1-sdv-kafl-tdfl+-advanced-49764e08-5aba-4fc8-ab39-e9d3b268e429'
+        # install kafl in its own subdir
+        # can't reuse install_root because of jinja templating recursion issue
+        kafl_install_root: "{{ playbook_dir | dirname if ansible_connection == 'local' else ansible_env.HOME + '/ccc'}}/kafl"
+
+    - role: intellabs.kafl.nyx_packer
+      tags:
+        - nyx_packer
+
+    - role: tdvf
+      tags:
+        - tdvf
+    - role: guest
+      tags:
+        - guest
+        - never
+    - role: smatch
+      tags:
+        - smatch
+
+  post_tasks:
+    - name: Copy bkc folder
+      copy:
+        src: "{{ playbook_dir }}/../bkc"
+        dest: "{{ install_root }}/"
+      when: ansible_connection != 'local'
+
+    - name: Install env file
+      template:
+        src: env.j2
+        dest: "{{ install_root }}/.env"

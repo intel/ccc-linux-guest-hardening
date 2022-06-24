@@ -5,95 +5,6 @@ kAFL with TDX SDV, to allows execution and fuzzing of TDX guests in kAFL.
 
 **Platform requirements:** This setup requires a Gen-6 or newer Intel CPU (for Intel PT) with about 1GB of RAM times the desired parallel fuzzing instances (e.g. CPUs/threads). Installation has been tested for recent Ubuntu (>=20.04) and Debian (>=bullseye). The setup requires installing a modifed (outdated, unmaintained) host kernel for TDX emulation and fuzzing and cannot be installed in a virtual machine. The components are provided for research and validation purposes only.
 
-## Installation
-
-### 1. Build and Install kAFL
-
-kAFL is a pyhon frontend to a custom Qemu/KVM stack. The following installs kAFL
-package and builds all userspace dependencies.
-
-Follow the [main readme](/README.md) for how to download components and create
-the Python + shell environment. Make sure all the main repositories are
-downloaded according to west manifest:
-
-```shell
-make env
-west update -k
-make install
-```
-
-In case of problems, please refer to the [kAFL Getting Started
-Guide](https://github.com/IntelLabs/kAFL/).
-
-
-### 2. Install TDX SDV + kAFL host kernel
-
-To boot and fuzz the TDX guest kernel on non-TDX hardware, we require a modified
-host kernel with with "SDV" emulation and kAFL/Nyx patches applied to Linux/KVM.
-
-Option 1: Install a host kernel from prebuild .deb packages. This is recommended and tested with several recent Ubuntu and Debian releases.
-- [Prebuild SDV+kAFL host kernel](https://github.com/IntelLabs/kafl.linux/releases/tag/kafl%2Fsdv-5.6-rc1)
-
-```shell
-sudo dpkg -i /path/to/linux-image-*deb
-```
-
-Option 2: Fetch host SDV + kAFL kernel to build from source
-
-West does not fetch the host kernel repo by default. You can fetch it explicitly and
-build based on known-working config:
-
-```shell
-west update linux-host # not pulled by default
-cd $LINUX_HOST
-cp $BKC_ROOT/bkc/kafl/linux_kernel_sdv_kafl.config .config
-make -j$(nproc) bindeb-pkg
-sudo dpkg -i ../linux-image-*deb
-```
-
-Add the following options to `kvm_intel` module loading (only `ve_injection=1` is strictly required):
-
-```shell
-cat >> /etc/modprobe.d/kvm-intel.conf << HERE
-options kvm-intel nested=1 ve_injection=1 halt_on_triple_fault=1
-HERE
-```
-
-After reboot, ensure that you have launched into a kAFL and SDV enabled kernel. You may need to update
-your bootloader config to get it loaded or select it manually on reboot:
-
-```shell
-uname -a
-Linux tdx-fuzz0 5.6.0-rc1-tdfl[...]
-```
-
-### 3. Build TDVF firmware for the guest
-
-To boot the TDX guest kernel on our emulation setup, we require a modified TDVF
-firmware build. Again, we recommend to use the prebuild image from github:
-
-- [TDVF-SDV v0.1](https://github.com/IntelLabs/kafl.edk2/releases/tag/tdvf-sdv-v0.1)
-
-Alternatively, to build TDVF youself:
-
-```shell
-west update tdvf # not pulled by default
-cd $TDVF_ROOT
-make -j $(nproc) -C BaseTools
-source edksetup.sh --reconfig
-build -n $(nproc) -p OvmfPkg/OvmfPkgX64.dsc -t GCC5 -a X64 -D TDX_EMULATION_ENABLE=FALSE -D DEBUG_ON_SERIAL_PORT=TRUE
-```
-
-Note: If you do not use west, you may need `git submodule update --init`
-
-Following the edk2 build process, you will find the TDVF binaries under
-`$WORKSPACE/Build/OvmfX64/*/FV` directory. The actual path will depend on how
-your build is configured, for example `Build/OvmfX64/DEBUG_GCC5/FV/OVMF.fd`.
-
-For additional help on building UEFI/EDK2, please check the [EDK2
-Wiki](https://github.com/tianocore/tianocore.github.io/wiki/Getting-Started-with-EDK-II).
-
-
 ## kAFL Hello World Example
 
 __TODO:__ update and split out different example harnesses as subsections
@@ -252,5 +163,3 @@ harnessing using the following functions:
 void kafl_fuzz_function(char *fname); // Harness around a single function fname
 void kafl_fuzz_function_disable(char *fname); // Disable fuzz input consumption for fname
 ```
-
-

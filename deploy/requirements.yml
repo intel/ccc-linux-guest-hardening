@@ -1,0 +1,5 @@
+collections:
+  - name: intellabs.kafl
+    source: git+https://github.com/IntelLabs/kAFL#/deploy/intellabs/
+    type: git
+    version: master
