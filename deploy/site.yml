@@ -20,6 +20,10 @@
         # can't reuse install_root because of jinja templating recursion issue
         kafl_install_root: "{{ playbook_dir | dirname if ansible_connection == 'local' else ansible_env.HOME + '/ccc'}}/kafl"
 
+    - role: intellabs.kafl.nyx_packer
+      tags:
+        - nyx_packer
+
     - role: tdvf
       tags:
         - tdvf
@@ -30,9 +34,6 @@
     - role: smatch
       tags:
         - smatch
-    - role: nyx_packer
-      tags:
-        - nyx_packer
 
   post_tasks:
     - name: Copy bkc folder
