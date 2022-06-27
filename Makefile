@@ -26,3 +26,9 @@ deploy:
 
 clean:
 	make -C deploy $@
+
+env: SHELL:=bash
+env: .env
+	source .env && \
+	source $$KAFL_ROOT/.venv/bin/activate && \
+	PROMPT_COMMAND='PS1="(`basename $$PWD`) $$PS1";unset PROMPT_COMMAND' $(SHELL)
