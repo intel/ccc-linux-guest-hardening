@@ -3,7 +3,7 @@
 kAFL/Nyx is a fuzzer for Qemu/KVM VMs. This setup describes the combination of
 kAFL with TDX SDV, to allows execution and fuzzing of TDX guests in kAFL.
 
-**Platform requirements:** This setup requires a Gen-6 or newer Intel CPU (for Intel PT) with about 1GB of RAM times the desired parallel fuzzing instances (e.g. CPUs/threads). Installation has been tested for recent Ubuntu (>=20.04) and Debian (>=bullseye). The setup requires installing a modifed (outdated, unmaintained) host kernel for TDX emulation and fuzzing and cannot be installed in a virtual machine. The components are provided for research and validation purposes only.
+**Platform requirements:** This setup requires a Gen-6 or newer Intel CPU (for Intel PT) and a modifed host kernel. It does not work in a VM or container.
 
 ## kAFL Hello World Example
 
