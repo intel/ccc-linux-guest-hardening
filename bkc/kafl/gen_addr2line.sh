@@ -40,6 +40,7 @@ if [ -d $INPUT ]; then
 	LINES_LIST=$WORK_DIR/traces/addr2line.lst
 	test -f $EDGE_LIST || fatal "Error: Supplied workdir is missing coverage info at $EDGE_LIST"
 elif [ -f $INPUT ]; then
+	WORK_DIR=$(realpath $(dirname $INPUT)/../)
 	EDGE_LIST=$(echo $INPUT|sed s/.lz4$/\.edges.lst/)
 	BLOCK_LIST=$(echo $INPUT|sed s/.lz4$/\.blocks.lst/)
 	ADDR_LIST=$(echo $INPUT|sed s/.lz4$/\.addr.lst/)
