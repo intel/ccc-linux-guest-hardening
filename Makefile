@@ -26,3 +26,8 @@ deploy:
 
 clean:
 	make -C deploy $@
+
+env: SHELL:=bash
+env: env.sh
+	@echo "Entering environment in sub-shell. Exit with 'Ctrl-d'."
+	@PROMPT_COMMAND='source env.sh; unset PROMPT_COMMAND' $(SHELL)
