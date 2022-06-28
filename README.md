@@ -3,8 +3,8 @@
 </h1>
 
 <p align="center">
-  <a href="https://github.com/Wenzel/ccc-linux-guest-hardening/actions/workflows/ci.yml">
-    <img src="https://github.com/Wenzel/ccc-linux-guest-hardening/actions/workflows/ci.yml/badge.svg" alt="CI">
+  <a href="https://github.com/intel/ccc-linux-guest-hardening/actions/workflows/ci.yml">
+    <img src="https://github.com/intel/ccc-linux-guest-hardening/actions/workflows/ci.yml/badge.svg" alt="CI">
   </a>
 </p>
 
