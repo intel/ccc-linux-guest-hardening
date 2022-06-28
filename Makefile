@@ -4,7 +4,7 @@
 # Makefile recipies for managing kAFL workspace
 
 # declare all targets in this variable
-ALL_TARGETS:=deploy clean
+ALL_TARGETS:=deploy clean env
 # declare all target as PHONY
 .PHONY: $(ALL_TARGETS)
 
