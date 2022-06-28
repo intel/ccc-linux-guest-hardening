@@ -44,4 +44,4 @@
     - name: Install env file
       template:
         src: env.j2
-        dest: "{{ install_root }}/.env"
+        dest: "{{ install_root }}/env.sh"
