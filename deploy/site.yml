@@ -30,7 +30,6 @@
     - role: guest
       tags:
         - guest
-        - never
     - role: smatch
       tags:
         - smatch
