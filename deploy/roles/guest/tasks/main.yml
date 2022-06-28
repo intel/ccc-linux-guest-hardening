@@ -18,7 +18,7 @@
     force: yes
 
 - name: Prepare fuzzing build of TDX guest kernel
-  include_tasks: build.yml
+  import_tasks: build.yml
   tags:
       - guest_build
       - never
