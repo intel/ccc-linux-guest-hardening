@@ -1,0 +1,18 @@
+- name: Copy BKC TDX guest kernel config
+  copy:
+    src: "{{ playbook_dir | dirname }}/bkc/kafl/linux_kernel_tdx_guest.config"
+    dest: "{{ guest_root }}/.config"
+
+- name: Enable Virtio harness
+  command: "{{ item }}"
+  args:
+    chdir: "{{ guest_root }}"
+  with_items:
+    - ./scripts/config -e CONFIG_TDX_FUZZ_KAFL
+    - ./scripts/config -e CONFIG_TDX_FUZZ_HARNESS_DOINITCALLS_VIRTIO
+
+- name: Build TDX guest kernel
+  make:
+    chdir: "{{ guest_root }}"
+    params:
+      --jobs: "{{ ansible_processor_nproc }}"
