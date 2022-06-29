@@ -1,11 +1,7 @@
-.env
-.venv/
-.pipenv
-.west/
-venv/
+env.sh
+/deploy/venv/
 Pipfile
 Pipfile.lock
-manifest/
 /kafl/
 linux-guest/
 linux-host/
