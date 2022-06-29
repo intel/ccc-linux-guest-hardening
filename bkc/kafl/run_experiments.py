@@ -264,7 +264,8 @@ def build_kernel(setup, linux_source, global_storage_dir, debug=False):
     os.chdir(old_cwd)
     userspace_harness_script = userspace_script_for_harness(harness)
     if userspace_harness_script:
-        subprocess.run(f"cp {userspace_harness_script} {kernel_build_path}/us_harness.sh", shell=True, stdout=out_stdout, stderr=out_stderr)
+        subprocess.run(f"cp -r {SHAREDIR_PATH} {kernel_build_path}/sharedir", shell=True, stdout=out_stdout, stderr=out_stderr)
+        subprocess.run(f"cp {userspace_harness_script} {kernel_build_path}/sharedir/init.sh", shell=True, stdout=out_stdout, stderr=out_stderr)
     return campaign_name
 
 
@@ -297,11 +298,8 @@ def run_setup(campaign_name, setup, linux_source, global_storage_dir, debug=Fals
         print(f"Could not find seed dir {harness_seeds}")
     seed_str = f"--seed-dir {seeds_dir}" if seeds_dir else ""
 
-    if campaign_name.startswith("US_"):
-        userspace_harness_script = os.path.join(kernel_build_path, "us_harness.sh")
-        subprocess.run(f"cp {SHAREDIR_PATH}/init.sh {SHAREDIR_PATH}/init.sh.bak", shell=True, stdout=out_stdout, stderr=out_stderr)
-        subprocess.run(f"cp {userspace_harness_script} {SHAREDIR_PATH}/init.sh", shell=True, stdout=out_stdout, stderr=out_stderr)
-
+    sharedir_str = f"--sharedir {kernel_build_path}/sharedir" if campaign_name.startswith("US_") else ""
+    debug_str = "--debug" if debug else ""
 
     print(f"Running campaign {workdir_path} with seeds '{seeds_dir}'")
     dry_run_flags = "--abort-exec=10000" if dry_run else ""
@@ -313,7 +311,7 @@ def run_setup(campaign_name, setup, linux_source, global_storage_dir, debug=Fals
     kafl_harness_extra_params = KAFL_PARAM_HARNESSES.get(harness, "")
     try:
 
-        exc_cmd = f"KAFL_WORKDIR={workdir_path} {FUZZ_SH_PATH} full {kernel_build_path} --abort-time={timeout} -p={processes} --cpu-offset={cpu_offset} {seed_str} {KAFL_EXTRA_FLAGS} {kafl_harness_extra_params} {dry_run_flags} {kernel_boot_params}"
+        exc_cmd = f"KAFL_WORKDIR={workdir_path} {FUZZ_SH_PATH} full {kernel_build_path} --abort-time={timeout} -p={processes} --cpu-offset={cpu_offset} {seed_str} {sharedir_str} {debug_str} {KAFL_EXTRA_FLAGS} {kafl_harness_extra_params} {dry_run_flags} {kernel_boot_params}"
         command_log.append(exc_cmd)
         #with open(os.path.join(workdir_path, "cmd"), "w") as f:
         #    print(exc_cmd, file=f)
@@ -338,11 +336,6 @@ def run_setup(campaign_name, setup, linux_source, global_storage_dir, debug=Fals
 
     ## HACK: overwrite ./target/ copied by fuzz.sh since vmlinux could have changed due to parallel campaign compilation
     #subprocess.run(f"cp {kernel_build_path}/* {target_dir}", shell=True, stdout=out_stdout, stderr=out_stderr)
-
-    # Restore sharedir init.sh
-    if campaign_name.startswith("US_"):
-        subprocess.run(f"mv {SHAREDIR_PATH}/init.sh.bak {SHAREDIR_PATH}/init.sh", shell=True, stdout=out_stdout, stderr=out_stderr)
-
 
 
 def worker(i, processes, stop, dry_run):
