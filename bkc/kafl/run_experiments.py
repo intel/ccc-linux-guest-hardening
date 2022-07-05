@@ -410,14 +410,13 @@ def do_run(args):
 
     linux_config_path = os.path.join(linux_src, ".config")
     linux_config_tmpl_path = os.path.join(linux_src, ".config.tmpl")
-    linux_config_bak_path = os.path.join(linux_src, ".config.fuzz.bak")
+    linux_config_bak_path = os.path.join(linux_src, ".config.bak")
     print(f"Backing up .config to {linux_config_bak_path}")
-    subprocess.run(f"cp {linux_config_path} {linux_config_bak_path}", shell=True)
+    subprocess.run(f"cp --backup=numbered {linux_config_path} {linux_config_bak_path}", shell=True)
     if os.path.isfile(linux_config_tmpl_path):
-        print(f"Using Kernel config template '{linux_config_tmpl_path}'")
+        print(f"Using template kernel config at '{linux_config_tmpl_path}'")
     else:
-        print(f"Kernel .config template file '{linux_config_tmpl_path}' does not exists, using ' {linux_config_path}'")
-        subprocess.run(f"cp {linux_config_path} {linux_config_tmpl_path}", shell=True)
+        print(f"No template kernel config, using current config at ' {linux_config_path}'")
 
 
     harnesses = parse_linux_config(linux_config_path)
