@@ -228,6 +228,7 @@ def build_kernel(setup, linux_source, global_storage_dir, debug=False):
 
     harness = normalize_harness_name(setup[0][0])
     storage_dir = tempfile.mkdtemp(dir=global_storage_dir, prefix=harness+"-")
+    subprocess.run(f"chmod a+rx {storage_dir}", shell=True, stdout=out_stdout, stderr=out_stderr)
     campaign_name = os.path.basename(storage_dir)
     print(f"Configuring kernel for campaign '{campaign_name}'")
 
