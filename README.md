@@ -91,16 +91,12 @@ Note: if your nodes require a proxy setup, update the `group_vars/all.yml`.
 When the installation is complete, you will find several tools and scripts
 inside the installation directory of the target system.
 
-The environment itself is defined using two files:
-
-- `.env` file contains useful environment variables for your scripts
-- `.venv` Python virtual environment for kAFl and workflow utilities
-
-All subsequent steps assume that you have activated the environment, like so:
+All subsequent steps assume that you have activated the installation environment.
+This is done either by sourcing the `env.sh` script, or by typing `make env`,
+which launches a sub-shell that makes it easier to exit and switch environments:
 
 ```shell
-source .env
-source $KAFL_ROOT/.venv/bin/activate
+make env
 ```
 
 # Kernel Hardening Workflow
