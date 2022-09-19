@@ -40,13 +40,16 @@ function usage()
 Usage: $0 <cmd> <dir> [args]
 
 Available commands <cmd>:
-  run    <target> [args] - launch fuzzer with optional kAFL args [args]
-  single <target> <file> - execute target from <dir> with single input from <file>
-  debug  <target> <file> - launch target with single input <file>
-                           and wait for gdb connection (qemu -s -S)
-  cov <workdir>          - re-execute all payloads from <workdir>/corpus/ and
-                           collect the individual trace logs to <workdir>/trace/
-  smatch <workdir>       - get addr2line and smatch_match results from traces
+  run    <target> [args]  - launch fuzzer with optional kAFL args [args]
+  single <target> <file>  - execute target from <dir> with single input from <file>
+  debug  <target> <file>  - launch target with single input <file>
+                            and wait for gdb connection (qemu -s -S)
+  cov <workdir>           - re-execute all payloads from <workdir>/corpus/ and
+                            collect the individual trace logs to <workdir>/trace/
+  smatch <workdir>        - get addr2line and smatch_match results from traces
+
+  campaign <target> <out> - consider free CPUs and save workdir to out/ when done
+  build    <dir>          - build harness template at <dir>
 
 <target> is a folder with vmlinux, System.map and bzImage
 <workdir> is the output of a prior fuzzing run (default: $DEFAULT_WORK_DIR).
@@ -134,6 +137,21 @@ function run()
 		--work-dir $WORK_DIR \
 		--sharedir $SHARE_DIR \
 		$KAFL_OPTS "$@"
+}
+
+# wrapper for more reproducible + parallelizable run()
+function campaign()
+{
+	OUTPUT_DIR="$(realpath -e -- $1)"
+	shift || fatal "Missing argument <dir>"
+
+	NAME=$(basename $OUTPUT_DIR)
+	WORK_DIR="$(mktemp -d -p /dev/shm ${USER}_tdfl.$NAME.XXX)"
+	KAFL_OPTS=$KAFL_FULL_OPTS
+	run "$@"
+
+	# backup only happens if run() returned on its own!
+	mv "$WORK_DIR" "$(mktemp -d -p "$OUTPUT_DIR" job_$(date "+%Y%M%d_XXX"))"
 }
 
 function debug()
@@ -264,6 +282,25 @@ function cov()
 		--input $WORK_DIR --log-hprintf "$@"
 }
 
+# build target from generated template config
+function build()
+{
+	TEMPLATE_DIR="$(realpath -e -- "$1")"
+	shift || fatal "Missing argument <dir>"
+
+	test -f "$TEMPLATE_DIR/linux.template" || fatal "Could not find kernel template config in $TEMPLATE_DIR"
+	test -f "$TEMPLATE_DIR/linux.config" || fatal "Could not find kernel harnes config in $TEMPLATE_DIR"
+
+	test -d "$LINUX_GUEST" || fatal "Could not find kernel source tree at \$LINUX_GUEST"
+	test -f "$LINUX_GUEST/Kconfig" || fatal "\$LINUX_GUEST is not pointing to a Linux source tree?"
+	test -n "$MAKEFLAGS" || echo "Detected empty MAKEFLAGS - consider setting MAKEFLAGS=-j$(nproc)."
+
+	cd $TEMPLATE_DIR
+	test -d build || mkdir build
+	cat linux.template linux.config > build/.config
+	cd $LINUX_GUEST && make O=$TEMPLATE_DIR/build olddefconfig && make O=$TEMPLATE_DIR/build
+}
+
 function smatch()
 {
 	# match smatch report against line coverage reported in addr2line.lst
@@ -285,12 +322,26 @@ shift || fatal "Missing argument: <cmd>"
 [ "$ACTION" == "-h" ] && usage
 
 
-TARGET_ROOT="$(realpath $1)"
-shift || fatal "Missing argument: <dir>"
-
 test -d "$BKC_ROOT" || fatal "Could not find BKC_ROOT. Check set_env.sh."
 test -d "$KAFL_ROOT" || fatal "Could not find KAFL_ROOT. Check set_env.sh."
 
+# Some actions don't need a TARGET_ROOT
+case $ACTION in
+	"build")
+		build "$@"
+		exit
+		;;
+	"ranges")
+		get_ip_regions
+		echo "PT trace regions:"
+		echo -e "\tip0: $ip0_a-$ip0_b"
+		echo -e "\tip1: $ip1_a-$ip1_b"
+		exit
+		;;
+esac
+
+TARGET_ROOT="$(realpath -e -- "$1")"
+shift || fatal "Missing argument: <dir>"
 
 # check if TARGET_ROOT is a valid <target> or <workdir>
 if [ -f $TARGET_ROOT/bzImage ]; then
@@ -326,6 +377,9 @@ case $ACTION in
 		KAFL_OPTS=$KAFL_QUICK_OPTS
 		run "$@"
 		;;
+	"campaign")
+		campaign "$@"
+		;;
 	"single")
 		single "$@"
 		echo
@@ -347,12 +401,6 @@ case $ACTION in
 	"noise")
 		noise "$@"
 		echo
-		;;
-	"ranges")
-		get_ip_regions
-		echo "PT trace regions:"
-		echo -e "\tip0: $ip0_a-$ip0_b"
-		echo -e "\tip1: $ip1_a-$ip1_b"
 		;;
 	*)
 		fatal "Unrecognized command $ACTION"
