@@ -128,7 +128,12 @@ def generate_setups(harnesses, pattern):
     for harness in harnesses:
         if pattern not in harness:
             continue
-        req_conf = ()
+
+        req_conf = tuple(default_config_options.items())
+        harness_options = harness_config_options.get(harness, None)
+        if harness_options:
+            req_conf = req_conf + tuple(harness_options.items())
+
         if harness.startswith("BOOT_"):
             basename = harness[len("BOOT_"):]
             req_conf = req_conf + ((f"CONFIG_TDX_FUZZ_HARNESS_{basename}", "y"),)
@@ -137,10 +142,6 @@ def generate_setups(harnesses, pattern):
             req_conf = req_conf + (("CONFIG_TDX_FUZZ_HARNESS_DOINITCALLS", "y"), ("CONFIG_TDX_FUZZ_HARNESS_DOINITCALLS_LEVEL", level),)
         elif harness.startswith("BPH_") or harness.startswith("US_"):
             req_conf = req_conf + (("CONFIG_TDX_FUZZ_HARNESS_NONE", "y"),)
-        req_conf = req_conf + tuple(default_config_options.items())
-        harness_options = harness_config_options.get(harness, None)
-        if harness_options:
-            req_conf = req_conf + tuple(harness_options.items())
         return req_conf
     return None
 
@@ -158,17 +159,22 @@ def select_seed_root(seed_dir, harness):
     return seed_dir
 
 def linux_config(args, setup):
-    shutil.copy(args.template, args.configs['linux'])
-
-    for conf,val in setup:
-        # if setup has repeated entries, the last setting is adopted
-        p.run(f"{args.config_helper} --file {args.configs['linux']} --set-val {conf} {val}", shell=True, stdout=p.DEVNULL, stderr=None)
 
     if not args.quiet:
-        print("Linux config overrides:")
+        print("Setting linux config overrides:")
         for conf,val in setup:
             print(f"  {conf}={val}")
         print("")
+
+    # Kernel scripts/config fails to correctly update CHOICE options,
+    # while kconfig/merge_config.sh uses nonexisting alldefconfig.
+    # Best option is to append the custom options. For reproducibility,
+    # just copy the template and let build step finalize the .config
+    # using e.g "cat a b > .config; make olddefconfig"
+    with open(args.configs['linux'], 'w') as f:
+        for conf,val in setup:
+            f.write(f"{conf}={val}\n")
+    shutil.copy(args.template, args.configs['template'])
 
 def kafl_config(args, sharedir):
     yaml=""
@@ -244,7 +250,6 @@ def process_args(args):
 
     # resolve config file template is required, actually
     args.template = parse_as_file(args.template)
-    args.config_helper = parse_as_file(args.config_helper)
 
     # seeds are not required, but notify in case of config error
     if args.seeds:
@@ -255,9 +260,10 @@ def process_args(args):
     if os.path.isdir(args.output):
         raise argparse.ArgumentTypeError(f"Refuse to work on existing output directory ({args.output})")
 
-    os.makedirs(os.path.join(args.output, "build"))
+    os.makedirs(args.output)
     args.configs = {
-            'linux': os.path.join(args.output, "build/.config"),
+            'template': os.path.join(args.output, "linux.template"),
+            'linux': os.path.join(args.output, "linux.config"),
             'kafl': os.path.join(args.output, "kafl.yaml")
             }
 
@@ -276,15 +282,9 @@ def parse_args():
     parser.add_argument('--config', '-c', metavar='<file>', dest='template', type=str,
             default="$BKC_ROOT/bkc/kafl/linux_kernel_tdx_guest.config",
             help='kernel .config template (default: $BKC_ROOT/bkc/kafl/linux_kernel_tdx_guest.config)')
-    #parser.add_argument('--speed', '-s', action="store_true",
-    #        help='optimize for execution speed')
-    #parser.add_argument('--debug', '-d', action="store_true",
-    #        help='optimize for bug detection')
     parser.add_argument('--seeds', '-s', metavar='<dir>', type=str,
             help='root seeds directory, containing a subfolder <harness> or "generic"')
     parser.add_argument('--quiet', '-q', action="store_true", help='suppress outputs')
-    parser.add_argument('--config_helper', metavar='<file>', type=str, default="$LINUX_GUEST/scripts/config",
-            help='path to Linux kernel config helper (default: $LINUX_GUEST/scripts/config)')
 
     args = parser.parse_args()
 
