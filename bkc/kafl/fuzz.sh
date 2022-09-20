@@ -35,6 +35,7 @@ test -d /tmp/kafl || mkdir /tmp/kafl
 
 function usage()
 {
+	test -n "$1" && echo "$1"
 	cat << HERE
 
 Usage: $0 <cmd> <dir> [args]
@@ -96,6 +97,36 @@ function get_ip_regions
 	#ip1_b=$(get_addr_lower __bss_start)
 }
 
+function set_workdir()
+{
+	test "$#" -ge 1 || usage "Error: Need additional <target> or <workdir> argument."
+	TARGET_ROOT="$(realpath -e -- "$1")"
+
+	# check if TARGET_ROOT is a valid <target> or <workdir>
+	test -d "$TARGET_ROOT" || fatal "Argument '$1' is not a valid directory!"
+	if [ -f $TARGET_ROOT/bzImage ]; then
+		TARGET_BIN=$TARGET_ROOT/bzImage
+		TARGET_MAP=$TARGET_ROOT/System.map
+		TARGET_ELF=$TARGET_ROOT/vmlinux
+		WORK_DIR=$DEFAULT_WORK_DIR
+	elif [ -f $TARGET_ROOT/arch/x86/boot/bzImage ]; then
+		TARGET_BIN=$TARGET_ROOT/arch/x86/boot/bzImage
+		TARGET_MAP=$TARGET_ROOT/System.map
+		TARGET_ELF=$TARGET_ROOT/vmlinux
+		WORK_DIR=$DEFAULT_WORK_DIR
+	elif [ -f $TARGET_ROOT/target/bzImage ]; then
+		TARGET_BIN=$TARGET_ROOT/target/bzImage
+		TARGET_MAP=$TARGET_ROOT/target/System.map
+		TARGET_ELF=$TARGET_ROOT/target/vmlinux
+		WORK_DIR=$TARGET_ROOT
+	fi
+	
+	test -d "$TARGET_ROOT" || fatal "Invalid folder $TARGET_ROOT"
+	test -f "$TARGET_BIN" || fatal "Could not find bzImage in $TARGET_ROOT or $TARGET_ROOT/target/"
+	test -f "$TARGET_ELF" || fatal "Could not find vmlinux in $TARGET_ROOT or $TARGET_ROOT/target/"
+	test -f "$TARGET_MAP" || fatal "Could not find System.map in $TARGET_ROOT or $TARGET_ROOT/target/"
+}
+
 # regular fuzz run based on TARGET_ROOT and default WORK_DIR
 function run()
 {
@@ -155,21 +186,24 @@ function pipeline()
 	fi
 
 	build "$HARNESS_ROOT"
-	get_workdir "$HARNESS_ROOT/build"
+	set_workdir "$HARNESS_ROOT/build"
 	HARNESS_NAME="$(basename $HARNESS_ROOT)"
 	WORK_DIR="$(mktemp -d -p /dev/shm ${USER}_tdfl.${HARNESS_NAME}.XXX)"
-
-	# switch there to pickup $PWD/kafl.yaml on top of KAFL_CONFIG_FILE
 	KAFL_OPTS=$KAFL_FULL_OPTS
 	#DRY_RUN="--abort-exec 10"
+
+	# switch there so that fuzzer picks up $PWD/kafl.yaml
 	cd $HARNESS_ROOT
 	run "$@" $DRY_RUN
 
+	# save workdir for processing
 	JOBDIR="$(mktemp -d -p "$HARNESS_ROOT" job_$(date "+%Y%M%d_XXX"))"
 	mv -T "$WORK_DIR" "$JOBDIR"
 
-	cov "$JOBDIR" "$@"
-	USE_GHIDRA=1 smatch "$JOBDIR"
+	# coverage + smatch report
+	set_workdir "$JOBDIR"
+	cov "$@"
+	USE_GHIDRA=1 smatch
 }
 
 # simple batch processing option
@@ -322,61 +356,32 @@ function smatch()
 	#$BKC_ROOT/kafl/trace_callers.py $WORK_DIR > $WORK_DIR/traces/io_callers.lst
 }
 
-ACTION="$1"
-shift || fatal "Missing argument: <cmd>"
+test $# -ge 1 || usage "Error: Need a <cmd> argument."
+ACTION="$1"; shift
 
 [ "$ACTION" == "help" ] && usage
 [ "$ACTION" == "--help" ] && usage
 [ "$ACTION" == "-h" ] && usage
 
-
 test -d "$BKC_ROOT" || fatal "Could not find BKC_ROOT. Check set_env.sh."
 test -d "$KAFL_ROOT" || fatal "Could not find KAFL_ROOT. Check set_env.sh."
 
-# Some actions don't need a TARGET_ROOT
+test -d $SHARE_DIR || mkdir -p $SHARE_DIR
+
+
+# most actions require a workdir/target at $1
 case $ACTION in
-	"build")
-		build "$@"
-		exit
+	full|run|cov|triage|single|debug|noise|smatch|ranges)
+		set_workdir "$1"; shift
 		;;
-	"ranges")
-		get_ip_regions
-		echo "PT trace regions:"
-		echo -e "\tip0: $ip0_a-$ip0_b"
-		echo -e "\tip1: $ip1_a-$ip1_b"
-		exit
+		*)
 		;;
 esac
 
-TARGET_ROOT="$(realpath -e -- "$1")"
-shift || fatal "Missing argument: <dir>"
-
-# check if TARGET_ROOT is a valid <target> or <workdir>
-if [ -f $TARGET_ROOT/bzImage ]; then
-	TARGET_BIN=$TARGET_ROOT/bzImage
-	TARGET_MAP=$TARGET_ROOT/System.map
-	TARGET_ELF=$TARGET_ROOT/vmlinux
-	WORK_DIR=$DEFAULT_WORK_DIR
-elif [ -f $TARGET_ROOT/arch/x86/boot/bzImage ]; then
-	TARGET_BIN=$TARGET_ROOT/arch/x86/boot/bzImage
-	TARGET_MAP=$TARGET_ROOT/System.map
-	TARGET_ELF=$TARGET_ROOT/vmlinux
-	WORK_DIR=$DEFAULT_WORK_DIR
-elif [ -f $TARGET_ROOT/target/bzImage ]; then
-	TARGET_BIN=$TARGET_ROOT/target/bzImage
-	TARGET_MAP=$TARGET_ROOT/target/System.map
-	TARGET_ELF=$TARGET_ROOT/target/vmlinux
-	WORK_DIR=$TARGET_ROOT
-fi
-
-test -d "$TARGET_ROOT" || fatal "Invalid folder $TARGET_ROOT"
-test -f "$TARGET_BIN" || fatal "Could not find bzImage in $TARGET_ROOT or $TARGET_ROOT/target/"
-test -f "$TARGET_ELF" || fatal "Could not find vmlinux in $TARGET_ROOT or $TARGET_ROOT/target/"
-test -f "$TARGET_MAP" || fatal "Could not find System.map in $TARGET_ROOT or $TARGET_ROOT/target/"
-
-test -d $SHARE_DIR || mkdir -p $SHARE_DIR
-
 case $ACTION in
+	"build")
+		build "$@"
+		;;
 	"full")
 		KAFL_OPTS=$KAFL_FULL_OPTS
 		run "$@"
@@ -409,8 +414,13 @@ case $ACTION in
 		noise "$@"
 		echo
 		;;
+	"ranges")
+		get_ip_regions
+		echo "PT trace regions:"
+		echo -e "\tip0: $ip0_a-$ip0_b"
+		echo -e "\tip1: $ip1_a-$ip1_b"
+		;;
 	*)
-		fatal "Unrecognized command $ACTION"
-		usage
+		usage "Error: Unrecognized command '$ACTION'."
 		;;
 esac
