@@ -176,7 +176,12 @@ function single()
 		--kernel $TARGET_BIN \
 		--work-dir $WORK_DIR \
 		--sharedir $SHARE_DIR \
+		--log-hprintf \
 		--action single -n 1 --input $TARGET_PAYLOAD "$@"
+
+	LOG_SRC="$WORK_DIR/hprintf_1337.log"
+	LOG_DST="$WORK_DIR/logs/$(basename "$TARGET_PAYLOAD")_printk.log"
+	test -f "$LOG_SRC" && mv --backup=t "$LOG_SRC" "$LOG_DST" || echo "Failed to move log for $TARGET_PAYLOAD?"
 }
 
 function triage()
@@ -215,8 +220,8 @@ function noise()
 	get_ip_regions
 
 	echo
-	echo "Checking feedback noise on payload $TARGET_PAYLOAD"
-	echo "Resume from workdir: $WORK_DIR"
+	echo "Checking feedback noise on workdir '$WORK_DIR',"
+	echo "Input: $TARGET_PAYLOAD"
 	echo
 	sleep 1
 
@@ -235,7 +240,7 @@ function noise()
 function cov()
 {
 	echo
-	echo "Resume from workdir: $WORK_DIR"
+	echo "Collecting coverage on workdir '$WORK_DIR'"
 	echo
 	sleep 1
 
