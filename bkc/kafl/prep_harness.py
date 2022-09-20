@@ -16,6 +16,8 @@ import subprocess as p
 import argparse
 import yaml
 
+from pprint import pprint, pformat
+
 boot_harnesses = [
         "BOOT_POST_TRAP",
         "BOOT_EARLYBOOT",
@@ -214,11 +216,9 @@ def kafl_sharedir(args):
     INITRD_FILE = os.path.expandvars("$BKC_ROOT/initrd.cpio.gz")
 
     if not os.path.isdir(SHAREDIR_PATH):
-        print(f"Sharedir '{SHAREDIR_PATH}' does not exists. Please do `make sharedir`.")
-        sys.exit(1)
+        sys.exit(f"Sharedir '{SHAREDIR_PATH}' does not exists. Please do `make sharedir`.")
     if not os.path.isfile(INITRD_FILE):
-        print(f"'{INITRD_FILE}' does not exists. Please do `make initrd.cpio.gz`.")
-        sys.exit(1)
+        sys.exit(f"'{INITRD_FILE}' does not exists. Please do `make initrd.cpio.gz`.")
 
     userspace_harness_script = userspace_script_for_harness(args.harness)
     if not userspace_harness_script:
@@ -291,18 +291,13 @@ def parse_args():
     # help if the requested harness is not recognized
     if args.harness not in HARNESSES:
         if args.harness not in ["help", "list"]:
-            print(f"Error: unrecognized harness `{args.harness}`.")
-        print("Supported harnesses:")
-        for h in HARNESSES:
-            print(f"  {h}")
-        return None
+            sys.exit(f"Error: unrecognized harness `{args.harness}`.\nSupported options:\n%s" % pformat(HARNESSES))
 
     # harness is real, process all other args..
     try:
         process_args(args)
     except (OSError,argparse.ArgumentTypeError) as e:
-        print(f"Error: {e}")
-        parser.print_help()
+        sys.exit(f"Error: {e}")
         return None
 
     return args

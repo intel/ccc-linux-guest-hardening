@@ -13,6 +13,7 @@
 # 
 
 set -e
+set -o pipefail
 
 BIOS_IMAGE=$BKC_ROOT/TDVF.fd
 INITRD_IMAGE=$BKC_ROOT/initrd.cpio.gz
