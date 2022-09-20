@@ -48,8 +48,9 @@ Available commands <cmd>:
                             collect the individual trace logs to <workdir>/trace/
   smatch <workdir>        - get addr2line and smatch_match results from traces
 
-  campaign <target> <out> - consider free CPUs and save workdir to out/ when done
-  build    <dir>          - build harness template at <dir>
+  build     <dir>         - build harness template at <dir>
+  pipeline  <dir>         - run pipeline on harness template at <dir>
+  batch <N> <dir>         - batch-fuzz harness builds at <dir>, N workers each
 
 <target> is a folder with vmlinux, System.map and bzImage
 <workdir> is the output of a prior fuzzing run (default: $DEFAULT_WORK_DIR).
@@ -139,19 +140,52 @@ function run()
 		$KAFL_OPTS "$@"
 }
 
-# wrapper for more reproducible + parallelizable run()
-function campaign()
+function pipeline()
 {
-	OUTPUT_DIR="$(realpath -e -- $1)"
+	HARNESS_ROOT="$(realpath -e -- "$1")"
 	shift || fatal "Missing argument <dir>"
 
-	NAME=$(basename $OUTPUT_DIR)
-	WORK_DIR="$(mktemp -d -p /dev/shm ${USER}_tdfl.$NAME.XXX)"
-	KAFL_OPTS=$KAFL_FULL_OPTS
-	run "$@"
+	if ! test -f "$HARNESS_ROOT/kafl.yaml"; then
+		echo "No kAFL config in '$HARNESS_ROOT', skipping..."
+		return
+	fi
+	if ! test -f "$HARNESS_ROOT/linux.config"; then
+		echo "No kernel config in '$HARNESS_ROOT', skipping..."
+		return
+	fi
 
-	# backup only happens if run() returned on its own!
-	mv "$WORK_DIR" "$(mktemp -d -p "$OUTPUT_DIR" job_$(date "+%Y%M%d_XXX"))"
+	build "$HARNESS_ROOT"
+	get_workdir "$HARNESS_ROOT/build"
+	HARNESS_NAME="$(basename $HARNESS_ROOT)"
+	WORK_DIR="$(mktemp -d -p /dev/shm ${USER}_tdfl.${HARNESS_NAME}.XXX)"
+
+	# switch there to pickup $PWD/kafl.yaml on top of KAFL_CONFIG_FILE
+	KAFL_OPTS=$KAFL_FULL_OPTS
+	#DRY_RUN="--abort-exec 10"
+	cd $HARNESS_ROOT
+	run "$@" $DRY_RUN
+
+	JOBDIR="$(mktemp -d -p "$HARNESS_ROOT" job_$(date "+%Y%M%d_XXX"))"
+	mv -T "$WORK_DIR" "$JOBDIR"
+
+	cov "$JOBDIR" "$@"
+	USE_GHIDRA=1 smatch "$JOBDIR"
+}
+
+# simple batch processing option
+function batch()
+{
+	test "$#" -ge 2 || usage "Missing arguments!"
+	NUM_WORKERS="$1"; shift
+	test "$NUM_WORKERS" -gt 0 || fatal "Argument '$NUM_WORKERS' is not an integer."
+
+	# template folder has kafl.yaml and build/vmlinux
+	for DIR in $@; do
+		TARGETS="$(find "$DIR" -name kafl.yaml)"
+		for TARGET in $TARGETS; do
+			pipeline "$(dirname "$TARGET")" -p $NUM_WORKERS
+		done
+	done
 }
 
 function debug()
@@ -377,8 +411,11 @@ case $ACTION in
 		KAFL_OPTS=$KAFL_QUICK_OPTS
 		run "$@"
 		;;
-	"campaign")
-		campaign "$@"
+	"pipeline")
+		pipeline "$@"
+		;;
+	"batch")
+		batch "$@"
 		;;
 	"single")
 		single "$@"
