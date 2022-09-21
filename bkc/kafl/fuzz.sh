@@ -35,8 +35,8 @@ test -d /tmp/kafl || mkdir /tmp/kafl
 
 function usage()
 {
-	test -n "$1" && echo "$1"
-	cat << HERE
+	test -n "$1" && echo -e "\n$1" >&2
+	cat >&2 << HERE
 
 Usage: $0 <cmd> <dir> [args]
 
@@ -63,7 +63,7 @@ HERE
 
 function fatal()
 {
-	echo $1
+	echo -e "\nError: $@\n" >&2
 	exit
 }
 
