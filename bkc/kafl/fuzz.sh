@@ -340,7 +340,8 @@ function build()
 	cd $TEMPLATE_DIR
 	test -d build || mkdir build
 	cat linux.template linux.config > build/.config
-	cd $LINUX_GUEST && make O=$TEMPLATE_DIR/build olddefconfig && make O=$TEMPLATE_DIR/build
+	KCFLAGS="KCFLAGS=-fno-ipa-sra -fno-ipa-cp-clone -fno-ipa-cp"
+	cd $LINUX_GUEST && make O=$TEMPLATE_DIR/build olddefconfig && make O=$TEMPLATE_DIR/build "$KCFLAGS"
 }
 
 function smatch()
