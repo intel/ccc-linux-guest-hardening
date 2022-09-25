@@ -27,6 +27,8 @@ MEMSIZE=1024
 KAFL_FULL_OPTS="--redqueen --redqueen-hammer --redqueen-simple --grimoire --radamsa -p 2"
 KAFL_QUICK_OPTS="--redqueen --redqueen-simple -D -p 2"
 
+# useful for KPROBE-based harnesses
+KERNEL_BUILD_PARAMS="KCFLAGS=-fno-ipa-sra -fno-ipa-cp-clone -fno-ipa-cp"
 
 # enable TDX workaround in Qemu
 export QEMU_BIOS_IN_RAM=1
@@ -50,8 +52,10 @@ Available commands <cmd>:
                             collect the individual trace logs to <workdir>/trace/
   smatch <workdir>        - get addr2line and smatch_match results from traces
 
-  build     <dir>         - build harness template at <dir>
-  pipeline  <dir>         - run pipeline on harness template at <dir>
+  build <dir>             - use harness config at <dir> to build kernel at <dir>/build
+  audit <dir> <config>    - smatch-audit guest-kernel using <config> and store to <dir>
+
+  pipe  <dir>             - run pipeline on harness template at <dir>
   batch <N> <dir>         - batch-fuzz harness builds at <dir>, N workers each
 
 <target> is a folder with vmlinux, System.map and bzImage
@@ -176,6 +180,8 @@ function pipeline()
 {
 	HARNESS_ROOT="$(realpath -e -- "$1")"
 	shift || fatal "Missing argument <dir>"
+	
+	echo "Launching pipeline on $(dirname "$TARGET")"
 
 	if ! test -f "$HARNESS_ROOT/kafl.yaml"; then
 		echo "No kAFL config in '$HARNESS_ROOT', skipping..."
@@ -198,7 +204,8 @@ function pipeline()
 	run "$@" $DRY_RUN
 
 	# save workdir for processing
-	JOBDIR="$(mktemp -d -p "$HARNESS_ROOT" job_$(date "+%Y%M%d_XXX"))"
+	CAMPAIGN_ROOT=$(dirname $HARNESS_ROOT)
+	JOBDIR="$(mktemp -d -p "$CAMPAIGN_ROOT" ${HARNESS_NAME}_$(date "+%Y%M%d_XXX"))"
 	mv -T "$WORK_DIR" "$JOBDIR"
 
 	# coverage + smatch report
@@ -351,8 +358,18 @@ function cov()
 		--input $WORK_DIR --log-hprintf "$@"
 }
 
+function smatch_audit()
+{
+	test $# -eq 2 || usage "Wrong number of arguments"
+	TARGET_DIR="$(realpath -e -- "$1")"; shift
+	TARGET_CONFIG="$(realpath -e -- "$1")"; shift
+
+	export KERNEL_BUILD_PARAMS
+	$BKC_ROOT/bkc/audit/smatch_audit.sh $TARGET_DIR $TARGET_CONFIG
+}
+
 # build target from generated template config
-function build()
+function build_harness()
 {
 	TEMPLATE_DIR="$(realpath -e -- "$1")"
 	shift || fatal "Missing argument <dir>"
@@ -362,16 +379,20 @@ function build()
 
 	test -d "$LINUX_GUEST" || fatal "Could not find kernel source tree at \$LINUX_GUEST"
 	test -f "$LINUX_GUEST/Kconfig" || fatal "\$LINUX_GUEST is not pointing to a Linux source tree?"
-	test -n "$MAKEFLAGS" || echo "Detected empty MAKEFLAGS - consider setting MAKEFLAGS=-j$(nproc)."
+
+	test -n "$MAKEFLAGS"   || echo "MAKEFLAGS is not set. Consider setting MAKEFLAGS=\"-j\$((2*\$(nproc)))\""
 
 	cd $TEMPLATE_DIR
 	test -d build || mkdir build
+	ODIR=$TEMPLATE_DIR/build
 	cat linux.template linux.config > build/.config
-	KCFLAGS="KCFLAGS=-fno-ipa-sra -fno-ipa-cp-clone -fno-ipa-cp"
-	cd $LINUX_GUEST && make O=$TEMPLATE_DIR/build olddefconfig && make O=$TEMPLATE_DIR/build "$KCFLAGS"
+	cd $LINUX_GUEST
+	make mrproper
+	make O=$ODIR olddefconfig
+	make O=$ODIR "$KERNEL_BUILD_PARAMS"
 }
 
-function smatch()
+function smatch_match()
 {
 	# match smatch report against line coverage reported in addr2line.lst
 	SMATCH_OUTPUT=$WORK_DIR/traces/smatch_match.lst
@@ -407,8 +428,11 @@ case $ACTION in
 esac
 
 case $ACTION in
+	"audit")
+		smatch_audit "$@"
+		;;
 	"build")
-		build "$@"
+		build_harness "$@"
 		;;
 	"full")
 		KAFL_OPTS=$KAFL_FULL_OPTS
@@ -418,7 +442,7 @@ case $ACTION in
 		KAFL_OPTS=$KAFL_QUICK_OPTS
 		run "$@"
 		;;
-	"pipeline")
+	"pipe")
 		pipeline "$@"
 		;;
 	"batch")
@@ -440,7 +464,7 @@ case $ACTION in
 		cov "$@"
 		;;
 	"smatch")
-		smatch "$@"
+		smatch_match "$@"
 		;;
 	"noise")
 		noise "$@"
