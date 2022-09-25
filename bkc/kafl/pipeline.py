@@ -25,7 +25,7 @@ from parsl.executors.threads import ThreadPoolExecutor
 #
 
 # Log to screen
-#parsl.set_stream_logger(level=parsl.logging.INFO)
+parsl.set_stream_logger(level=parsl.logging.INFO)
 
 # Log to file
 #parsl.set_file_logger(FILENAME, level=logging.DEBUG)
@@ -42,9 +42,11 @@ from parsl.executors.threads import ThreadPoolExecutor
 #        )
 #parsl.load(worker_config)
 
-BKC_ROOT=Path(os.environ.get('BKC_ROOT'))
-RUNNER=BKC_ROOT/'bkc/kafl/fuzz.sh'
-CAMPAIGN_DIR=Path("/home/steffens/data/test/")
+BKC_ROOT = Path(os.environ.get('BKC_ROOT'))
+RUNNER = BKC_ROOT/'bkc/kafl/fuzz.sh'
+CAMPAIGN_DIR = Path("/home/steffens/data/test/")
+DEFAULT_GUEST_CONFIG = BKC_ROOT/'bkc/kafl/linux_kernel_tdx_guest.config'
+USE_GHIDRA=0 # use ghidra for gen_addr2line.sh?
 
 NCPU=72        # available vCPUs
 NUM_WORKERS=16 # kAFL workers (max 1 per vCPU)
@@ -70,21 +72,26 @@ def check_inputs(inputs):
         if not os.path.exists(f):
             raise parsl.app.errors.ParslError(f"Missing input file {f}")
 
-def mkjobdir(harness):
+def mkjobdir(label):
     job_root = CAMPAIGN_DIR/'run'
-    label = harness.name + "_"
     os.makedirs(job_root, exist_ok=True)
-    tmpdir = tempfile.mkdtemp(dir=job_root, prefix=label)
-    #subprocess.run(f"chmod a+rx {tmpdir}", shell=True, stdout=out_stdout, stderr=out_stderr)
+    tmpdir = tempfile.mkdtemp(dir=job_root, prefix=f"{label}_")
     os.chmod(tmpdir, 0o755)
-    return tmpdir
+    return Path(tmpdir)
 
 ##
 # Task wrappers
 ##
+
+@bash_app
+def mrproper(inputs=[], outputs=[], stderr=parsl.AUTO_LOGNAME, stdout=parsl.AUTO_LOGNAME):
+    print(f"mrproper: {inputs[0]}")
+    check_inputs(inputs)
+    return f"cd {inputs[0]}; MAKEFLAGS='-j{NUM_THREADS}' make mrproper"
+
 @bash_app
 def build(inputs=[], outputs=[], stderr=parsl.AUTO_LOGNAME, stdout=parsl.AUTO_LOGNAME):
-    print(f"make: {inputs[0]}")
+    print(f"build: {inputs[0]}")
     check_inputs(inputs)
     return f"MAKEFLAGS='-j{NUM_THREADS}' {RUNNER} build {inputs[0]}"
 
@@ -102,67 +109,73 @@ def trace(inputs=[], outputs=[], stderr=parsl.AUTO_LOGNAME, stdout=parsl.AUTO_LO
     return f"{RUNNER} cov {inputs[0]} -p {NUM_THREADS}"
 
 @bash_app
-def smatch(inputs=[], outputs=[]):
+def smatch(inputs=[], outputs=[], stderr=parsl.AUTO_LOGNAME, stdout=parsl.AUTO_LOGNAME):
     print(f"smatch: {inputs[0]}")
     check_inputs(inputs)
-    return f"MAKEFLAGS='-j{NUM_THREADS}' {RUNNER} smatch {inputs[0]}"
+    return f"cp {inputs[1]} {inputs[0]}/target/smatch_warns.txt; USE_GHIDRA={USE_GHIDRA} MAKEFLAGS='-j{NUM_THREADS}' {RUNNER} smatch {inputs[0]}"
 
 @bash_app
-def audit(inputs=[], outputs=[]):
+def audit_kernel(inputs=[], outputs=[], stderr=parsl.AUTO_LOGNAME, stdout=parsl.AUTO_LOGNAME):
+    print(f"audit: {inputs[0]}")
     check_inputs(inputs)
-    # TODO broken - maybe re-implement the test-kernel.sh here?
-    return f"LINUX_GUEST={inputs[0]} MAKEFLAGS='-j{NUM_THREADS}' make -C {BKC_ROOT}/bkc/audit"
+    # TODO thread limit broken - maybe re-implement the test-kernel.sh here?
+    if os.path.exists(outputs[1]):
+        print(f"Skipping audit_kernel task - output already exists: {outputs[1]}")
+        return ""
+    else:
+        return f"MAKEFLAGS='-j{NUM_THREADS}' {RUNNER} audit {inputs[0]} {inputs[1]}"
 
 #
 # Actual pipeline starts here
 #
-def pipeline():
-    harnesses = list()
-    for harness in CAMPAIGN_DIR.glob('**/kafl.yaml'):
-        print(f"Identified harness directory: {harness.parent}")
-        harnesses.append(harness.parent)
-
+def pipeline(harness_dirs):
     jobs = []
-    for harness in harnesses:
+
+    # smatch audit
+    sources = Path(os.environ.get('LINUX_GUEST'))
+    target = CAMPAIGN_DIR/'smatch'
+    os.makedirs(target, exist_ok=True)
+    global_smatch_warns = target/'smatch_warns.txt'
+    global_smatch_list = target/'smatch_warns_annotated.txt'
+
+    # audit based on TDX fuzzing template
+    config = DEFAULT_GUEST_CONFIG
+    audit_job = audit_kernel(inputs=[File(str(target)), File(str(config))], outputs=[File(str(global_smatch_warns)), File(str(global_smatch_list))])
+    audit_job.result() # wait to complete
+    clean = mrproper(inputs=[File(str(sources))], outputs=[File(str(sources))])
+    clean.result() # wait for mrproper
+
+    # harness builds
+    for harness in harness_dirs:
         target=harness/'build'
         job = build(inputs=[File(str(harness))], outputs=[File(str(target))])
         jobs.append(job)
 
-
     # wait for all build jobs to complete
     [job.result() for job in jobs]
 
-    job_dirs = []
-    for harness in harnesses:
-        target=str(harness/'build')
-        jobdir = mkjobdir(harness)
-        job = fuzz(inputs=[File(target)], outputs=[File(jobdir)])
-        jobs.append(job)
-        job_dirs.append(jobdir)
+    fuzz_jobs = []
+    for harness in harness_dirs:
+        target = harness/'build'
+        jobdir = mkjobdir(harness.name)
+        job = fuzz(inputs=[File(str(target))], outputs=[File(str(jobdir))])
+        fuzz_jobs.append(job)
 
     # wait for all build jobs to complete
-    [job.result() for job in jobs]
+    #[job.result() for job in jobs]
 
-    for job in job_dirs:
-        jobdir = Path(job)
-        trace_out = jobdir/'traces/edges_uniq.lst'
+    for job in fuzz_jobs:
+        jobdir = job.outputs[0].result()
+        smatch_match = Path(jobdir)/'traces/smatch_match.lst'
+        trace_out = Path(jobdir)/'traces/edges_uniq.lst'
 
-        job = trace(inputs=[File(str(jobdir))], outputs=[File(str(trace_out))])
-        jobs.append(job)
-        job.result()
-
-        smatch_match = jobdir/'traces/smatch_match.lst'
-        smatch_warns = jobdir/'/target/smatch_warns.lst'
-
-        job = smatch(
-                inputs=[File(str(jobdir)),
-                    File(str(smatch_warns)),
-                    File(str(trace_out))],
-                outputs=[File(str(smatch_match))])
+        # start smatch once the corresponding edges_uniq.lst is done
+        job = trace(inputs=[jobdir], outputs=[File(str(trace_out))])
+        job = smatch(inputs=[jobdir, global_smatch_list, job.outputs[0]], outputs=[File(str(smatch_match))])
         jobs.append(job)
 
+    # wait for all jobs to complete
     [job.result() for job in jobs]
-
 
 if __name__ == "__main__":
     pipeline()
