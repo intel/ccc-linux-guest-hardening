@@ -48,22 +48,6 @@ CAMPAIGN_DIR = Path("/home/steffens/data/test/")
 DEFAULT_GUEST_CONFIG = BKC_ROOT/'bkc/kafl/linux_kernel_tdx_guest.config'
 USE_GHIDRA=0 # use ghidra for gen_addr2line.sh?
 
-NCPU=72        # available vCPUs
-NUM_WORKERS=16 # kAFL workers (max 1 per vCPU)
-NUM_THREADS=32 # SW threads to schedule (can to overcommit)
-NUM_PIPES=max(1,(NCPU-2)//NUM_WORKERS) # concurrent pipelines
-
-# use local python threads for spawning tasks in a pipeline
-local_threads = Config(
-    executors=[
-        ThreadPoolExecutor(
-            max_threads=NUM_PIPES,
-            label='local_threads'
-        )
-    ]
-)
-parsl.load(local_threads)
-
 #
 # Helpers
 #
@@ -178,4 +162,43 @@ def pipeline(harness_dirs):
     [job.result() for job in jobs]
 
 if __name__ == "__main__":
-    pipeline()
+
+    harness_dirs = list()
+    for harness in CAMPAIGN_DIR.glob('**/kafl.yaml'):
+        print(f"Identified harness directory: {harness.parent}")
+        harness_dirs.append(harness.parent)
+
+    # Scale workers/threads based on available CPUs
+    NCPU=len(os.sched_getaffinity(0)) # available vCPUs
+    NUM_WORKERS=16 # kAFL workers (max 1 per vCPU)
+    NUM_THREADS=32 # SW threads to schedule (can to overcommit)
+
+    # use few threads/pipes for small CPU
+    if NCPU < NUM_WORKERS:
+        NUM_PIPES=1
+        NUM_WORKERS=NCPU
+        NUM_THREADS=2*NCPU
+    else:
+        NUM_PIPES=max(1,(NCPU-2)//NUM_WORKERS) # concurrent pipelines
+
+    # use more threads when relatively few pipes
+    if NUM_PIPES > len(harness_dirs):
+        NUM_PIPES = len(harness_dirs)
+        NUM_THREADS = 2*NCPU//NUM_PIPES
+        #NUM_WORKERS = NCPU//NUM_PIPES
+
+    print(f"Executing %d harnesses in %d pipelines (%d workers, %d threads across %d CPUs)" % (
+        len(harness_dirs), NUM_PIPES, NUM_WORKERS, NUM_THREADS, NCPU))
+
+    # define pipeline number based on python threads
+    local_threads = Config(
+        executors=[
+            ThreadPoolExecutor(
+                max_threads=NUM_PIPES,
+                label='local_threads'
+            )
+        ]
+    )
+    parsl.load(local_threads)
+
+    pipeline(harness_dirs)
