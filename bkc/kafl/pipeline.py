@@ -25,12 +25,6 @@ from parsl.executors.threads import ThreadPoolExecutor
 # Configuration
 #
 
-# Log to screen
-parsl.set_stream_logger(level=parsl.logging.INFO)
-
-# Log to file
-#parsl.set_file_logger(FILENAME, level=logging.DEBUG)
-
 #from parsl.executors import WorkQueueExecutor
 #worker_config = Config(
 #        executors=[
@@ -183,10 +177,10 @@ def main():
     harness_dirs = list()
     for c in args.campaign:
         for harness in Path(c).glob('**/kafl.yaml'):
-            if args.pattern and args.pattern not in harness.name:
+            if args.pattern and args.pattern not in harness.parent.name:
                 continue
-        print(f"Selected harness: {harness.parent}")
-        harness_dirs.append(harness.parent)
+            print(f"Selected harness: {harness.parent}")
+            harness_dirs.append(harness.parent)
 
     # pick root based on first harness' parent
     CAMPAIGN_DIR = Path(harness_dirs[0].parent)
@@ -223,6 +217,13 @@ def main():
         ]
     )
     parsl.load(local_threads)
+
+    if args.verbose:
+        # log actions to screen
+        parsl.set_stream_logger(level=parsl.logging.INFO)
+        # modify file logging?
+        #parsl.set_file_logger(FILENAME, level=logging.DEBUG)
+
 
     run_campaign(args, harness_dirs)
 
