@@ -126,43 +126,38 @@ def get_kafl_config_boot_params():
         default_append = conf.get("qemu_append", "")
         return default_append
 
-def generate_setups(harnesses, pattern):
-    for harness in harnesses:
-        if pattern not in harness:
-            continue
+def generate_setups(args, harness):
+    req_conf = tuple(default_config_options.items())
+    harness_options = harness_config_options.get(harness, None)
+    if harness_options:
+        req_conf = req_conf + tuple(harness_options.items())
 
-        req_conf = tuple(default_config_options.items())
-        harness_options = harness_config_options.get(harness, None)
-        if harness_options:
-            req_conf = req_conf + tuple(harness_options.items())
-
-        if harness.startswith("BOOT_"):
-            basename = harness[len("BOOT_"):]
-            req_conf = req_conf + ((f"CONFIG_TDX_FUZZ_HARNESS_{basename}", "y"),)
-        elif harness.startswith("DOINITCALLS_LEVEL"):
-            level = harness[len("DOINITCALLS_LEVEL_"):]
-            req_conf = req_conf + (("CONFIG_TDX_FUZZ_HARNESS_DOINITCALLS", "y"), ("CONFIG_TDX_FUZZ_HARNESS_DOINITCALLS_LEVEL", level),)
-        elif harness.startswith("BPH_") or harness.startswith("US_"):
-            req_conf = req_conf + (("CONFIG_TDX_FUZZ_HARNESS_NONE", "y"),)
-        return req_conf
-    return None
+    if harness.startswith("BOOT_"):
+        basename = harness[len("BOOT_"):]
+        req_conf = req_conf + ((f"CONFIG_TDX_FUZZ_HARNESS_{basename}", "y"),)
+    elif harness.startswith("DOINITCALLS_LEVEL"):
+        level = harness[len("DOINITCALLS_LEVEL_"):]
+        req_conf = req_conf + (("CONFIG_TDX_FUZZ_HARNESS_DOINITCALLS", "y"), ("CONFIG_TDX_FUZZ_HARNESS_DOINITCALLS_LEVEL", level),)
+    elif harness.startswith("BPH_") or harness.startswith("US_"):
+        req_conf = req_conf + (("CONFIG_TDX_FUZZ_HARNESS_NONE", "y"),)
+    return req_conf
 
 def select_seed_root(seed_dir, harness):
     harness_dir = os.path.join(seed_dir, harness)
     generic_dir = os.path.join(seed_dir, "generic")
 
     if os.path.isdir(harness_dir):
-        print(f"Using harness-specific seeds from {harness_dir}")
+        print(f"{harness}: Using harness-specific seeds from {harness_dir}")
         return harness_dir
     if os.path.isdir(generic_dir):
-        print(f"Using generic seeds from {generic_dir}")
+        print(f"{harness}: Using generic seeds from {generic_dir}")
         return generic_dir
-    print(f"No harness-specific seeds detected, using all of {seed_dir}")
+    print(f"{harness}: No harness-specific seeds detected, using all of {seed_dir}")
     return seed_dir
 
 def linux_config(args, setup):
 
-    if not args.quiet:
+    if args.verbose:
         print("Setting linux config overrides:")
         for conf,val in setup:
             print(f"  {conf}={val}")
@@ -178,31 +173,29 @@ def linux_config(args, setup):
             f.write(f"{conf}={val}\n")
     shutil.copy(args.template, args.configs['template'])
 
-def kafl_config(args, sharedir):
+def kafl_config(args, harness, sharedir):
     yaml=""
 
     ## add default and harness-specific options (timeout, funky,..)
     yaml = yaml + "\n".join(KAFL_CONFIG_DEFAULTS)
-    yaml = yaml + "\n".join(KAFL_CONFIG_HARNESSES.get(args.harness, [])) + "\n"
+    yaml = yaml + "\n".join(KAFL_CONFIG_HARNESSES.get(harness, [])) + "\n"
 
     if sharedir:
         yaml += f"sharedir: {sharedir}\n"
 
     # select seed_dir
-    if not args.seeds:
-        print("No --seed-dir given, continuing without seeds..")
-    else:
-        seed_dir = select_seed_root(args.seeds, args.harness)
+    if args.seeds:
+        seed_dir = select_seed_root(args.seeds, harness)
         yaml += f"seed_dir: {seed_dir}\n"
 
     # set any custom boot params
-    harness_boot_params = BOOT_PARAM_HARNESSES.get(args.harness, None)
+    harness_boot_params = BOOT_PARAM_HARNESSES.get(harness, None)
     if harness_boot_params:
         default_boot_params = get_kafl_config_boot_params()
         full_boot_params = default_boot_params + " " + harness_boot_params
         yaml += f"qemu_append: {full_boot_params}\n"
 
-    if not args.quiet and len(yaml) > 0:
+    if args.verbose and len(yaml) > 0:
         print("kAFL config overrides:")
         for line in yaml.splitlines():
             print(f"  {line}")
@@ -211,7 +204,7 @@ def kafl_config(args, sharedir):
     with open(args.configs['kafl'], 'w') as f:
         f.write(yaml)
 
-def kafl_sharedir(args):
+def kafl_sharedir(args, harness):
     SHAREDIR_PATH = os.path.expandvars("$BKC_ROOT/sharedir")
     INITRD_FILE = os.path.expandvars("$BKC_ROOT/initrd.cpio.gz")
 
@@ -220,17 +213,18 @@ def kafl_sharedir(args):
     if not os.path.isfile(INITRD_FILE):
         sys.exit(f"'{INITRD_FILE}' does not exists. Please do `make initrd.cpio.gz`.")
 
-    userspace_harness_script = userspace_script_for_harness(args.harness)
+    userspace_harness_script = userspace_script_for_harness(harness)
     if not userspace_harness_script:
         return None
 
-    print(f"Using sharedir template at {SHAREDIR_PATH}.\nStage 2 init.sh: {userspace_harness_script}")
-    sharedir = shutil.copytree(SHAREDIR_PATH, os.path.join(args.output, "sharedir"))
+    if args.verbose:
+        print(f"Using sharedir template at {SHAREDIR_PATH}.\nStage 2 init.sh: {userspace_harness_script}")
+
+    sharedir = shutil.copytree(SHAREDIR_PATH, args.configs['sharedir'], dirs_exist_ok=True)
     shutil.copy(userspace_harness_script, os.path.join(sharedir, "init.sh"))
     return sharedir
 
 def process_args(args):
-
     def parse_as_path(pathname):
         return os.path.abspath(
                 os.path.expanduser(
@@ -257,43 +251,42 @@ def process_args(args):
 
     # prepare files in --output directory or die trying
     args.output = parse_as_path(args.output)
-    if os.path.isdir(args.output):
-        raise argparse.ArgumentTypeError(f"Refuse to work on existing output directory ({args.output})")
-
-    os.makedirs(args.output)
-    args.configs = {
-            'template': os.path.join(args.output, "linux.template"),
-            'linux': os.path.join(args.output, "linux.config"),
-            'kafl': os.path.join(args.output, "kafl.yaml")
-            }
-
-    # test-create destination files in output folder
-    for fname in args.configs.values():
-        with open(fname, 'w') as f:
-            f.truncate(0)
+    if os.path.exists(args.output) and not os.path.isdir(args.output):
+        raise argparse.ArgumentTypeError(f"Provided output path is not a valid directory: {args.output}")
 
 def parse_args():
-
     parser = argparse.ArgumentParser(description='kAFL TDX kernel config generator.')
+    parser.add_argument('output', metavar='<output>', type=str,
+            help='output directory (existing files are overwritten!)')
     parser.add_argument('harness', metavar='<harness>', type=str,
-            help='target configuration to generate (try `list`)')
-    parser.add_argument('output', metavar='<directory>', type=str,
-            help='output directory (will be created/overwritten as needed)')
+            help='pattern that matches one or more harness configurations (try `list` or `all`)')
     parser.add_argument('--config', '-c', metavar='<file>', dest='template', type=str,
             default="$BKC_ROOT/bkc/kafl/linux_kernel_tdx_guest.config",
             help='kernel .config template (default: $BKC_ROOT/bkc/kafl/linux_kernel_tdx_guest.config)')
     parser.add_argument('--seeds', '-s', metavar='<dir>', type=str,
             help='root seeds directory, containing a subfolder <harness> or "generic"')
-    parser.add_argument('--quiet', '-q', action="store_true", help='suppress outputs')
+    parser.add_argument('--verbose', '-v', action="store_true", help='verbose output')
 
+    #args,_ = parser.parse_known_args()
     args = parser.parse_args()
 
-    # help if the requested harness is not recognized
-    if args.harness not in HARNESSES:
-        if args.harness not in ["help", "list"]:
-            sys.exit(f"Error: unrecognized harness `{args.harness}`.\nSupported options:\n%s" % pformat(HARNESSES))
+    # pre-process harness pattern before complaining about output path..
+    selected = list()
+    if args.harness in ["help", "list"]:
+        sys.exit(f"Supported harnesses:\n%s" % pformat(HARNESSES))
 
-    # harness is real, process all other args..
+    if args.harness == "all":
+        selected = HARNESSES
+    else:
+        for h in HARNESSES:
+            if args.harness in h:
+                selected.append(h)
+    if len(selected) == 0:
+        sys.exit(f"Error: unrecognized harness `{args.harness}`.\nSupported patterns:\n%s" % pformat(HARNESSES))
+    else:
+        args.harness = selected
+
+    # process all other args..
     try:
         process_args(args)
     except (OSError,argparse.ArgumentTypeError) as e:
@@ -307,11 +300,29 @@ def main():
     if not args:
         sys.exit(1)
 
-    print(f"Preparing {args.harness} at {args.output}")
-    setup = generate_setups(HARNESSES, args.harness)
-    linux_config(args, setup)
-    sharedir = kafl_sharedir(args)
-    kafl_config(args, sharedir)
+    if not args.seeds:
+        print("No --seed-dir given, continuing without seeds..")
+
+    print(f"Preparing harness(es) at {args.output}:\n%s" % pformat(args.harness))
+    for h in args.harness:
+
+        os.makedirs(os.path.join(args.output, h), exist_ok=True)
+        args.configs = {
+                'template': os.path.join(args.output, h, "linux.template"),
+                'linux': os.path.join(args.output, h, "linux.config"),
+                'kafl': os.path.join(args.output, h, "kafl.yaml"),
+                'sharedir': os.path.join(args.output, h, "sharedir")
+                }
+
+        ## test-create destination files in output folder
+        #for fname in args.configs.values():
+        #    with open(fname, 'w') as f:
+        #        f.truncate(0)
+
+        setup = generate_setups(args, h)
+        linux_config(args, setup)
+        sharedir = kafl_sharedir(args, h)
+        kafl_config(args, h, sharedir)
 
     sys.exit(0)
 
