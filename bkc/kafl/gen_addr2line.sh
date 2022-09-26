@@ -86,6 +86,6 @@ fi
 
 echo "Generating addr2line dump for seen code locations.."
 test -f $ADDR_LIST || ADDR_LIST=$BLOCK_LIST
-eu-addr2line --pretty-print -afi -e $TARGET_ELF < $ADDR_LIST > $LINES_LIST
+eu-addr2line --pretty-print -afi -e $TARGET_ELF < $ADDR_LIST > $LINES_LIST || echo "Ignoring addr2line failure :-/" >&2
 
 echo "Generated addr2line table: $(wc -l $LINES_LIST)"
