@@ -11,6 +11,7 @@ import sys
 
 import glob
 import tempfile
+import argparse
 from pathlib import Path
 
 import parsl
@@ -44,7 +45,6 @@ parsl.set_stream_logger(level=parsl.logging.INFO)
 
 BKC_ROOT = Path(os.environ.get('BKC_ROOT'))
 RUNNER = BKC_ROOT/'bkc/kafl/fuzz.sh'
-CAMPAIGN_DIR = Path("/home/steffens/data/test/")
 DEFAULT_GUEST_CONFIG = BKC_ROOT/'bkc/kafl/linux_kernel_tdx_guest.config'
 USE_GHIDRA=0 # use ghidra for gen_addr2line.sh?
 
@@ -56,8 +56,8 @@ def check_inputs(inputs):
         if not os.path.exists(f):
             raise parsl.app.errors.ParslError(f"Missing input file {f}")
 
-def mkjobdir(label):
-    job_root = CAMPAIGN_DIR/'run'
+def mkjobdir(path, label):
+    job_root = path.parent/'run'
     os.makedirs(job_root, exist_ok=True)
     tmpdir = tempfile.mkdtemp(dir=job_root, prefix=f"{label}_")
     os.chmod(tmpdir, 0o755)
@@ -109,15 +109,12 @@ def audit_kernel(inputs=[], outputs=[], stderr=parsl.AUTO_LOGNAME, stdout=parsl.
     else:
         return f"MAKEFLAGS='-j{NUM_THREADS}' {RUNNER} audit {inputs[0]} {inputs[1]}"
 
-#
-# Actual pipeline starts here
-#
-def pipeline(harness_dirs):
+def run_campaign(args, harness_dirs):
     jobs = []
 
     # smatch audit
     sources = Path(os.environ.get('LINUX_GUEST'))
-    target = CAMPAIGN_DIR/'smatch'
+    target = CAMPAIGN_DIR/'audit'
     os.makedirs(target, exist_ok=True)
     global_smatch_warns = target/'smatch_warns.txt'
     global_smatch_list = target/'smatch_warns_annotated.txt'
@@ -141,7 +138,7 @@ def pipeline(harness_dirs):
     fuzz_jobs = []
     for harness in harness_dirs:
         target = harness/'build'
-        jobdir = mkjobdir(harness.name)
+        jobdir = mkjobdir(harness, harness.name)
         job = fuzz(inputs=[File(str(target))], outputs=[File(str(jobdir))])
         fuzz_jobs.append(job)
 
@@ -161,12 +158,38 @@ def pipeline(harness_dirs):
     # wait for all jobs to complete
     [job.result() for job in jobs]
 
-if __name__ == "__main__":
+
+def parse_args():
+
+    parser = argparse.ArgumentParser(description='Campaign Automation')
+    parser.add_argument('campaign', metavar='<campaign>', type=str, nargs="+",
+            help='root campaign dir or one or more harness dirs (files may be overwritten!))')
+    parser.add_argument('--pattern', metavar='<pattern>', type=str,
+            help='filter pattern for which harnesses to schedule')
+    parser.add_argument('--keep', '-k', action="store_true", help="keep build files")
+    parser.add_argument('--verbose', '-v', action="store_true", help="verbose mode")
+
+    return parser.parse_args()
+
+def main():
+
+    global NCPU
+    global NUM_WORKERS
+    global NUM_THREADS
+    global CAMPAIGN_DIR
+
+    args = parse_args()
 
     harness_dirs = list()
-    for harness in CAMPAIGN_DIR.glob('**/kafl.yaml'):
-        print(f"Identified harness directory: {harness.parent}")
+    for c in args.campaign:
+        for harness in Path(c).glob('**/kafl.yaml'):
+            if args.pattern and args.pattern not in harness.name:
+                continue
+        print(f"Selected harness: {harness.parent}")
         harness_dirs.append(harness.parent)
+
+    # pick root based on first harness' parent
+    CAMPAIGN_DIR = Path(harness_dirs[0].parent)
 
     # Scale workers/threads based on available CPUs
     NCPU=len(os.sched_getaffinity(0)) # available vCPUs
@@ -201,4 +224,7 @@ if __name__ == "__main__":
     )
     parsl.load(local_threads)
 
-    pipeline(harness_dirs)
+    run_campaign(args, harness_dirs)
+
+if __name__ == "__main__":
+    main()
