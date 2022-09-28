@@ -58,59 +58,93 @@ def mkjobdir(job_root, label):
     os.chmod(tmpdir, 0o755)
     return Path(tmpdir)
 
-def pfile(path: Path) -> File:
-    return File(path.as_uri())
+def all_exist(touchfiles):
+    for f in touchfiles:
+        if not os.path.exists(f):
+            return False
+    return True
 
 ##
 # Task wrappers
 ##
 
-@bash_app
-def mrproper(inputs=[], outputs=[], stderr=parsl.AUTO_LOGNAME, stdout=parsl.AUTO_LOGNAME):
-    print(f"mrproper: {inputs[0]}")
-    check_inputs(inputs)
-    return f"cd {inputs[0]}; MAKEFLAGS='-j{NUM_THREADS}' make mrproper"
+@python_app
+def task_audit(args, audit_dir, config, touchfiles=[]):
 
-@bash_app
-def build(inputs=[], outputs=[], stderr=parsl.AUTO_LOGNAME, stdout=parsl.AUTO_LOGNAME):
-    print(f"build: {inputs[0]}")
-    check_inputs(inputs)
-    return f"MAKEFLAGS='-j{NUM_THREADS}' {RUNNER} build {inputs[0]} {outputs[0]}"
+    import os
+    import subprocess
 
-@bash_app
-def fuzz(inputs=[], outputs=[], stderr=parsl.AUTO_LOGNAME, stdout=parsl.AUTO_LOGNAME):
-    print(f"fuzz: {inputs[0]}")
-    check_inputs(inputs)
-    return f"KAFL_WORKDIR={outputs[0]} {RUNNER} run {inputs[0]} {DRY_RUN_FUZZ} -p {NUM_WORKERS}"
+    if all_exist(touchfiles):
+        return
 
-@bash_app
-def trace(inputs=[], outputs=[], stderr=parsl.AUTO_LOGNAME, stdout=parsl.AUTO_LOGNAME):
-    # assuming we fuzz with -trace, we can overcommit the decode jobs here
-    print(f"trace: {inputs[0]}")
-    check_inputs(inputs)
-    return f"{RUNNER} cov {inputs[0]} -p {NUM_THREADS}"
+    subprocess.run(
+            f"MAKEFLAGS='-j{NUM_THREADS}' {RUNNER} audit {audir_dir} {config}",
+            shell=True, check=True)
 
-@bash_app
-def smatch(inputs=[], outputs=[], stderr=parsl.AUTO_LOGNAME, stdout=parsl.AUTO_LOGNAME):
-    print(f"smatch: {inputs[0]}")
-    check_inputs(inputs)
-    return f"USE_GHIDRA={USE_GHIDRA} MAKEFLAGS='-j{NUM_THREADS}' {RUNNER} smatch {inputs[0]}"
+@python_app
+def task_build(args, harness_dir, build_dir, target_dir,
+               global_smatch_warns, global_smatch_list):
 
-@bash_app
-def audit_kernel(inputs=[], outputs=[], stderr=parsl.AUTO_LOGNAME, stdout=parsl.AUTO_LOGNAME):
-    print(f"audit: {inputs[0]}")
-    check_inputs(inputs)
-    # TODO thread limit broken - maybe re-implement the test-kernel.sh here?
-    if os.path.exists(outputs[1]):
-        print(f"Skipping audit_kernel task - output already exists: {outputs[1]}")
-        return ""
-    else:
-        return f"MAKEFLAGS='-j{NUM_THREADS}' {RUNNER} audit {inputs[0]} {inputs[1]}"
+    import os
+    import subprocess
+    import shutil
+
+    target_files = [
+            build_dir/'.config',
+            build_dir/'vmlinux',
+            build_dir/'System.map',
+            build_dir/'arch/x86/boot/bzImage',
+            global_smatch_warns,
+            global_smatch_list ]
+
+    os.makedirs(target_dir, exist_ok=True)
+
+    if all_exist([target_dir/f.name for f in target_files]):
+        return
+
+    subprocess.run(
+            f"MAKEFLAGS='-j{NUM_THREADS}' {RUNNER} build {harness_dir} {build_dir}",
+            shell=True, check=True)
+
+    for f in target_files:
+        shutil.copy(f, target_dir)
+    if not args.keep:
+        shutil.rmtree(build_dir)
+
+@python_app
+def task_fuzz(args, harness_dir, target_dir, work_dir):
+
+    import os
+    import subprocess
+
+    subprocess.run(
+            f"KAFL_WORKDIR={work_dir} {RUNNER} run {target_dir} {DRY_RUN_FUZZ} -p {NUM_WORKERS}",
+            shell=True, check=True, cwd=harness_dir)
+
+@python_app
+def task_trace(args, harness_dir, work_dir):
+
+    import os
+    import subprocess
+
+    subprocess.run(
+            f"{RUNNER} cov {work_dir} -p {NUM_THREADS}",
+            shell=True, check=True, cwd=harness_dir)
+
+@python_app
+def task_smatch(args, work_dir, smatch_list):
+
+    import os
+    import subprocess
+    import shutil
+
+    subprocess.run(
+            f"USE_GHIDRA={USE_GHIDRA} MAKEFLAGS='-j{NUM_THREADS}' {RUNNER} smatch {work_dir}",
+            shell=True, check=True)
 
 def run_campaign(args, harness_dirs):
     # smatch audit
-    sources = Path(os.environ.get('LINUX_GUEST'))
-    audit_dir = CAMPAIGN_DIR/'audit_list'
+    audit_dir = CAMPAIGN_ROOT/'audit_list'
     os.makedirs(audit_dir, exist_ok=True)
     global_smatch_warns = audit_dir/'smatch_warns.txt'
     global_smatch_list = audit_dir/'smatch_warns_annotated.txt'
@@ -118,54 +152,45 @@ def run_campaign(args, harness_dirs):
     # audit based on TDX fuzzing template
     # this is required to run inside the kernel source tree
     config = DEFAULT_GUEST_CONFIG
-    audit_job = audit_kernel(inputs=[pfile(audit_dir), pfile(config)], outputs=[pfile(global_smatch_warns), pfile(global_smatch_list)])
-    audit_job.result() # wait to complete
+    t = task_audit(args, audit_dir, config, touchfiles=[global_smatch_warns, global_smatch_list])
+    t.result() # wait to complete
 
-    # # build kernels for each harness and prepare `target` dir
-    # clean = mrproper(inputs=[pfile(sources)], outputs=[pfile(sources)])
-    # clean.result() # wait for mrproper
-
+    pipeline = dict()
     for harness in harness_dirs:
-        build_dir = mkjobdir(harness, 'build')
-        target_dir = harness/'target'
-        target_files = [
-                build_dir/'.config',
-                build_dir/'vmlinux',
-                build_dir/'System.map',
-                build_dir/'arch/x86/boot/bzImage',
-                global_smatch_warns,
-                global_smatch_list ]
+        pipeline.update({harness.name: {
+            'harness_dir': harness,
+            'target_dir': harness/'target',
+            'build_dir': mkjobdir(harness, 'build'),
+            'work_dir': mkjobdir(harness, 'run')
+            }})
 
-        job = build(inputs=[pfile(harness)], outputs=[pfile(build_dir)])
-        job.result() # wait for build to be done
+    for p in pipeline.values():
+        t = task_build(
+                args,
+                p['harness_dir'],
+                p['build_dir'],
+                p['target_dir'],
+                global_smatch_warns, global_smatch_list)
 
-        os.makedirs(target_dir, exist_ok=True)
-        for f in target_files:
-            shutil.copy(f, target_dir)
-        if not args.keep:
-            shutil.rmtree(build_dir)
+        t.result() # wait for build to be done
 
-    fuzz_jobs = []
-    for harness in harness_dirs:
-        target_dir = harness/'target'
-        jobdir = mkjobdir(harness, 'run')
-        job = fuzz(inputs=[pfile(target_dir)], outputs=[pfile(jobdir)])
-        fuzz_jobs.append(job)
+    fuzz_tasks = []
+    for p in pipeline.values():
+        t = task_fuzz(
+                args,
+                p['harness_dir'],
+                p['target_dir'],
+                p['work_dir'])
+        fuzz_tasks.append(t)
 
     # wait for all build jobs to complete
-    #[job.result() for job in fuzz_jobs]
+    [t.result() for t in fuzz_tasks]
 
-    trace_jobs = []
-    for job in fuzz_jobs:
-        # wait for fuzz job, then process traces & launch smatch matching
-        jobdir = job.outputs[0].result()
-        job = trace(inputs=[jobdir])
-        job.result()
-        job = smatch(inputs=[jobdir, global_smatch_list])
-        trace_jobs.append(job)
-
-    # wait for all jobs to complete
-    [job.result() for job in trace_jobs]
+    for p in pipeline.values():
+        t = task_trace(args, p['harness_dir'], p['work_dir'])
+        t.result()
+        t = task_smatch(args, p['work_dir'], global_smatch_list)
+        t.result()
 
 def parse_args():
 
@@ -185,7 +210,7 @@ def main():
     global NCPU
     global NUM_WORKERS
     global NUM_THREADS
-    global CAMPAIGN_DIR
+    global CAMPAIGN_ROOT
     global DRY_RUN_FUZZ
 
     args = parse_args()
@@ -199,7 +224,7 @@ def main():
             harness_dirs.append(harness.parent)
 
     # pick root based on first harness' parent
-    CAMPAIGN_DIR = Path(harness_dirs[0].parent)
+    CAMPAIGN_ROOT = Path(harness_dirs[0].parent)
 
     # Scale workers/threads based on available CPUs
     NCPU=len(os.sched_getaffinity(0)) # available vCPUs
