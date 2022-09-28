@@ -12,6 +12,7 @@ import sys
 import glob
 import tempfile
 import argparse
+import shutil
 from pathlib import Path
 
 import parsl
@@ -41,6 +42,7 @@ BKC_ROOT = Path(os.environ.get('BKC_ROOT'))
 RUNNER = BKC_ROOT/'bkc/kafl/fuzz.sh'
 DEFAULT_GUEST_CONFIG = BKC_ROOT/'bkc/kafl/linux_kernel_tdx_guest.config'
 USE_GHIDRA=0 # use ghidra for gen_addr2line.sh?
+DRY_RUN_FUZZ="--abort-exec 100"
 
 #
 # Helpers
@@ -50,12 +52,14 @@ def check_inputs(inputs):
         if not os.path.exists(f):
             raise parsl.app.errors.ParslError(f"Missing input file {f}")
 
-def mkjobdir(path, label):
-    job_root = path.parent/'run'
+def mkjobdir(job_root, label):
     os.makedirs(job_root, exist_ok=True)
     tmpdir = tempfile.mkdtemp(dir=job_root, prefix=f"{label}_")
     os.chmod(tmpdir, 0o755)
     return Path(tmpdir)
+
+def pfile(path: Path) -> File:
+    return File(path.as_uri())
 
 ##
 # Task wrappers
@@ -71,13 +75,13 @@ def mrproper(inputs=[], outputs=[], stderr=parsl.AUTO_LOGNAME, stdout=parsl.AUTO
 def build(inputs=[], outputs=[], stderr=parsl.AUTO_LOGNAME, stdout=parsl.AUTO_LOGNAME):
     print(f"build: {inputs[0]}")
     check_inputs(inputs)
-    return f"MAKEFLAGS='-j{NUM_THREADS}' {RUNNER} build {inputs[0]}"
+    return f"MAKEFLAGS='-j{NUM_THREADS}' {RUNNER} build {inputs[0]} {outputs[0]}"
 
 @bash_app
 def fuzz(inputs=[], outputs=[], stderr=parsl.AUTO_LOGNAME, stdout=parsl.AUTO_LOGNAME):
     print(f"fuzz: {inputs[0]}")
     check_inputs(inputs)
-    return f"KAFL_WORKDIR={outputs[0]} {RUNNER} run {inputs[0]} --abort-exec 100 -p {NUM_WORKERS}"
+    return f"KAFL_WORKDIR={outputs[0]} {RUNNER} run {inputs[0]} {DRY_RUN_FUZZ} -p {NUM_WORKERS}"
 
 @bash_app
 def trace(inputs=[], outputs=[], stderr=parsl.AUTO_LOGNAME, stdout=parsl.AUTO_LOGNAME):
@@ -90,7 +94,7 @@ def trace(inputs=[], outputs=[], stderr=parsl.AUTO_LOGNAME, stdout=parsl.AUTO_LO
 def smatch(inputs=[], outputs=[], stderr=parsl.AUTO_LOGNAME, stdout=parsl.AUTO_LOGNAME):
     print(f"smatch: {inputs[0]}")
     check_inputs(inputs)
-    return f"cp {inputs[1]} {inputs[0]}/target/smatch_warns.txt; USE_GHIDRA={USE_GHIDRA} MAKEFLAGS='-j{NUM_THREADS}' {RUNNER} smatch {inputs[0]}"
+    return f"USE_GHIDRA={USE_GHIDRA} MAKEFLAGS='-j{NUM_THREADS}' {RUNNER} smatch {inputs[0]}"
 
 @bash_app
 def audit_kernel(inputs=[], outputs=[], stderr=parsl.AUTO_LOGNAME, stdout=parsl.AUTO_LOGNAME):
@@ -104,54 +108,64 @@ def audit_kernel(inputs=[], outputs=[], stderr=parsl.AUTO_LOGNAME, stdout=parsl.
         return f"MAKEFLAGS='-j{NUM_THREADS}' {RUNNER} audit {inputs[0]} {inputs[1]}"
 
 def run_campaign(args, harness_dirs):
-    jobs = []
-
     # smatch audit
     sources = Path(os.environ.get('LINUX_GUEST'))
-    target = CAMPAIGN_DIR/'audit'
-    os.makedirs(target, exist_ok=True)
-    global_smatch_warns = target/'smatch_warns.txt'
-    global_smatch_list = target/'smatch_warns_annotated.txt'
+    audit_dir = CAMPAIGN_DIR/'audit_list'
+    os.makedirs(audit_dir, exist_ok=True)
+    global_smatch_warns = audit_dir/'smatch_warns.txt'
+    global_smatch_list = audit_dir/'smatch_warns_annotated.txt'
 
     # audit based on TDX fuzzing template
+    # this is required to run inside the kernel source tree
     config = DEFAULT_GUEST_CONFIG
-    audit_job = audit_kernel(inputs=[File(str(target)), File(str(config))], outputs=[File(str(global_smatch_warns)), File(str(global_smatch_list))])
+    audit_job = audit_kernel(inputs=[pfile(audit_dir), pfile(config)], outputs=[pfile(global_smatch_warns), pfile(global_smatch_list)])
     audit_job.result() # wait to complete
-    clean = mrproper(inputs=[File(str(sources))], outputs=[File(str(sources))])
-    clean.result() # wait for mrproper
 
-    # harness builds
+    # # build kernels for each harness and prepare `target` dir
+    # clean = mrproper(inputs=[pfile(sources)], outputs=[pfile(sources)])
+    # clean.result() # wait for mrproper
+
     for harness in harness_dirs:
-        target=harness/'build'
-        job = build(inputs=[File(str(harness))], outputs=[File(str(target))])
-        jobs.append(job)
+        build_dir = mkjobdir(harness, 'build')
+        target_dir = harness/'target'
+        target_files = [
+                build_dir/'.config',
+                build_dir/'vmlinux',
+                build_dir/'System.map',
+                build_dir/'arch/x86/boot/bzImage',
+                global_smatch_warns,
+                global_smatch_list ]
 
-    # wait for all build jobs to complete
-    [job.result() for job in jobs]
+        job = build(inputs=[pfile(harness)], outputs=[pfile(build_dir)])
+        job.result() # wait for build to be done
+
+        os.makedirs(target_dir, exist_ok=True)
+        for f in target_files:
+            shutil.copy(f, target_dir)
+        if not args.keep:
+            shutil.rmtree(build_dir)
 
     fuzz_jobs = []
     for harness in harness_dirs:
-        target = harness/'build'
-        jobdir = mkjobdir(harness, harness.name)
-        job = fuzz(inputs=[File(str(target))], outputs=[File(str(jobdir))])
+        target_dir = harness/'target'
+        jobdir = mkjobdir(harness, 'run')
+        job = fuzz(inputs=[pfile(target_dir)], outputs=[pfile(jobdir)])
         fuzz_jobs.append(job)
 
     # wait for all build jobs to complete
-    #[job.result() for job in jobs]
+    #[job.result() for job in fuzz_jobs]
 
+    trace_jobs = []
     for job in fuzz_jobs:
+        # wait for fuzz job, then process traces & launch smatch matching
         jobdir = job.outputs[0].result()
-        smatch_match = Path(jobdir)/'traces/smatch_match.lst'
-        trace_out = Path(jobdir)/'traces/edges_uniq.lst'
-
-        # start smatch once the corresponding edges_uniq.lst is done
-        job = trace(inputs=[jobdir], outputs=[File(str(trace_out))])
-        job = smatch(inputs=[jobdir, global_smatch_list, job.outputs[0]], outputs=[File(str(smatch_match))])
-        jobs.append(job)
+        job = trace(inputs=[jobdir])
+        job.result()
+        job = smatch(inputs=[jobdir, global_smatch_list])
+        trace_jobs.append(job)
 
     # wait for all jobs to complete
-    [job.result() for job in jobs]
-
+    [job.result() for job in trace_jobs]
 
 def parse_args():
 
@@ -162,6 +176,7 @@ def parse_args():
             help='filter pattern for which harnesses to schedule')
     parser.add_argument('--keep', '-k', action="store_true", help="keep build files")
     parser.add_argument('--verbose', '-v', action="store_true", help="verbose mode")
+    parser.add_argument('--dry-run', '-n', action="store_true", help="abort fuzzing after 100 execs")
 
     return parser.parse_args()
 
@@ -171,6 +186,7 @@ def main():
     global NUM_WORKERS
     global NUM_THREADS
     global CAMPAIGN_DIR
+    global DRY_RUN_FUZZ
 
     args = parse_args()
 
@@ -219,11 +235,11 @@ def main():
     parsl.load(local_threads)
 
     if args.verbose:
-        # log actions to screen
         parsl.set_stream_logger(level=parsl.logging.INFO)
-        # modify file logging?
         #parsl.set_file_logger(FILENAME, level=logging.DEBUG)
 
+    if not args.dry_run:
+        DRY_RUN_FUZZ = ''
 
     run_campaign(args, harness_dirs)
 
