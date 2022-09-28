@@ -13,6 +13,7 @@ import glob
 import tempfile
 import argparse
 import shutil
+import time
 from pathlib import Path
 
 import parsl
@@ -37,12 +38,6 @@ from parsl.executors.threads import ThreadPoolExecutor
 #            ]
 #        )
 #parsl.load(worker_config)
-
-BKC_ROOT = Path(os.environ.get('BKC_ROOT'))
-RUNNER = BKC_ROOT/'bkc/kafl/fuzz.sh'
-DEFAULT_GUEST_CONFIG = BKC_ROOT/'bkc/kafl/linux_kernel_tdx_guest.config'
-USE_GHIDRA=0 # use ghidra for gen_addr2line.sh?
-DRY_RUN_FUZZ="--abort-exec 100"
 
 #
 # Helpers
@@ -74,11 +69,11 @@ def task_audit(args, audit_dir, config, touchfiles=[]):
     import os
     import subprocess
 
-    if all_exist(touchfiles):
+    if not args.rebuild and all_exist(touchfiles):
         return
 
     subprocess.run(
-            f"MAKEFLAGS='-j{NUM_THREADS}' {RUNNER} audit {audir_dir} {config}",
+            f"MAKEFLAGS='-j{args.threads}' {args.fuzz_sh} audit {audit_dir} {config}",
             shell=True, check=True)
 
 @python_app
@@ -99,11 +94,12 @@ def task_build(args, harness_dir, build_dir, target_dir,
 
     os.makedirs(target_dir, exist_ok=True)
 
-    if all_exist([target_dir/f.name for f in target_files]):
-        return
+    if not args.rebuild:
+        if all_exist([target_dir/f.name for f in target_files]):
+            return
 
     subprocess.run(
-            f"MAKEFLAGS='-j{NUM_THREADS}' {RUNNER} build {harness_dir} {build_dir}",
+            f"MAKEFLAGS='-j{args.threads}' {args.fuzz_sh} build {harness_dir} {build_dir}",
             shell=True, check=True)
 
     for f in target_files:
@@ -118,7 +114,7 @@ def task_fuzz(args, harness_dir, target_dir, work_dir):
     import subprocess
 
     subprocess.run(
-            f"KAFL_WORKDIR={work_dir} {RUNNER} run {target_dir} {DRY_RUN_FUZZ} -p {NUM_WORKERS}",
+            f"KAFL_WORKDIR={work_dir} {args.fuzz_sh} run {target_dir} {args.dry_run} -p {args.workers}",
             shell=True, check=True, cwd=harness_dir)
 
 @python_app
@@ -128,7 +124,7 @@ def task_trace(args, harness_dir, work_dir):
     import subprocess
 
     subprocess.run(
-            f"{RUNNER} cov {work_dir} -p {NUM_THREADS}",
+            f"{args.fuzz_sh} cov {work_dir} -p {args.workers}",
             shell=True, check=True, cwd=harness_dir)
 
 @python_app
@@ -138,20 +134,25 @@ def task_smatch(args, work_dir, smatch_list):
     import subprocess
     import shutil
 
+    if args.use_ghidra:
+        USE_GHIDRA=1
+    else:
+        USE_GHIDRA=0
+
     subprocess.run(
-            f"USE_GHIDRA={USE_GHIDRA} MAKEFLAGS='-j{NUM_THREADS}' {RUNNER} smatch {work_dir}",
+            f"USE_GHIDRA={USE_GHIDRA} MAKEFLAGS='-j{args.threads}' {args.fuzz_sh} smatch {work_dir}",
             shell=True, check=True)
 
 def run_campaign(args, harness_dirs):
     # smatch audit
-    audit_dir = CAMPAIGN_ROOT/'audit_list'
+    audit_dir = args.campaign_root/'audit_list'
     os.makedirs(audit_dir, exist_ok=True)
     global_smatch_warns = audit_dir/'smatch_warns.txt'
     global_smatch_list = audit_dir/'smatch_warns_annotated.txt'
 
     # audit based on TDX fuzzing template
     # this is required to run inside the kernel source tree
-    config = DEFAULT_GUEST_CONFIG
+    config = args.linux_conf
     t = task_audit(args, audit_dir, config, touchfiles=[global_smatch_warns, global_smatch_list])
     t.result() # wait to complete
 
@@ -161,7 +162,7 @@ def run_campaign(args, harness_dirs):
             'harness_dir': harness,
             'target_dir': harness/'target',
             'build_dir': mkjobdir(harness, 'build'),
-            'work_dir': mkjobdir(harness, 'run')
+            'work_dir': mkjobdir(harness, 'workdir')
             }})
 
     for p in pipeline.values():
@@ -193,66 +194,77 @@ def run_campaign(args, harness_dirs):
         t.result()
 
 def parse_args():
+    bkc_root = Path(os.environ.get('BKC_ROOT'))
+    default_ncpu = len(os.sched_getaffinity(0))
+    default_fuzzsh = bkc_root/'bkc/kafl/fuzz.sh'
+    default_config = bkc_root/'bkc/kafl/linux_kernel_tdx_guest.config'
 
     parser = argparse.ArgumentParser(description='Campaign Automation')
     parser.add_argument('campaign', metavar='<campaign>', type=str, nargs="+",
             help='root campaign dir or one or more harness dirs (files may be overwritten!))')
-    parser.add_argument('--pattern', metavar='<pattern>', type=str,
-            help='filter pattern for which harnesses to schedule')
-    parser.add_argument('--keep', '-k', action="store_true", help="keep build files")
+    parser.add_argument('--harness', metavar='<str>', type=str,
+            help='only schedule harnesses containing this string (e.g. "BPH")'),
+
+    parser.add_argument('--ncpu', '-j', type=int, metavar='n', default=default_ncpu,
+            help=f'number of vCPUs to use (default: {default_ncpu})')
+    parser.add_argument('--workers', '-p', type=int, metavar='n', default=16,
+            help='number of kAFL workers (default: min(16,ncpu))')
+    parser.add_argument('--threads', '-t', type=int, metavar='n', default=32,
+            help='number of SW threads (default: 2*workers)')
+
+    parser.add_argument('--rebuild', '-r', action="store_true",
+            help="rebuild audit and fuzz kernels")
+    parser.add_argument('--keep', '-k', action="store_true",
+            help="keep kernel build trees")
+    parser.add_argument('--dry-run', '-n', action="store_true",
+            help="kill fuzzer after 100 execs (corpus may be empty)")
     parser.add_argument('--verbose', '-v', action="store_true", help="verbose mode")
-    parser.add_argument('--dry-run', '-n', action="store_true", help="abort fuzzing after 100 execs")
+
+    parser.add_argument('--linux-conf', metavar='<file>', default=default_config,
+            help=f"base config for generating audit and harness kernels (default: {default_config})")
+    parser.add_argument('--fuzz-sh', metavar='<file>', default=default_fuzzsh,
+            help=f"fuzz.sh runner script (default: {default_fuzzsh})")
+    parser.add_argument('--use-ghidra', metavar='<0|1>', type=bool, default=False,
+            help="use Ghidra for deriving covered blocks from edges? (default=0)")
 
     return parser.parse_args()
 
 def main():
-
-    global NCPU
-    global NUM_WORKERS
-    global NUM_THREADS
-    global CAMPAIGN_ROOT
-    global DRY_RUN_FUZZ
 
     args = parse_args()
 
     harness_dirs = list()
     for c in args.campaign:
         for harness in Path(c).glob('**/kafl.yaml'):
-            if args.pattern and args.pattern not in harness.parent.name:
+            if args.harness and args.harness not in harness.parent.name:
                 continue
             print(f"Selected harness: {harness.parent}")
             harness_dirs.append(harness.parent)
 
     # pick root based on first harness' parent
-    CAMPAIGN_ROOT = Path(harness_dirs[0].parent)
+    args.campaign_root = Path(harness_dirs[0].parent)
 
-    # Scale workers/threads based on available CPUs
-    NCPU=len(os.sched_getaffinity(0)) # available vCPUs
-    NUM_WORKERS=16 # kAFL workers (max 1 per vCPU)
-    NUM_THREADS=32 # SW threads to schedule (can to overcommit)
-
-    # use few threads/pipes for small CPU
-    if NCPU < NUM_WORKERS:
-        NUM_PIPES=1
-        NUM_WORKERS=NCPU
-        NUM_THREADS=2*NCPU
+    # for few CPUs, use single pipes and all available cores
+    if args.ncpu < args.workers:
+        args.pipes = 1
+        args.workers = args.ncpu
+        args.threads = 2*args.ncpu
     else:
-        NUM_PIPES=max(1,(NCPU-2)//NUM_WORKERS) # concurrent pipelines
+        args.pipes = max(1,(args.ncpu-2)//args.workers)
 
-    # use more threads when relatively few pipes
-    if NUM_PIPES > len(harness_dirs):
-        NUM_PIPES = len(harness_dirs)
-        NUM_THREADS = 2*NCPU//NUM_PIPES
-        #NUM_WORKERS = NCPU//NUM_PIPES
+    # if we don't need so many pipes, scale up the threads (but not workers)
+    if args.pipes > len(harness_dirs):
+        args.pipes = len(harness_dirs)
+        args.threads = 2*(args.ncpu//args.pipes)
 
     print(f"Executing %d harnesses in %d pipelines (%d workers, %d threads across %d CPUs)" % (
-        len(harness_dirs), NUM_PIPES, NUM_WORKERS, NUM_THREADS, NCPU))
+        len(harness_dirs), args.pipes, args.workers, args.threads, args.ncpu))
 
-    # define pipeline number based on python threads
+    # pipeline concurrency is done via parallel parsl jobs
     local_threads = Config(
         executors=[
             ThreadPoolExecutor(
-                max_threads=NUM_PIPES,
+                max_threads=args.pipes,
                 label='local_threads'
             )
         ]
@@ -263,9 +275,12 @@ def main():
         parsl.set_stream_logger(level=parsl.logging.INFO)
         #parsl.set_file_logger(FILENAME, level=logging.DEBUG)
 
-    if not args.dry_run:
-        DRY_RUN_FUZZ = ''
+    if args.dry_run:
+        args.dry_run = "--abort-exec 100"
+    else:
+        args.dry_run = ""
 
+    time.sleep(1)
     run_campaign(args, harness_dirs)
 
 if __name__ == "__main__":
