@@ -52,7 +52,7 @@ Available commands <cmd>:
                             collect the individual trace logs to <workdir>/trace/
   smatch <workdir>        - get addr2line and smatch_match results from traces
 
-  build <dir>             - use harness config at <dir> to build kernel at <dir>/build
+  build <dir> <build>     - use harness config at <dir> to build kernel at <build>
   audit <dir> <config>    - smatch-audit guest-kernel using <config> and store to <dir>
 
   pipe  <dir>             - run pipeline on harness template at <dir>
@@ -192,8 +192,8 @@ function pipeline()
 		return
 	fi
 
-	build "$HARNESS_ROOT"
 	set_workdir "$HARNESS_ROOT/build"
+	build "$HARNESS_ROOT" "$HARNESS_ROOT/build"
 	HARNESS_NAME="$(basename $HARNESS_ROOT)"
 	WORK_DIR="$(mktemp -d -p /dev/shm ${USER}_tdfl.${HARNESS_NAME}.XXX)"
 	KAFL_OPTS=$KAFL_FULL_OPTS
@@ -345,8 +345,9 @@ function smatch_audit()
 # build target from generated template config
 function build_harness()
 {
-	TEMPLATE_DIR="$(realpath -e -- "$1")"
-	shift || fatal "Missing argument <dir>"
+	test $# -eq 2 || usage "Wrong number of arguments"
+	TEMPLATE_DIR="$(realpath -e -- "$1")"; shift
+	BUILD_DIR="$(realpath -e -- "$1")"; shift
 
 	test -f "$TEMPLATE_DIR/linux.template" || fatal "Could not find kernel template config in $TEMPLATE_DIR"
 	test -f "$TEMPLATE_DIR/linux.config" || fatal "Could not find kernel harnes config in $TEMPLATE_DIR"
@@ -357,13 +358,12 @@ function build_harness()
 	test -n "$MAKEFLAGS"   || echo "MAKEFLAGS is not set. Consider setting MAKEFLAGS=\"-j\$((2*\$(nproc)))\""
 
 	cd $TEMPLATE_DIR
-	test -d build || mkdir build
-	ODIR=$TEMPLATE_DIR/build
-	cat linux.template linux.config > build/.config
+	test -d $BUILD_DIR || mkdir $BUILD_DIR
+	cat linux.template linux.config > $BUILD_DIR/.config
 	cd $LINUX_GUEST
 	make mrproper
-	make O=$ODIR olddefconfig
-	make O=$ODIR "$KERNEL_BUILD_PARAMS"
+	make O=$BUILD_DIR olddefconfig
+	make O=$BUILD_DIR "$KERNEL_BUILD_PARAMS"
 }
 
 function smatch_match()
