@@ -68,22 +68,29 @@ def all_exist(touchfiles):
 ##
 
 @python_app
-def task_audit(args, audit_dir, config, touchfiles=[]):
+def task_audit(args, audit_dir, config, touchfiles=[],
+               stdout=parsl.AUTO_LOGNAME):
 
     import os
     import subprocess
+
+    os.makedirs(Path(stdout).parent)
 
     if not args.rebuild and all_exist(touchfiles):
         return
 
     env = dict(os.environ, MAKEFLAGS=f"-j{args.threads}")
 
-    subprocess.run([args.fuzz_sh, "audit", audit_dir, config],
-            shell=False, check=True, env=env)
+    print(f"Starting audit job at {audit_dir}\n`- logs: {stdout}")
+    with open(stdout, 'w') as log:
+        subprocess.run([args.fuzz_sh, "audit", audit_dir, config],
+            shell=False, check=True, env=env,
+            stdout=log, stderr=subprocess.STDOUT)
 
 @python_app
 def task_build(args, harness_dir, build_dir, target_dir,
-               global_smatch_warns, global_smatch_list):
+               global_smatch_warns, global_smatch_list,
+               stdout=parsl.AUTO_LOGNAME):
 
     import os
     import subprocess
@@ -98,6 +105,7 @@ def task_build(args, harness_dir, build_dir, target_dir,
             global_smatch_list ]
 
     os.makedirs(target_dir, exist_ok=True)
+    os.makedirs(Path(stdout).parent, exist_ok=True)
 
     if not args.rebuild:
         if all_exist([target_dir/f.name for f in target_files]):
@@ -105,8 +113,11 @@ def task_build(args, harness_dir, build_dir, target_dir,
 
     env = dict(os.environ, MAKEFLAGS=f"-j{args.threads}")
 
-    p = subprocess.run([args.fuzz_sh, "build", harness_dir, build_dir],
-        shell=False, check=True, env=env)
+    print(f"Starting build job at {build_dir}\n`- logs: {stdout}")
+    with open(stdout, 'w') as log:
+        p = subprocess.run([args.fuzz_sh, "build", harness_dir, build_dir],
+                shell=False, check=True, env=env,
+                stdout=log, stderr=subprocess.STDOUT)
 
     if p.returncode != 0:
         return
@@ -117,41 +128,57 @@ def task_build(args, harness_dir, build_dir, target_dir,
         shutil.rmtree(build_dir)
 
 @python_app
-def task_fuzz(args, harness_dir, target_dir, work_dir):
+def task_fuzz(args, harness_dir, target_dir, work_dir,
+              stdout=parsl.AUTO_LOGNAME):
 
     import os
     import subprocess
 
+    os.makedirs(Path(stdout).parent, exist_ok=True)
     env = dict(os.environ, KAFL_WORKDIR=f"{work_dir}")
 
-    subprocess.run([args.fuzz_sh, "run", target_dir, *args.kafl_extra, "-p", args.workers],
-            shell=False, check=True, cwd=harness_dir, env=env)
+    print(f"Starting fuzzer job at {work_dir}\n`- logs: {stdout}")
+    with open(stdout, 'w') as log:
+        subprocess.run([args.fuzz_sh, "run", target_dir, *args.kafl_extra, "-p", str(args.workers)],
+                shell=False, check=True, env=env, cwd=harness_dir,
+                stdout=log, stderr=subprocess.STDOUT)
 
 @python_app
-def task_trace(args, harness_dir, work_dir):
+def task_trace(args, harness_dir, work_dir,
+               stdout=parsl.AUTO_LOGNAME):
 
     import os
     import subprocess
 
-    subprocess.run([args.fuzz_sh, "cov", work_dir, "-p", args.workers],
-            shell=False, check=True, cwd=harness_dir)
+    os.makedirs(Path(stdout).parent, exist_ok=True)
+
+    print(f"Starting trace job at {work_dir}\n`- logs: {stdout}")
+    with open(stdout, 'w') as log:
+        subprocess.run([args.fuzz_sh, "cov", work_dir, "-p", str(args.workers)],
+                shell=False, check=True, cwd=harness_dir,
+                stdout=log, stderr=subprocess.STDOUT)
 
 @python_app
-def task_smatch(args, work_dir, smatch_list, wait_task=None):
+def task_smatch(args, work_dir, smatch_list, wait_task=None,
+                stdout=parsl.AUTO_LOGNAME):
 
     import os
     import subprocess
     import shutil
 
-    # wait on dependency...
-    if dep:
-        dep.result()
+    # wait on dependency... :-/
+    if wait_task:
+        wait_task.result()
 
+    os.makedirs(Path(stdout).parent, exist_ok=True)
     env = dict(os.environ, MAKEFLAGS=f"-j{args.threads}", USE_GHIDRA=str(int(args.use_ghidra)))
 
     #f"USE_GHIDRA={USE_GHIDRA} MAKEFLAGS='-j{args.threads}' {args.fuzz_sh} smatch {work_dir}",
-    subprocess.run([args.fuzz_sh, "smatch", work_dir],
-            shell=False, check=True, env=env)
+    print(f"Starting smatch job at {work_dir}\n`- logs: {stdout}")
+    with open(stdout, 'w') as log:
+        subprocess.run([args.fuzz_sh, "smatch", work_dir],
+                shell=False, check=True, env=env,
+                stdout=log, stderr=subprocess.STDOUT)
 
 def run_campaign(args, harness_dirs):
     # smatch audit
@@ -273,6 +300,9 @@ def main():
                 continue
             harness_dirs.append(harness.parent)
 
+    if len(harness_dirs) < 1:
+        sys.exit("No matching harnesses in directory. Abort.")
+
     # pick root based on first harness' parent
     args.campaign_root = Path(harness_dirs[0].parent)
 
@@ -311,14 +341,15 @@ def main():
 
     args.kafl_extra = []
     if args.dry_run:
-        args.kafl_extra = ["--abort-exec", "100"]
+        args.kafl_extra = ["--abort-exec", "1000"]
 
-    print(f"\nExecuting %d harnesses in %d pipelines (%d workers, %d threads, %d cpus)." % (
+    print(f"\nExecuting %d harnesses in %d pipelines (%d workers, %d threads, %d cpus).\n" % (
         len(harness_dirs), args.pipes, args.workers, args.threads, args.ncpu))
 
-    for i in "4321\n":
-        time.sleep(1)
+    for i in "321":
         print(f"{i},", end='', flush=True)
+        time.sleep(1)
+    print(" Go!\n")
 
     run_campaign(args, harness_dirs)
 
