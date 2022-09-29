@@ -386,8 +386,8 @@ ACTION="$1"; shift
 [ "$ACTION" == "--help" ] && usage
 [ "$ACTION" == "-h" ] && usage
 
-test -d "$BKC_ROOT" || fatal "Could not find BKC_ROOT. Check set_env.sh."
-test -d "$KAFL_ROOT" || fatal "Could not find KAFL_ROOT. Check set_env.sh."
+test -d "$BKC_ROOT" || fatal "Could not find BKC_ROOT. Check 'env.sh'."
+test -d "$KAFL_ROOT" || fatal "Could not find KAFL_ROOT. Check 'env.sh'."
 
 test -d $SHARE_DIR || mkdir -p $SHARE_DIR
 
