@@ -42,6 +42,7 @@ analyze_kernel()
 	echo "Analysing kernel at $LINUX_GUEST. This may take a minute.."
 	cd $LINUX_GUEST
 	make clean
+	make olddefconfig
 	find -name \*.c.smatch -exec rm \{\} \;
 	make -k CHECK="$SMATCH_BIN -p=kernel --file-output --succeed $*" C=1 "$PARAMS" $TARGETS 2>&1 | tee $SMATCH_LOG
 	find -name \*.c.smatch -exec cat \{\} \; -exec rm \{\} \; > $SMATCH_WARNS
