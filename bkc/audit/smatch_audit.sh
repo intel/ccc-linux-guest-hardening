@@ -92,4 +92,9 @@ fi
 analyze_kernel
 
 # restore .config
-test -n "$CONFIG_BAK" && cp $CONFIG_BAK $CONFIG_OLD && rm $CONFIG_BAK
+if test -n "$CONFIG_BAK"; then
+	cp $CONFIG_BAK $CONFIG_OLD
+	rm $CONFIG_BAK
+fi
+
+exit 0
