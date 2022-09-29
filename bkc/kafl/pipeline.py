@@ -79,7 +79,8 @@ def task_audit(args, audit_dir, config, touchfiles=[],
     if not args.rebuild and all_exist(touchfiles):
         return
 
-    env = dict(os.environ, MAKEFLAGS=f"-j{args.threads}")
+    # can use all cpus here since other pipelines are waiting
+    env = dict(os.environ, MAKEFLAGS=f"-j{args.ncpu}")
 
     print(f"Starting audit job at {audit_dir}\n`- logs: {stdout}")
     with open(stdout, 'w') as log:
@@ -202,6 +203,7 @@ def run_campaign(args, harness_dirs):
             'work_dir': mkjobdir(harness, 'workdir')
             }})
 
+    build_tasks = []
     for p in pipeline.values():
         t = task_build(
                 args,
@@ -209,8 +211,10 @@ def run_campaign(args, harness_dirs):
                 p['build_dir'],
                 p['target_dir'],
                 global_smatch_warns, global_smatch_list)
+        build_tasks.append(t)
 
-        t.result() # wait for build to be done
+    # wait for all build tasks to complete
+    [t.result() for t in build_tasks]
 
     fuzz_tasks = []
     for p in pipeline.values():
@@ -221,7 +225,7 @@ def run_campaign(args, harness_dirs):
                 p['work_dir'])
         fuzz_tasks.append(t)
 
-    # wait for all build jobs to complete
+    # wait for all fuzz tasks to complete
     [t.result() for t in fuzz_tasks]
 
     trace_tasks = []
@@ -233,6 +237,7 @@ def run_campaign(args, harness_dirs):
         #t.result()
         trace_tasks.append(t)
 
+    # wait for all tasks before exit
     [t.result() for t in trace_tasks]
 
 def prepare_campaign(args, campaign_dir):
