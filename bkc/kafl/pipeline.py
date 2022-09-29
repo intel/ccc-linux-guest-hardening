@@ -14,6 +14,8 @@ import tempfile
 import argparse
 import shutil
 import time
+import subprocess
+
 
 from pathlib import Path
 from pprint import pformat
@@ -206,10 +208,22 @@ def run_campaign(args, harness_dirs):
 
     [t.result() for t in trace_tasks]
 
+def prepare_campaign(args, campaign_dir):
+
+    if args.harness:
+        pattern = args.harness
+    else:
+        pattern = "all"
+
+    subprocess.run([args.prep_harness, campaign_dir, pattern, '--config', args.linux_conf],
+            shell=False, check=True)
+    print("")
+
 def parse_args():
     bkc_root = Path(os.environ.get('BKC_ROOT'))
     default_ncpu = len(os.sched_getaffinity(0))
     default_fuzzsh = bkc_root/'bkc/kafl/fuzz.sh'
+    default_preph = bkc_root/'bkc/kafl/prep_harness.py'
     default_config = bkc_root/'bkc/kafl/linux_kernel_tdx_guest.config'
 
     parser = argparse.ArgumentParser(description='Campaign Automation')
@@ -237,6 +251,8 @@ def parse_args():
             help=f"base config for generating audit and harness kernels (default: {default_config})")
     parser.add_argument('--fuzz-sh', metavar='<file>', default=default_fuzzsh,
             help=f"fuzz.sh runner script (default: {default_fuzzsh})")
+    parser.add_argument('--prep-harness', metavar='<file>', default=default_preph,
+            help=f"prep_harness.py helper script (default: {default_preph})")
     parser.add_argument('--use-ghidra', metavar='<0|1>', type=bool, default=False,
             help="use Ghidra for deriving covered blocks from edges? (default=0)")
 
@@ -245,6 +261,10 @@ def parse_args():
 def main():
 
     args = parse_args()
+
+    # if campaign directory does not exist, create based on args
+    if len(args.campaign) == 1 and not os.path.exists(args.campaign[0]):
+        prepare_campaign(args, args.campaign[0])
 
     harness_dirs = list()
     for c in args.campaign:
