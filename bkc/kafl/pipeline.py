@@ -74,9 +74,10 @@ def task_audit(args, audit_dir, config, touchfiles=[]):
     if not args.rebuild and all_exist(touchfiles):
         return
 
-    subprocess.run(
-            f"MAKEFLAGS='-j{args.threads}' {args.fuzz_sh} audit {audit_dir} {config}",
-            shell=True, check=True)
+    env = dict(os.environ, MAKEFLAGS=f"-j{args.threads}")
+
+    subprocess.run([args.fuzz_sh, "audit", audit_dir, config],
+            shell=False, check=True, env=env)
 
 @python_app
 def task_build(args, harness_dir, build_dir, target_dir,
@@ -100,9 +101,13 @@ def task_build(args, harness_dir, build_dir, target_dir,
         if all_exist([target_dir/f.name for f in target_files]):
             return
 
-    subprocess.run(
-            f"MAKEFLAGS='-j{args.threads}' {args.fuzz_sh} build {harness_dir} {build_dir}",
-            shell=True, check=True)
+    env = dict(os.environ, MAKEFLAGS=f"-j{args.threads}")
+
+    p = subprocess.run([args.fuzz_sh, "build", harness_dir, build_dir],
+        shell=False, check=True, env=env)
+
+    if p.returncode != 0:
+        return
 
     for f in target_files:
         shutil.copy(f, target_dir)
@@ -115,9 +120,10 @@ def task_fuzz(args, harness_dir, target_dir, work_dir):
     import os
     import subprocess
 
-    subprocess.run(
-            f"KAFL_WORKDIR={work_dir} {args.fuzz_sh} run {target_dir} {args.dry_run} -p {args.workers}",
-            shell=True, check=True, cwd=harness_dir)
+    env = dict(os.environ, KAFL_WORKDIR=f"{work_dir}")
+
+    subprocess.run([args.fuzz_sh, "run", target_dir, *args.kafl_extra, "-p", args.workers],
+            shell=False, check=True, cwd=harness_dir, env=env)
 
 @python_app
 def task_trace(args, harness_dir, work_dir):
@@ -125,25 +131,25 @@ def task_trace(args, harness_dir, work_dir):
     import os
     import subprocess
 
-    subprocess.run(
-            f"{args.fuzz_sh} cov {work_dir} -p {args.workers}",
-            shell=True, check=True, cwd=harness_dir)
+    subprocess.run([args.fuzz_sh, "cov", work_dir, "-p", args.workers],
+            shell=False, check=True, cwd=harness_dir)
 
 @python_app
-def task_smatch(args, work_dir, smatch_list):
+def task_smatch(args, work_dir, smatch_list, wait_task=None):
 
     import os
     import subprocess
     import shutil
 
-    if args.use_ghidra:
-        USE_GHIDRA=1
-    else:
-        USE_GHIDRA=0
+    # wait on dependency...
+    if dep:
+        dep.result()
 
-    subprocess.run(
-            f"USE_GHIDRA={USE_GHIDRA} MAKEFLAGS='-j{args.threads}' {args.fuzz_sh} smatch {work_dir}",
-            shell=True, check=True)
+    env = dict(os.environ, MAKEFLAGS=f"-j{args.threads}", USE_GHIDRA=str(int(args.use_ghidra)))
+
+    #f"USE_GHIDRA={USE_GHIDRA} MAKEFLAGS='-j{args.threads}' {args.fuzz_sh} smatch {work_dir}",
+    subprocess.run([args.fuzz_sh, "smatch", work_dir],
+            shell=False, check=True, env=env)
 
 def run_campaign(args, harness_dirs):
     # smatch audit
@@ -189,11 +195,16 @@ def run_campaign(args, harness_dirs):
     # wait for all build jobs to complete
     [t.result() for t in fuzz_tasks]
 
+    trace_tasks = []
     for p in pipeline.values():
         t = task_trace(args, p['harness_dir'], p['work_dir'])
-        t.result()
-        t = task_smatch(args, p['work_dir'], global_smatch_list)
-        t.result()
+        #t.result()
+        trace_tasks.append(t)
+        t = task_smatch(args, p['work_dir'], global_smatch_list, wait_task=t)
+        #t.result()
+        trace_tasks.append(t)
+
+    [t.result() for t in trace_tasks]
 
 def parse_args():
     bkc_root = Path(os.environ.get('BKC_ROOT'))
@@ -242,10 +253,12 @@ def main():
                 continue
             harness_dirs.append(harness.parent)
 
-    print(f"Selected harnesses:\n%s" % pformat([str(h) for h in harness_dirs]))
-
     # pick root based on first harness' parent
     args.campaign_root = Path(harness_dirs[0].parent)
+
+    print(f"Setting campaign root to {args.campaign_root}")
+    print(f"Scheduled for execution:\n%s" % pformat([str(h) for h in harness_dirs]))
+
 
     # for few CPUs, use single pipes and all available cores
     if args.ncpu < args.workers:
@@ -276,10 +289,9 @@ def main():
         parsl.set_stream_logger(level=parsl.logging.INFO)
         #parsl.set_file_logger(FILENAME, level=logging.DEBUG)
 
+    args.kafl_extra = []
     if args.dry_run:
-        args.dry_run = "--abort-exec 100"
-    else:
-        args.dry_run = ""
+        args.kafl_extra = ["--abort-exec", "100"]
 
     print(f"\nExecuting %d harnesses in %d pipelines (%d workers, %d threads, %d cpus)." % (
         len(harness_dirs), args.pipes, args.workers, args.threads, args.ncpu))
