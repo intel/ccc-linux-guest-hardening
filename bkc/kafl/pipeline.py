@@ -14,7 +14,9 @@ import tempfile
 import argparse
 import shutil
 import time
+
 from pathlib import Path
+from pprint import pformat
 
 import parsl
 from parsl.app.app import python_app, bash_app
@@ -238,8 +240,9 @@ def main():
         for harness in Path(c).glob('**/kafl.yaml'):
             if args.harness and args.harness not in harness.parent.name:
                 continue
-            print(f"Selected harness: {harness.parent}")
             harness_dirs.append(harness.parent)
+
+    print(f"Selected harnesses:\n%s" % pformat([str(h) for h in harness_dirs]))
 
     # pick root based on first harness' parent
     args.campaign_root = Path(harness_dirs[0].parent)
@@ -251,14 +254,12 @@ def main():
         args.threads = 2*args.ncpu
     else:
         args.pipes = max(1,(args.ncpu-2)//args.workers)
+        args.threads = 2*args.workers
 
     # if we don't need so many pipes, scale up the threads (but not workers)
     if args.pipes > len(harness_dirs):
         args.pipes = len(harness_dirs)
         args.threads = 2*(args.ncpu//args.pipes)
-
-    print(f"Executing %d harnesses in %d pipelines (%d workers, %d threads across %d CPUs)" % (
-        len(harness_dirs), args.pipes, args.workers, args.threads, args.ncpu))
 
     # pipeline concurrency is done via parallel parsl jobs
     local_threads = Config(
@@ -280,8 +281,17 @@ def main():
     else:
         args.dry_run = ""
 
-    time.sleep(1)
+    print(f"\nExecuting %d harnesses in %d pipelines (%d workers, %d threads, %d cpus)." % (
+        len(harness_dirs), args.pipes, args.workers, args.threads, args.ncpu))
+
+    for i in "4321\n":
+        time.sleep(1)
+        print(f"{i},", end='', flush=True)
+
     run_campaign(args, harness_dirs)
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\nExit on ctrl-c.\n")
