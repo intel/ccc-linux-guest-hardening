@@ -17,7 +17,7 @@ set -o pipefail
 
 BIOS_IMAGE=$BKC_ROOT/TDVF.fd
 INITRD_IMAGE=$BKC_ROOT/initrd.cpio.gz
-SHARE_DIR=$BKC_ROOT/sharedir
+DEFAULT_SHARE_DIR=$BKC_ROOT/sharedir
 DEFAULT_WORK_DIR=$KAFL_WORKDIR
 #DISK_IMAGE=$BKC_ROOT/tdx_overlay1.qcow2
 
@@ -32,6 +32,13 @@ KERNEL_BUILD_PARAMS="KCFLAGS=-fno-ipa-sra -fno-ipa-cp-clone -fno-ipa-cp"
 
 # enable TDX workaround in Qemu
 export QEMU_BIOS_IN_RAM=1
+
+# prefer $PWD/sharedir over $BKC_ROOT/sharedir
+if test -d ./sharedir; then
+	SHARE_DIR=$PWD/sharedir
+else
+	SHARE_DIR=$DEFAULT_SHARE_DIR
+fi
 
 # virtfs needs some default folder to serve to guest
 test -d /tmp/kafl || mkdir /tmp/kafl
