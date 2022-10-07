@@ -163,3 +163,5 @@ harnessing using the following functions:
 void kafl_fuzz_function(char *fname); // Harness around a single function fname
 void kafl_fuzz_function_disable(char *fname); // Disable fuzz input consumption for fname
 ```
+
+Here is an [example](../../docs/example_targeted_fuzzing.md) of using kprobe-based harnessing for targeted fuzzing.
