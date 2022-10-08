@@ -10,28 +10,47 @@
 
 # Helper script for generating buildroot-based initrd rootfs for userspace fuzzing
 
+set -e
+
 BUILDROOT_VERSION="buildroot-2021.11"
 URL="https://buildroot.org/downloads/$BUILDROOT_VERSION.tar.gz"
 
-if [[ -z "${BKC_ROOT}" ]]; then
-	echo "BKC_ROOT is not set. Please do `make env`"
-	exit 1
+function fatal()
+{
+	echo -e "\nError: $@\n" >&2
+	echo -e "Usage:\n\t$(basename $0) <path/to/initrd.cpio.gz>\n" >&2
+	exit
+}
+
+test -n "$BKC_ROOT" || fatal "BKC_ROOT is not set. Try 'make env'"
+test $# -eq 1 || fatal "Missing argument."
+
+TARGET_INITRD="$(realpath "$1")"
+
+if test -d "$BUILDROOT_VERSION" -a -f $TARGET_INITRD; then
+   echo "Output files already exist. Skipping.."
+   exit 0
 fi
 
-cd $BKC_ROOT
-wget $URL
-tar xzf $(basename $URL)
-rm $BUILDROOT_VERSION.tar.gz
+# cleanup
+rm -rf $BUILDROOT_VERSION $BUILDROOT_VERSION.tgz
+
+wget -O $BUILDROOT_VERSION.tgz "$URL"
+tar xzf $BUILDROOT_VERSION.tgz
+rm $BUILDROOT_VERSION.tgz
 cd $BUILDROOT_VERSION
+
 git init .; git add .; git commit -m "vanilla $BUILDROOT_VERSION"
 git am $BKC_ROOT/bkc/kafl/userspace/buildroot/0001-upgrade-to-stress-ng-0.13.05.patch
 git am $BKC_ROOT/bkc/kafl/userspace/buildroot/0002-new-package-perf_fuzzer.patch
+
 cp $BKC_ROOT/bkc/kafl/userspace/buildroot/buildroot.config .config
 cp $BKC_ROOT/bkc/kafl/userspace/buildroot/busybox.config package/busybox/.config
-make source
-make -j $(nproc)
-cd $BKC_ROOT
-$BKC_ROOT/bkc/kafl/userspace/bless_initrd.sh $BUILDROOT_VERSION/output/target/
-make -C $BUILDROOT_VERSION
-ln -sf  $BUILDROOT_VERSION/output/images/rootfs.cpio.gz $BKC_ROOT/initrd.cpio.gz
 
+make source
+make # set jobs via MAKEFLAGS
+
+# bless and re-make final image
+$BKC_ROOT/bkc/kafl/userspace/bless_initrd.sh output/target/
+make
+ln -sf $(realpath output/images/rootfs.cpio.gz) $TARGET_INITRD
