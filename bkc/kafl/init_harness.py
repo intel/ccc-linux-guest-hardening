@@ -12,7 +12,6 @@ import re
 import os
 import sys
 import shutil
-import subprocess as p
 import argparse
 import yaml
 
@@ -81,10 +80,12 @@ KAFL_CONFIG_DEFAULTS = [
 ]
 
 KAFL_CONFIG_HARNESSES = {
-        "FULL_BOOT":           ["abort_time: 24", "timeout: 8", "timeout_soft: 3"],
-        "DOINITCALLS_LEVEL_6": ["abort_time: 24"],
-        "DOINITCALLS_LEVEL_4": ["abort_time: 24"],
-        "DO_BASIC":            ["abort_time: 24"],
+        "BOOT_FULL_BOOT":           ["abort_time: 24", "timeout: 8", "timeout_soft: 3"],
+        "BOOT_DOINITCALLS_LEVEL_6": ["abort_time: 24"],
+        "BOOT_DOINITCALLS_LEVEL_4": ["abort_time: 24"],
+        "BOOT_DO_BASIC":            ["abort_time: 24"],
+        "BOOT_DOINITCALLS_VIRTIO":  ["abort_time: 24", "qemu_extra: -drive file=disk.img,id=fuzzdev -device virtio-blk-pci,drive=fuzzdev"],
+        "BPH_VIRTIO_PCI_PROBE":     ["abort_time: 24", "qemu_extra: -drive file=disk.img,id=fuzzdev -device virtio-blk-pci,drive=fuzzdev -device virtio-rng"],
         }
 
 default_config_options = {"CONFIG_TDX_FUZZ_KAFL_DETERMINISTIC": "y",
@@ -156,7 +157,6 @@ def select_seed_root(seed_dir, harness):
     return seed_dir
 
 def linux_config(args, setup):
-
     if args.verbose:
         print("Setting linux config overrides:")
         for conf,val in setup:
