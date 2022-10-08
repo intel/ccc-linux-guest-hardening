@@ -68,27 +68,6 @@ def all_exist(touchfiles):
 ##
 
 @python_app
-def task_audit(args, audit_dir, config, touchfiles=[],
-               stdout=parsl.AUTO_LOGNAME):
-
-    import os
-    import subprocess
-
-    os.makedirs(Path(stdout).parent)
-
-    if not args.rebuild and all_exist(touchfiles):
-        return
-
-    # can use all cpus here since other pipelines are waiting
-    env = dict(os.environ, MAKEFLAGS=f"-j{args.ncpu}")
-
-    print(f"Starting audit job at {audit_dir}\n`- logs: {stdout}")
-    with open(stdout, 'w') as log:
-        subprocess.run([args.fuzz_sh, "audit", audit_dir, config],
-            shell=False, check=True, env=env,
-            stdout=log, stderr=subprocess.STDOUT)
-
-@python_app
 def task_build(args, harness_dir, build_dir, target_dir,
                global_smatch_warns, global_smatch_list,
                stdout=parsl.AUTO_LOGNAME):
@@ -182,17 +161,9 @@ def task_smatch(args, work_dir, smatch_list, wait_task=None,
                 stdout=log, stderr=subprocess.STDOUT)
 
 def run_campaign(args, harness_dirs):
-    # smatch audit
-    audit_dir = args.campaign_root/'audit_list'
-    os.makedirs(audit_dir, exist_ok=True)
-    global_smatch_warns = audit_dir/'smatch_warns.txt'
-    global_smatch_list = audit_dir/'smatch_warns_annotated.txt'
+    global_smatch_warns = args.asset_root/'smatch_warns.txt'
+    global_smatch_list = args.asset_root/'smatch_warns_annotated.txt'
 
-    # audit based on TDX fuzzing template
-    # this is required to run inside the kernel source tree
-    config = args.linux_conf
-    t = task_audit(args, audit_dir, config, touchfiles=[global_smatch_warns, global_smatch_list])
-    t.result() # wait to complete
 
     pipeline = dict()
     for harness in harness_dirs:
@@ -240,22 +211,23 @@ def run_campaign(args, harness_dirs):
     # wait for all tasks before exit
     [t.result() for t in trace_tasks]
 
-def prepare_campaign(args, campaign_dir):
+def init_campaign(args, campaign_dir):
 
     if args.harness:
         pattern = args.harness
     else:
         pattern = "all"
 
-    subprocess.run([args.prep_harness, campaign_dir, pattern, '--config', args.linux_conf],
+    # generate harness configs
+    subprocess.run([args.init_helper, campaign_dir, pattern, '--config', args.linux_conf],
             shell=False, check=True)
     print("")
 
 def parse_args():
-    bkc_root = Path(os.environ.get('BKC_ROOT'))
     default_ncpu = len(os.sched_getaffinity(0))
+    bkc_root = Path(os.environ.get('BKC_ROOT'))
     default_fuzzsh = bkc_root/'bkc/kafl/fuzz.sh'
-    default_preph = bkc_root/'bkc/kafl/prep_harness.py'
+    default_init  = bkc_root/'bkc/kafl/init_harness.py'
     default_config = bkc_root/'bkc/kafl/linux_kernel_tdx_guest.config'
 
     parser = argparse.ArgumentParser(description='Campaign Automation')
@@ -272,7 +244,7 @@ def parse_args():
             help='number of SW threads (default: 2*workers)')
 
     parser.add_argument('--rebuild', '-r', action="store_true",
-            help="rebuild audit and fuzz kernels")
+            help="rebuild fuzz kernels")
     parser.add_argument('--keep', '-k', action="store_true",
             help="keep kernel build trees")
     parser.add_argument('--dry-run', '-n', action="store_true",
@@ -280,11 +252,13 @@ def parse_args():
     parser.add_argument('--verbose', '-v', action="store_true", help="verbose mode")
 
     parser.add_argument('--linux-conf', metavar='<file>', default=default_config,
-            help=f"base config for generating audit and harness kernels (default: {default_config})")
+            help=f"base config for kernel harness (default: {default_config})")
     parser.add_argument('--fuzz-sh', metavar='<file>', default=default_fuzzsh,
             help=f"fuzz.sh runner script (default: {default_fuzzsh})")
-    parser.add_argument('--prep-harness', metavar='<file>', default=default_preph,
-            help=f"prep_harness.py helper script (default: {default_preph})")
+    parser.add_argument('--init-helper', metavar='<file>', default=default_init,
+            help=f"init_harness.py helper script (default: {default_init})")
+    parser.add_argument('--asset-root', metavar='<dir>', default=bkc_root,
+            help=f"pre-compute / assets directory (default: {bkc_root})")
     parser.add_argument('--use-ghidra', metavar='<0|1>', type=bool, default=False,
             help="use Ghidra for deriving covered blocks from edges? (default=0)")
 
@@ -296,7 +270,7 @@ def main():
 
     # if campaign directory does not exist, create based on args
     if len(args.campaign) == 1 and not os.path.exists(args.campaign[0]):
-        prepare_campaign(args, args.campaign[0])
+        init_campaign(args, args.campaign[0])
 
     harness_dirs = list()
     for c in args.campaign:
