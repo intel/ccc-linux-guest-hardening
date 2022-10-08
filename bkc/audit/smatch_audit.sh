@@ -33,8 +33,11 @@ function fail()
 analyze_kernel()
 {
 	test -n "$MAKEFLAGS" || echo "MAKEFLAGS is not set. Consider setting MAKEFLAGS=\"-j\$((2*\$(nproc)))\""
+
+	# May not care about modules but lets build anyway.
+	# Assume KCFLAGS as by kAFL/KPROBE builds.
 	TARGETS="${KERNEL_BUILD_TARGETS:="bzImage modules"}"
-	PARAMS="${KERNEL_BUILD_PARAMS:=""}"
+	PARAMS="${KERNEL_BUILD_PARAMS:="KCFLAGS=-fno-ipa-sra -fno-ipa-cp-clone -fno-ipa-cp"}"
 
 	echo "Analysing kernel at $LINUX_GUEST. This may take a minute.."
 	cd $LINUX_GUEST
