@@ -18,9 +18,9 @@ TEMPLATE=$BKC_ROOT/bkc/kafl/userspace/initrd_template
 
 fatal() {
 	echo
-    echo "Fatal error: $1"
-    echo
-    exit 1
+	echo -e "\nError: $@\n" >&2
+	echo "Usage:\n\t$(basename $0) <path/to/initrd.cpio.gz>\n" >&2
+	exit 1
 }
 
 test -d "$TEMPLATE" || fatal "Could not find initrd template folder >>$TEMPLATE<<"
@@ -29,20 +29,24 @@ echo "[*] Installing latest busybox-static tools..."
 sudo apt install busybox-static || fatal "Failed to install busybox?"
 BUSYBOX=$(which busybox) || fatal "Could not find busybox binary."
 
-TARGET="$(realpath $1)"
-test -z "$TARGET" && fatal "Target folder $TARGET is a file. Refuse to overwrite."
-test -f "$TARGET" && fatal "Target folder $TARGET is a file. Refuse to overwrite."
-test -d "$TARGET" && fatal "Target folder $TARGET already exists. Refuse to overwrite."
+TARGET_INITRD="$(realpath $1)"
+TARGET_ROOT="$(dirname "$TARGET_INITRD")/busybox-rootfs"
 
-mkdir -p "$TARGET" || fatal "Failed to create target folder $TARGET"
+test -z "$TARGET_INITRD" && fatal "Output path $TARGET_INITRD is not set. Abort."
+test -e "$TARGET_INITRD" && fatal "Target folder $TARGET_INITRD already exists. Abort."
+test -e "$TARGET_ROOT"   && fatal "Target folder $TARGET_ROOT already exists. Abort."
 
-echo "[*] Populating target folder at $TARGET..."
+mkdir -p "$TARGET_ROOT" || fatal "Failed to create busybox rootfs at $TARGET_ROOT"
 
-cp -r $TEMPLATE/* "$TARGET"/
-pushd "$TARGET" > /dev/null
+echo "[*] Building busybox rootfs at $TARGET_ROOT..."
+
+cp -r $TEMPLATE/* "$TARGET_ROOT"/
+pushd "$TARGET_ROOT" > /dev/null
 	mkdir -p  bin dev  etc  lib  lib64  mnt/root  proc  root  sbin  sys  usr/bin
 	$BUSYBOX --install -s bin/
 	cp $BUSYBOX usr/bin
 popd > /dev/null
 
-echo "[*] Done. To generate the final initrd image, run $TARGET/build.sh <outputfile>"
+# bless and create final image
+$BKC_ROOT/bkc/kafl/userspace/bless_initrd.sh "$TARGET_ROOT"
+$TARGET_ROOT/build.sh "$TARGET_INITRD"

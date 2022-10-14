@@ -37,10 +37,16 @@ auditlogs := smatch_warns_annotated.txt smatch_warns.txt
 assets := sharedir initrd.cpio.gz disk.img
 
 sharedir:
-	+BASH_ENV=env.sh bash bkc/kafl/userspace/gen_sharedir.sh sharedir/
+	+BASH_ENV=env.sh bash bkc/kafl/userspace/gen_sharedir.sh $@
 
-initrd.cpio.gz:
-	+BASH_ENV=env.sh bash bkc/kafl/userspace/gen_buildroot.sh initrd.cpio.gz
+initrd_buildroot.cpio.gz:
+	+BASH_ENV=env.sh bash bkc/kafl/userspace/gen_buildroot.sh $@
+
+initrd_busybox.cpio.gz:
+	+BASH_ENV=env.sh bash bkc/kafl/userspace/gen_initrd.sh $@
+
+initrd.cpio.gz: initrd_busybox.cpio.gz
+	+BASH_ENV=env.sh ln -sf $^ $@
 
 disk.img:
 	qemu-img create -f qcow2 $@ 1024M
