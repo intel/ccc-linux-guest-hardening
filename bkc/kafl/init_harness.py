@@ -84,8 +84,9 @@ KAFL_CONFIG_HARNESSES = {
         "BOOT_DOINITCALLS_LEVEL_6": ["abort_time: 24"],
         "BOOT_DOINITCALLS_LEVEL_4": ["abort_time: 24"],
         "BOOT_DO_BASIC":            ["abort_time: 24"],
-        "BOOT_DOINITCALLS_VIRTIO":  ["abort_time: 24", "qemu_extra: -drive file=disk.img,id=fuzzdev -device virtio-blk-pci,drive=fuzzdev"],
-        "BPH_VIRTIO_PCI_PROBE":     ["abort_time: 24", "qemu_extra: -drive file=disk.img,id=fuzzdev -device virtio-blk-pci,drive=fuzzdev -device virtio-rng"],
+        "BOOT_DOINITCALLS_VIRTIO":  ["abort_time: 24"],
+        "BPH_VIRTIO_PCI_PROBE":     ["abort_time: 24", "qemu_extra: -drive file=$BKC_ROOT/disk.img,if=none,id=fuzzdev -device virtio-blk-pci,drive=fuzzdev -device virtio-rng"],
+        "BOOT_VIRTIO_BLK_PROBE":    ["abort_time: 24", "qemu_extra: -drive file=$BKC_ROOT/disk.img,if=none,id=fuzzdev -device virtio-blk-pci,drive=fuzzdev -device virtio-rng"],
         }
 
 default_config_options = {"CONFIG_TDX_FUZZ_KAFL_DETERMINISTIC": "y",
@@ -177,7 +178,7 @@ def kafl_config(args, harness, sharedir):
     yaml=""
 
     ## add default and harness-specific options (timeout, funky,..)
-    yaml = yaml + "\n".join(KAFL_CONFIG_DEFAULTS)
+    yaml = yaml + "\n".join(KAFL_CONFIG_DEFAULTS) + "\n"
     yaml = yaml + "\n".join(KAFL_CONFIG_HARNESSES.get(harness, [])) + "\n"
 
     if sharedir:

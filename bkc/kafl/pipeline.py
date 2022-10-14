@@ -280,7 +280,7 @@ def main():
             harness_dirs.append(harness.parent)
 
     if len(harness_dirs) < 1:
-        sys.exit("No matching harnesses in directory. Abort.")
+        sys.exit(f"No matching harnesses found in campaign root. Abort.")
 
     # pick root based on first harness' parent
     args.campaign_root = Path(harness_dirs[0].parent)
