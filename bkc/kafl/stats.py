@@ -23,7 +23,7 @@ def msgpack_read(pathname):
     with open(pathname, 'rb') as f:
         return msgpack.unpackb(f.read(), strict_map_key=False)
 
-def stats_print(stats, plotfile, workdir):
+def stats_print(args, stats, plotfile, workdir):
 
     def pprint_last_findings(stats):
         last = dict()
@@ -93,7 +93,7 @@ def stats_print(stats, plotfile, workdir):
 
     print("</pre></td><td>")
     if plotfile.is_file():
-        print(f"<img width=700 src=\"{plotfile.relative_to(workdir.parent)}\">")
+        print(f"<img width=700 src=\"{plotfile.relative_to(args.searchdir)}\">")
 
     print("</td></tr>")
 
@@ -204,7 +204,7 @@ def process_workdir(workdir):
         if nodes_path.is_file():
             nodes[nid] = msgpack_read(nodes_path)
 
-    stats['name'] = workdir.name
+    stats['name'] = workdir.parent.name
     stats['runtime'] = max([worker['run_time'] for worker in workers.values()])
     stats['workers'] = workers
     stats['nodes'] = nodes
@@ -225,7 +225,7 @@ def main():
         stats = process_workdir(c.parent)
         stats_aggregate(stats)
         plotfile = generate_plots(c.parent)
-        stats_print(stats, plotfile, c.parent)
+        stats_print(args, stats, plotfile, c.parent)
 
 
 if __name__ == "__main__":

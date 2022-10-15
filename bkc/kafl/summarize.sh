@@ -56,9 +56,9 @@ fi
 truncate -s 0 $DECODE_LIST
 truncate -s 0 $REPRO_LIST
 
-find */logs -name crash_\*log > $LOGS_CRASH
-find */logs -name kasan_\*log > $LOGS_KASAN
-find */logs -name timeo_\*log > $LOGS_TIMEO
+find */workdir_*/logs -name crash_\*log > $LOGS_CRASH
+find */workdir_*/logs -name kasan_\*log > $LOGS_KASAN
+find */workdir_*/logs -name timeo_\*log > $LOGS_TIMEO
 
 declare -A tag2msg
 declare -A tag2log
@@ -127,7 +127,7 @@ get_workdir_from_logname() {
 get_harness_from_logname() {
 	# harness is encoded in first part of workdir folder name
 	log=$1
-	basename $(get_workdir_from_logname $log)|sed 's/-.*//'
+	dirname $(get_workdir_from_logname $log)
 }
 
 get_hash_from_logname() {
@@ -171,8 +171,9 @@ decode_log() {
 			#echo "$log.txt exists, skip decoding.." >&2
 			echo "$log.txt"
 		else
-			echo "Decoding $log ..." >&2
-			$DECODE_SCRIPT $ELF < "$log" > "$log.txt"
+			#echo "Decoding $log ..." >&2
+			#$DECODE_SCRIPT $ELF < "$log" > "$log.txt"
+			echo "$DECODE_SCRIPT $ELF < $log > $log.txt" >> $DECODE_LIST
 			echo "$log"
 		fi
 	fi
@@ -266,13 +267,13 @@ get_best_stackdump() {
 			# return existing decoded log
 			echo $stacklog.txt
 		else
-			# no decoded logs, record item to jobs file and link the raw log
+			# no decoded logs, add item to jobs file and link the raw log
 			#decode_log "$stacklog" # immediately decode stack logs?
 			echo "$stacklog" >> $DECODE_LIST
 			echo $stacklog
 		fi
 	else
-		# no reproducer info, record item to 'jobs' file
+		# no reproducer info, add item to jobs file
 		echo "$workdir,$cksum" >> $REPRO_LIST
 	fi
 }
@@ -331,4 +332,4 @@ decode_jobs=$(wc -l $DECODE_LIST|awk '{print $1}')
 repro_jobs=$(wc -l $REPRO_LIST|awk '{print $1}')
 
 test "$decode_jobs" -gt 0 && echo "Recorded $decode_jobs missing stack decode jobs in $DIR/$DECODE_LIST"
-test "$repro_jobs" -gt 0 && echo "Recorded $repro_jobs missing reproducer jobs in $DIR/$DECODE_LIST"
+test "$repro_jobs" -gt 0 && echo "Recorded $repro_jobs missing reproducer jobs in $DIR/$REPRO_LIST"
