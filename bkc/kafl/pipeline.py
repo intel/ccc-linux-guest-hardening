@@ -149,7 +149,6 @@ def task_smatch(args, work_dir, smatch_list, wait_task=None):
 
     import os
     import subprocess
-    import shutil
 
     # wait on dependency... :-/
     if wait_task:
@@ -165,6 +164,26 @@ def task_smatch(args, work_dir, smatch_list, wait_task=None):
                 stdout=log, stderr=subprocess.STDOUT)
 
 
+@python_app
+def task_triage(args):
+
+    import os
+    import subprocess
+
+    # generate stats output
+    if args.stats_helper.exists():
+        with open(args.campaign_root/'stats.html', 'w') as stats_html:
+            subprocess.run([args.stats_helper, args.campaign_root],
+                    shell=False, check=True, stdout=stats_html, stderr=None)
+
+    # sort / decode / summarize crash reports
+    if args.triage_helper.exists():
+        with open(args.campaign_root/'summary.log', 'w') as logfile:
+            subprocess.run([args.triage_helper, args.campaign_root],
+                    shell=False, check=True, cwd=args.campaign_root,
+                    stdout=logfile, stderr=subprocess.STDOUT)
+
+
 def run_campaign(args, harness_dirs):
     global_smatch_warns = args.asset_root/'smatch_warns.txt'
     global_smatch_list = args.asset_root/'smatch_warns_annotated.txt'
@@ -172,8 +191,8 @@ def run_campaign(args, harness_dirs):
 
     pipeline = list()
     for harness in harness_dirs:
-        workdirs = harness.glob('workdir_*')
-        if not workdirs or args.refuzz:
+        workdirs = [harness.glob('workdir_*')]
+        if workdirs or args.refuzz:
             workdirs = [mkjobdir(harness, 'workdir')]
 
         for workdir in workdirs:
@@ -219,8 +238,12 @@ def run_campaign(args, harness_dirs):
         #t.result()
         trace_tasks.append(t)
 
+    t = task_triage(args)
+    trace_tasks.append(t)
+
     # wait for all tasks before exit
     [t.result() for t in trace_tasks]
+
 
 
 def init_campaign(args, campaign_dir):
@@ -241,6 +264,8 @@ def parse_args():
     default_fuzzsh = bkc_root/'bkc/kafl/fuzz.sh'
     default_init  = bkc_root/'bkc/kafl/init_harness.py'
     default_config = bkc_root/'bkc/kafl/linux_kernel_tdx_guest.config'
+    default_triage = bkc_root/'bkc/kafl/summarize.sh'
+    default_stats = bkc_root/'bkc/kafl/stats.py'
 
     parser = argparse.ArgumentParser(description='Campaign Automation')
     parser.add_argument('campaign', metavar='<campaign>', type=str, nargs="+",
@@ -265,16 +290,21 @@ def parse_args():
             help="keep kernel build trees")
     parser.add_argument('--verbose', '-v', action="store_true", help="verbose mode")
 
+    parser.add_argument('--asset-root', metavar='<dir>', default=bkc_root,
+            help=f"pre-compute / assets directory (default: {bkc_root})")
+    parser.add_argument('--use-ghidra', metavar='<0|1>', type=bool, default=False,
+            help="use Ghidra for deriving covered blocks from edges? (default=0)")
+
     parser.add_argument('--linux-conf', metavar='<file>', default=default_config,
             help=f"base config for kernel harness (default: {default_config})")
     parser.add_argument('--fuzz-sh', metavar='<file>', default=default_fuzzsh,
             help=f"fuzz.sh runner script (default: {default_fuzzsh})")
     parser.add_argument('--init-helper', metavar='<file>', default=default_init,
             help=f"init_harness.py helper script (default: {default_init})")
-    parser.add_argument('--asset-root', metavar='<dir>', default=bkc_root,
-            help=f"pre-compute / assets directory (default: {bkc_root})")
-    parser.add_argument('--use-ghidra', metavar='<0|1>', type=bool, default=False,
-            help="use Ghidra for deriving covered blocks from edges? (default=0)")
+    parser.add_argument('--triage-helper', metavar='<file>', default=default_triage,
+            help=f"triage helper script (default: {default_triage})")
+    parser.add_argument('--stats-helper', metavar='<file>', default=default_stats,
+            help=f"statistics helper script (default: {default_stats})")
 
     return parser.parse_args()
 
