@@ -1,10 +1,27 @@
 #!/usr/bin/env python3
-
 #
 # Fuzzing campaign pipeline
 #
 # Schedules `fuzz.sh` jobs based on available CPU
 #
+# Usage / Notes
+#
+# - Currently assumes ansible install + make prepare has been run
+#   (--asset-root can be used to point to the outputs of make prepare)
+#
+# - Use with non-existing campaign root to generate desired harness configs
+#   (--harness <pattern> is again interpreted as filter to desired harnesses)
+#
+# - Use with existing campaign root to discover + run harnesses there
+#
+#   - Provide multiple target folders and/or constrain selection with --harness <pattern>
+#     --rebuild forces a kernel rebuild even if target/ components already exist for the harness
+#
+# - Currently not clever enough to properly delete partial result on failure/abort,
+#   which also means we cannot reasonably scan + resume an aborted run
+#
+# - But you can always inspect the target folders and run the subtask manually there: most pipeline tasks
+#   are simply executing `fuzz.sh` from the harness folder and pickup the relevant configs/files from there
 
 import os
 import sys
@@ -28,24 +45,9 @@ from parsl.config import Config
 from parsl.executors.threads import ThreadPoolExecutor
 
 #
-# Configuration
-#
-
-#from parsl.executors import WorkQueueExecutor
-#worker_config = Config(
-#        executors=[
-#            WorkQueueExecutor(
-#                # ...other options go here
-#                autolabel=True,
-#                autocategory=True
-#                )
-#            ]
-#        )
-#parsl.load(worker_config)
-
-#
 # Helpers
 #
+
 def check_inputs(inputs):
     for f in inputs:
         if not os.path.exists(f):
@@ -63,9 +65,9 @@ def all_exist(touchfiles):
             return False
     return True
 
-##
+#
 # Task wrappers
-##
+#
 
 @python_app
 def task_build(args, harness_dir, build_dir, target_dir,
@@ -160,6 +162,7 @@ def task_smatch(args, work_dir, smatch_list, wait_task=None,
                 shell=False, check=True, env=env,
                 stdout=log, stderr=subprocess.STDOUT)
 
+
 def run_campaign(args, harness_dirs):
     global_smatch_warns = args.asset_root/'smatch_warns.txt'
     global_smatch_list = args.asset_root/'smatch_warns_annotated.txt'
@@ -210,6 +213,7 @@ def run_campaign(args, harness_dirs):
 
     # wait for all tasks before exit
     [t.result() for t in trace_tasks]
+
 
 def init_campaign(args, campaign_dir):
 
@@ -263,6 +267,7 @@ def parse_args():
             help="use Ghidra for deriving covered blocks from edges? (default=0)")
 
     return parser.parse_args()
+
 
 def main():
 
@@ -331,6 +336,7 @@ def main():
     print(" Go!\n")
 
     run_campaign(args, harness_dirs)
+
 
 if __name__ == "__main__":
     try:
