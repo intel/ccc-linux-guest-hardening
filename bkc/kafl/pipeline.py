@@ -71,8 +71,7 @@ def all_exist(touchfiles):
 
 @python_app
 def task_build(args, harness_dir, build_dir, target_dir,
-               global_smatch_warns, global_smatch_list,
-               stdout=parsl.AUTO_LOGNAME):
+               global_smatch_warns, global_smatch_list):
 
     import os
     import subprocess
@@ -87,16 +86,17 @@ def task_build(args, harness_dir, build_dir, target_dir,
             global_smatch_list ]
 
     os.makedirs(target_dir, exist_ok=True)
-    os.makedirs(Path(stdout).parent, exist_ok=True)
 
     if not args.rebuild:
         if all_exist([target_dir/f.name for f in target_files]):
+            shutil.rmtree(build_dir)
             return
 
     env = dict(os.environ, MAKEFLAGS=f"-j{args.threads}")
+    logfile = build_dir/'task_build.log'
 
-    print(f"Starting build job at {build_dir}\n`- logs: {stdout}")
-    with open(stdout, 'w') as log:
+    print(f"Starting build job at {build_dir} (log: {logfile.name})")
+    with open(logfile, 'w') as log:
         p = subprocess.run([args.fuzz_sh, "build", harness_dir, build_dir],
                 shell=False, check=True, env=env,
                 stdout=log, stderr=subprocess.STDOUT)
@@ -106,43 +106,46 @@ def task_build(args, harness_dir, build_dir, target_dir,
 
     for f in target_files:
         shutil.copy(f, target_dir)
+        shutil.copy(logfile, target_dir)
     if not args.keep:
         shutil.rmtree(build_dir)
 
 @python_app
-def task_fuzz(args, harness_dir, target_dir, work_dir,
-              stdout=parsl.AUTO_LOGNAME):
+def task_fuzz(args, harness_dir, target_dir, work_dir):
 
     import os
     import subprocess
 
-    os.makedirs(Path(stdout).parent, exist_ok=True)
-    env = dict(os.environ, KAFL_WORKDIR=f"{work_dir}")
+    if ((work_dir/'stats').exists() and
+        (work_dir/'corpus').exists()):
+        print(f"Skip fuzzing for existing workdir {work_dir}..")
+        return
 
-    print(f"Starting fuzzer job at {work_dir}\n`- logs: {stdout}")
-    with open(stdout, 'w') as log:
+    env = dict(os.environ, KAFL_WORKDIR=f"{work_dir}")
+    logfile = work_dir/'task_fuzz.log'
+
+    print(f"Starting fuzzer job at {work_dir} (log: {logfile.name})")
+    with open(logfile, 'w') as log:
         subprocess.run([args.fuzz_sh, "run", target_dir, *args.kafl_extra, "-p", str(args.workers)],
                 shell=False, check=True, env=env, cwd=harness_dir,
                 stdout=log, stderr=subprocess.STDOUT)
 
 @python_app
-def task_trace(args, harness_dir, work_dir,
-               stdout=parsl.AUTO_LOGNAME):
+def task_trace(args, harness_dir, work_dir):
 
     import os
     import subprocess
 
-    os.makedirs(Path(stdout).parent, exist_ok=True)
+    logfile = work_dir/'task_trace.log'
 
-    print(f"Starting trace job at {work_dir}\n`- logs: {stdout}")
-    with open(stdout, 'w') as log:
+    print(f"Starting trace job at {work_dir} (log: {logfile.name})")
+    with open(logfile, 'w') as log:
         subprocess.run([args.fuzz_sh, "cov", work_dir, "-p", str(args.workers)],
                 shell=False, check=True, cwd=harness_dir,
                 stdout=log, stderr=subprocess.STDOUT)
 
 @python_app
-def task_smatch(args, work_dir, smatch_list, wait_task=None,
-                stdout=parsl.AUTO_LOGNAME):
+def task_smatch(args, work_dir, smatch_list, wait_task=None):
 
     import os
     import subprocess
@@ -152,12 +155,11 @@ def task_smatch(args, work_dir, smatch_list, wait_task=None,
     if wait_task:
         wait_task.result()
 
-    os.makedirs(Path(stdout).parent, exist_ok=True)
     env = dict(os.environ, MAKEFLAGS=f"-j{args.threads}", USE_GHIDRA=str(int(args.use_ghidra)))
+    logfile = work_dir/'task_smatch.log'
 
-    #f"USE_GHIDRA={USE_GHIDRA} MAKEFLAGS='-j{args.threads}' {args.fuzz_sh} smatch {work_dir}",
-    print(f"Starting smatch job at {work_dir}\n`- logs: {stdout}")
-    with open(stdout, 'w') as log:
+    print(f"Starting smatch job at {work_dir} (log: {logfile.name})")
+    with open(logfile, 'w') as log:
         subprocess.run([args.fuzz_sh, "smatch", work_dir],
                 shell=False, check=True, env=env,
                 stdout=log, stderr=subprocess.STDOUT)
@@ -319,10 +321,6 @@ def main():
     )
     parsl.load(local_threads)
 
-    if args.verbose:
-        parsl.set_stream_logger(level=parsl.logging.INFO)
-        #parsl.set_file_logger(FILENAME, level=logging.DEBUG)
-
     args.kafl_extra = []
     if args.dry_run:
         args.kafl_extra = ["--abort-exec", "1000"]
@@ -343,3 +341,4 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         print("\nExit on ctrl-c.\n")
+        sys.exit(1)
