@@ -117,7 +117,7 @@ def task_fuzz(args, harness_dir, target_dir, work_dir):
     import subprocess
 
     if ((work_dir/'stats').exists() and
-        (work_dir/'corpus').exists()):
+        (work_dir/'worker_stats_0').exists()):
         print(f"Skip fuzzing for existing workdir {work_dir}..")
         return
 
@@ -170,17 +170,23 @@ def run_campaign(args, harness_dirs):
     global_smatch_list = args.asset_root/'smatch_warns_annotated.txt'
 
 
-    pipeline = dict()
+    pipeline = list()
     for harness in harness_dirs:
-        pipeline.update({harness.name: {
-            'harness_dir': harness,
-            'target_dir': harness/'target',
-            'build_dir': mkjobdir(harness, 'build'),
-            'work_dir': mkjobdir(harness, 'workdir')
-            }})
+        workdirs = harness.glob('workdir_*')
+        if not workdirs or args.refuzz:
+            workdirs = [mkjobdir(harness, 'workdir')]
+
+        for workdir in workdirs:
+            pipeline.append({
+                'harness_name': harness.name,
+                'harness_dir': harness,
+                'target_dir': harness/'target',
+                'build_dir': mkjobdir(harness, 'build'),
+                'work_dir': workdir
+                })
 
     build_tasks = []
-    for p in pipeline.values():
+    for p in pipeline:
         t = task_build(
                 args,
                 p['harness_dir'],
@@ -193,7 +199,7 @@ def run_campaign(args, harness_dirs):
     [t.result() for t in build_tasks]
 
     fuzz_tasks = []
-    for p in pipeline.values():
+    for p in pipeline:
         t = task_fuzz(
                 args,
                 p['harness_dir'],
@@ -205,7 +211,7 @@ def run_campaign(args, harness_dirs):
     [t.result() for t in fuzz_tasks]
 
     trace_tasks = []
-    for p in pipeline.values():
+    for p in pipeline:
         t = task_trace(args, p['harness_dir'], p['work_dir'])
         #t.result()
         trace_tasks.append(t)
@@ -249,12 +255,14 @@ def parse_args():
     parser.add_argument('--threads', '-t', type=int, metavar='n', default=32,
             help='number of SW threads (default: 2*workers)')
 
-    parser.add_argument('--rebuild', '-r', action="store_true",
+    parser.add_argument('--rebuild', action="store_true",
             help="rebuild fuzz kernels")
-    parser.add_argument('--keep', '-k', action="store_true",
-            help="keep kernel build trees")
+    parser.add_argument('--refuzz', action="store_true",
+            help="ignore existing workdirs in the campaign root (default: resume the pipeline)")
     parser.add_argument('--dry-run', '-n', action="store_true",
-            help="kill fuzzer after 100 execs (corpus may be empty)")
+            help="abort fuzzer after 500 execs")
+    parser.add_argument('--keep', action="store_true",
+            help="keep kernel build trees")
     parser.add_argument('--verbose', '-v', action="store_true", help="verbose mode")
 
     parser.add_argument('--linux-conf', metavar='<file>', default=default_config,
@@ -323,7 +331,7 @@ def main():
 
     args.kafl_extra = []
     if args.dry_run:
-        args.kafl_extra = ["--abort-exec", "1000"]
+        args.kafl_extra = ["--abort-exec", "500"]
 
     print(f"\nExecuting %d harnesses in %d pipelines (%d workers, %d threads, %d cpus).\n" % (
         len(harness_dirs), args.pipes, args.workers, args.threads, args.ncpu))
