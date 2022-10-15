@@ -62,9 +62,6 @@ Available commands <cmd>:
   build <dir> <build>     - use harness config at <dir> to build kernel at <build>
   audit <dir> <config>    - smatch-audit guest-kernel using <config> and store to <dir>
 
-  pipe  <dir>             - run pipeline on harness template at <dir>
-  batch <N> <dir>         - batch-fuzz harness builds at <dir>, N workers each
-
 <target> is a folder with vmlinux, System.map and bzImage
 <workdir> is the output of a prior fuzzing run (default: $DEFAULT_WORK_DIR).
 
@@ -181,60 +178,6 @@ function run()
 		--work-dir $WORK_DIR \
 		--sharedir $SHARE_DIR \
 		$KAFL_OPTS "$@"
-}
-
-function pipeline()
-{
-	HARNESS_ROOT="$(realpath -e -- "$1")"
-	shift || fatal "Missing argument <dir>"
-	
-	echo "Launching pipeline on $(dirname "$TARGET")"
-
-	if ! test -f "$HARNESS_ROOT/kafl.yaml"; then
-		echo "No kAFL config in '$HARNESS_ROOT', skipping..."
-		return
-	fi
-	if ! test -f "$HARNESS_ROOT/linux.config"; then
-		echo "No kernel config in '$HARNESS_ROOT', skipping..."
-		return
-	fi
-
-	set_workdir "$HARNESS_ROOT/build"
-	build "$HARNESS_ROOT" "$HARNESS_ROOT/build"
-	HARNESS_NAME="$(basename $HARNESS_ROOT)"
-	WORK_DIR="$(mktemp -d -p /dev/shm ${USER}_tdfl.${HARNESS_NAME}.XXX)"
-	KAFL_OPTS=$KAFL_FULL_OPTS
-	#DRY_RUN="--abort-exec 10"
-
-	# switch there so that fuzzer picks up $PWD/kafl.yaml
-	cd $HARNESS_ROOT
-	run "$@" $DRY_RUN
-
-	# save workdir for processing
-	CAMPAIGN_ROOT=$(dirname $HARNESS_ROOT)
-	JOBDIR="$(mktemp -d -p "$CAMPAIGN_ROOT" ${HARNESS_NAME}_$(date "+%Y%M%d_XXX"))"
-	mv -T "$WORK_DIR" "$JOBDIR"
-
-	# coverage + smatch report
-	set_workdir "$JOBDIR"
-	cov "$@"
-	USE_GHIDRA=1 smatch
-}
-
-# simple batch processing option
-function batch()
-{
-	test "$#" -ge 2 || usage "Missing arguments!"
-	NUM_WORKERS="$1"; shift
-	test "$NUM_WORKERS" -gt 0 || fatal "Argument '$NUM_WORKERS' is not an integer."
-
-	# template folder has kafl.yaml and build/vmlinux
-	for DIR in $@; do
-		TARGETS="$(find "$DIR" -name kafl.yaml)"
-		for TARGET in $TARGETS; do
-			pipeline "$(dirname "$TARGET")" -p $NUM_WORKERS
-		done
-	done
 }
 
 function debug()
@@ -448,12 +391,6 @@ case $ACTION in
 	"run")
 		KAFL_OPTS=$KAFL_QUICK_OPTS
 		run "$@"
-		;;
-	"pipe")
-		pipeline "$@"
-		;;
-	"batch")
-		batch "$@"
 		;;
 	"single")
 		single "$@"
