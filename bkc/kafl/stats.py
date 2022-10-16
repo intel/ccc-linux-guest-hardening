@@ -40,13 +40,13 @@ def estimate_done(stats):
     num_norms = stats['findings']['regular'] - stats['favs_total']
 
     if stats['total_execs'] == 0 or num_favs + num_norms == 0:
-        print(f"No execs or no paths in {stats['path']}. Skipping..", file=sys.stderr)
+        #print(f"No execs or no paths in {stats['path']}. Skipping..", file=sys.stderr)
         return 0
 
     if num_favs > 0:
         done_favs = 100*stats['aggregate']['fav_states'].get('final', 0) / num_favs
     else:
-        done_favs = 100
+        done_favs = 0
     if num_norms > 0:
         done_norms = 100*stats['aggregate']['norm_states'].get('final', 0) / num_norms
     else:
@@ -62,7 +62,7 @@ def print_stats(args, stats):
     workdir = f"{stats['name']}/{stats['path'].name}"
     runtime = humanize.naturaldelta(timedelta(seconds=stats['runtime']))
 
-    print(f"{workdir}\n  Runtime: {runtime}, {done_total:2.0f}% done")
+    print(f"\n{workdir}\n  Runtime: {runtime}, {done_total:2.0f}% done")
     for i in ['regular', 'crash', 'kasan', 'timeout']:
         print(f"  {i:>10}: {stats['findings'][i]:4d} (last: {last_find[i]})")
 
