@@ -80,13 +80,16 @@ KAFL_CONFIG_DEFAULTS = [
 ]
 
 KAFL_CONFIG_HARNESSES = {
-        "BOOT_FULL_BOOT":           ["abort_time: 24", "timeout: 8", "timeout_soft: 3"],
-        "BOOT_DOINITCALLS_LEVEL_6": ["abort_time: 24"],
-        "BOOT_DOINITCALLS_LEVEL_4": ["abort_time: 24"],
-        "BOOT_DO_BASIC":            ["abort_time: 24"],
-        "BOOT_DOINITCALLS_VIRTIO":  ["abort_time: 24"],
-        "BPH_VIRTIO_PCI_PROBE":     ["abort_time: 24", "qemu_extra: -drive file=$BKC_ROOT/disk.img,if=none,id=fuzzdev -device virtio-blk-pci,drive=fuzzdev -device virtio-rng"],
-        "BOOT_VIRTIO_BLK_PROBE":    ["abort_time: 24", "qemu_extra: -drive file=$BKC_ROOT/disk.img,if=none,id=fuzzdev -device virtio-blk-pci,drive=fuzzdev -device virtio-rng"],
+        # TODO: virtio-blk bug:
+        # qemu-system-x86_64: hw/pci/msix.c:113: msix_fire_vector_notifier: Assertion `ret >= 0' failed.
+        #"BOOT_DOINITCALLS_VIRTIO":  ["abort_time: 24", "qemu_extra: -drive file=disk.img,id=fuzzdev -device virtio-blk-pci,drive=fuzzdev"],
+        "BOOT_FULL_BOOT":           ["abort_time: 12", "timeout: 8", "timeout_soft: 3"],
+        "BOOT_DO_BASIC":            ["abort_time: 12"],
+        "BOOT_DOINITCALLS_VIRTIO":  ["abort_time: 4"],
+        "BPH_VIRTIO_PCI_PROBE":     ["abort_time: 4", "timeout: 4", "timeout_soft: 2",
+            "qemu_extra: -drive file=$BKC_ROOT/disk.img,if=none,id=fuzzdev -device virtio-blk-pci,drive=fuzzdev -device virtio-rng"],
+        "BOOT_VIRTIO_BLK_PROBE":    ["abort_time: 2",
+            "qemu_extra: -drive file=$BKC_ROOT/disk.img,if=none,id=fuzzdev -device virtio-blk-pci,drive=fuzzdev -device virtio-rng"],
         }
 
 default_config_options = {"CONFIG_TDX_FUZZ_KAFL_DETERMINISTIC": "y",
