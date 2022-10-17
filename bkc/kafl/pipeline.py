@@ -258,6 +258,10 @@ def init_campaign(args, campaign_dir):
             shell=False, check=True)
     print("")
 
+def dir_arg_type(d):
+    p = Path(d)
+    return p.resolve()
+
 def parse_args():
     default_ncpu = len(os.sched_getaffinity(0))
     bkc_root = Path(os.environ.get('BKC_ROOT'))
@@ -268,7 +272,7 @@ def parse_args():
     default_stats = bkc_root/'bkc/kafl/stats.py'
 
     parser = argparse.ArgumentParser(description='Campaign Automation')
-    parser.add_argument('campaign', metavar='<campaign>', type=str, nargs="+",
+    parser.add_argument('campaign', metavar='<campaign>', type=dir_arg_type, nargs="+",
             help='root campaign dir or one or more harness dirs (files may be overwritten!))')
     parser.add_argument('--harness', metavar='<str>', type=str,
             help='only schedule harnesses containing this string (e.g. "BPH")'),
