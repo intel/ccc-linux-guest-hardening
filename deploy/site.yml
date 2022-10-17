@@ -41,6 +41,14 @@
         dest: "{{ install_root }}/"
       when: ansible_connection != 'local'
 
+    - name: Install additional utilities
+      package:
+        name:
+          - debugedit
+          - elfutils # eu-addr2line
+        state: present
+      become: yes
+
     - name: Install env file
       template:
         src: env.j2

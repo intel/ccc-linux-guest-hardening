@@ -314,6 +314,9 @@ function build_harness()
 	make mrproper
 	make O=$BUILD_DIR olddefconfig
 	make O=$BUILD_DIR "$KERNEL_BUILD_PARAMS"
+
+	# fix debug symbols to use relative paths, for later smatch match
+	debugedit -b `pwd` -d '' $BUILD_DIR/vmlinux
 }
 
 function smatch_match()
