@@ -70,53 +70,63 @@ def print_html(args, stats, plotfile):
     last_find = pprint_last_findings(stats)
     done_total = estimate_done(stats)
 
-    print("<table>\n<tr><th align=left>%s</th></tr>" % stats['name'])
-    print("<tr><td><pre>")
-    print("Total runtime:    " + humanize.naturaldelta(timedelta(seconds=stats['runtime'])))
-    print("Total executions: " + humanize.intword(stats['total_execs']))
-    print("Edges in bitmap:  " + humanize.intcomma(stats['bytes_in_bitmap']))
-    print("Estimated done:    ~%d%%" % done_total)
+    with open(args.html, 'a') as f:
+        f.writelines([
+            "<table>\n<tr><th align=left>%s</th></tr>\n" % stats['name'],
+            "<tr><td><pre>\n",
+            "Total runtime:    %s\n" % humanize.naturaldelta(timedelta(seconds=stats['runtime'])),
+            "Total executions: %s\n" % humanize.intword(stats['total_execs']),
+            "Edges in bitmap:  %s\n" % humanize.intcomma(stats['bytes_in_bitmap']),
+            "Estimated done:  ~%d%%\n" % done_total,
+            ])
 
-    if done_total > 0:
-        print("\nPerformance")
-        print("  Avg. exec/s:  " + humanize.intcomma(stats['execs']))
-        print("  Timeout rate: %3.2f%%" % (stats['num_timeout']/stats['total_execs']*100))
-        print("  Funky rate:   %3.2f%%" % (stats['num_funky']/stats['total_execs']*100))
-        print("  Reload rate:  %3.2f%%" % (stats['num_reload']/stats['total_execs']*100))
-        print("\nCorpus (%s paths)" % humanize.intcomma(stats['paths_total']))
-        print("  regular:   %4d (last: %s)" % (stats['findings']['regular'], last_find['regular']))
-        print("  crashes:   %4d (last: %s)" % (stats['findings']['crash'], last_find['crash']))
-        print("  sanitizer: %4d (last: %s)" % (stats['findings']['kasan'], last_find['kasan']))
-        print("  timeout:   %4d (last: %s)" % (stats['findings']['timeout'], last_find['timeout']))
+        if done_total > 0:
+            f.writelines([
+                "\nPerformance\n",
+                "  Avg. exec/s: %s\n" % humanize.intcomma(stats['execs']),
+                "  Timeout rate: %3.2f%%\n" % (stats['num_timeout']/stats['total_execs']*100),
+                "  Funky rate:   %3.2f%%\n" % (stats['num_funky']/stats['total_execs']*100),
+                "  Reload rate:  %3.2f%%\n" % (stats['num_reload']/stats['total_execs']*100),
+                "\nCorpus (%s paths)\n" % humanize.intcomma(stats['paths_total']),
+                "  regular:   %4d (last: %s)\n" % (stats['findings']['regular'], last_find['regular']),
+                "  crashes:   %4d (last: %s)\n" % (stats['findings']['crash'], last_find['crash']),
+                "  sanitizer: %4d (last: %s)\n" % (stats['findings']['kasan'], last_find['kasan']),
+                "  timeout:   %4d (last: %s)\n" % (stats['findings']['timeout'], last_find['timeout']),
+                ])
 
-        queue_stages = {
-                'initial': 'init',
-                'redq/grim': 'rq/gr',
-                'deterministic': 'deter',
-                'havoc': 'havoc',
-                'final': 'final' }
+            queue_stages = {
+                    'initial': 'init',
+                    'redq/grim': 'rq/gr',
+                    'deterministic': 'deter',
+                    'havoc': 'havoc',
+                    'final': 'final' }
 
-        print("\nQueue Progress")
-        print("  %5s  %4s    %4s" % ("Stage", "Favs", "Norm"))
-        for stage in queue_stages:
-            print("  %5s: %4d  / %4d" % (queue_stages[stage],
-                                      stats['aggregate']['fav_states'].get(stage, 0),
-                                      stats['aggregate']['norm_states'].get(stage, 0)))
+            f.writelines([
+                "\nQueue Progress\n",
+                "  %5s  %4s    %4s\n" % ("Stage", "Favs", "Norm"),
+                ])
 
-        print("\nMutation Yields")
-        for method, num in stats['aggregate']['yield'].items():
-            print("  %12s: %4d" % (method, num))
+            for stage in queue_stages:
+                f.write("  %5s: %4d  / %4d\n" % (queue_stages[stage],
+                                          stats['aggregate']['fav_states'].get(stage, 0),
+                                          stats['aggregate']['norm_states'].get(stage, 0)))
 
-    print("</pre></td><td>")
-    if plotfile.is_file():
-        print(f"<img width=700 src=\"{plotfile.relative_to(args.searchdir)}\">")
+            f.write("\nMutation Yields\n")
+            for method, num in stats['aggregate']['yield'].items():
+                f.write("  %12s: %4d\n" % (method, num))
 
-    print("</td></tr>")
+        f.write("</pre></td><td>\n")
+        if plotfile.is_file():
+            f.write(f"<img width=700 src=\"{plotfile.relative_to(args.searchdir)}\">\n")
 
-    #print("<tr><td><details><summary>kAFL config</summary><pre>")
-    #pprint(msgpack_read(workdir/"config"))
-    #print("</pre></details></td></tr>")
-    print("</table>\n")
+        f.writelines([
+            "</td></tr>\n",
+            "</table>\n\n",
+            ])
+
+        #print("<tr><td><details><summary>kAFL config</summary><pre>")
+        #pprint(msgpack_read(workdir/"config"))
+        #print("</pre></details></td></tr>")
 
 def stats_aggregate(stats):
 
@@ -234,10 +244,14 @@ def main():
 
     parser = argparse.ArgumentParser(description="kAFL Workdir Summary")
     parser.add_argument("searchdir", help="folder to scan for kAFL workdirs")
-    parser.add_argument("--html", action="store_true", help="produce more detailed html output")
+    parser.add_argument("--html", metavar='<file>', type=Path,
+            help="produce more detailed html output")
     args = parser.parse_args()
 
     candidates = Path(args.searchdir).rglob("stats.csv")
+
+    if args.html:
+        os.truncate(args.html,0)
 
     for c in sorted(candidates):
         stats = process_workdir(c.parent)
