@@ -69,9 +69,9 @@ def parse_line_coverage_file(fname):
     with open(fname, "r") as fh:
         try:
             s = fh.read()
-            m = re.findall("\S+:[0-9]+", s)
+            m = re.findall("[\w./]+:[0-9]+", s)
             for l in m:
-                lines.add(os.path.normpath(l))
+                lines.add(os.path.normpath(l.strip('./')))
         except UnicodeDecodeError as e:
             print(f"Error decoding file {fname}: {e}", file=sys.stderr)
             pass
