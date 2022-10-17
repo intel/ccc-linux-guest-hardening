@@ -154,7 +154,11 @@ def task_smatch(args, work_dir, smatch_list, wait_task=None):
     if wait_task:
         wait_task.result()
 
-    env = dict(os.environ, MAKEFLAGS=f"-j{args.threads}", USE_GHIDRA=str(int(args.use_ghidra)))
+    env = dict(
+            os.environ,
+            MAKEFLAGS=f"-j{args.threads}",
+            USE_GHIDRA=str(int(args.use_ghidra)),
+            USE_FAST_MATCHER=str(int(args.use_fast_matcher)))
     logfile = work_dir/'task_smatch.log'
 
     print(f"Starting smatch job at {work_dir} (log: {logfile.name})")
@@ -258,6 +262,12 @@ def init_campaign(args, campaign_dir):
             shell=False, check=True)
     print("")
 
+def check_fast_matcher_built():
+    bkc_root = Path(os.environ.get('BKC_ROOT'))
+    fast_matcher_bin = bkc_root/'bkc/coverage/fast_matcher/target/release/fast_matcher'
+    if not os.path.exists(fast_matcher_bin):
+        sys.exit(f"Cannot find fast_matcher binary '{fast_matcher_bin}'. Please build first. Exiting.")
+
 def dir_arg_type(d):
     p = Path(d)
     return p.resolve()
@@ -298,6 +308,8 @@ def parse_args():
             help=f"pre-compute / assets directory (default: {bkc_root})")
     parser.add_argument('--use-ghidra', metavar='<0|1>', type=bool, default=False,
             help="use Ghidra for deriving covered blocks from edges? (default=0)")
+    parser.add_argument('--use-fast-matcher', metavar='<0|1>', type=bool, default=False,
+            help="use fast_matcher for coverage mapping? (default=0)")
 
     parser.add_argument('--linux-conf', metavar='<file>', default=default_config,
             help=f"base config for kernel harness (default: {default_config})")
@@ -316,6 +328,9 @@ def parse_args():
 def main():
 
     args = parse_args()
+
+    if args.use_fast_matcher:
+        check_fast_matcher_built()
 
     # if campaign directory does not exist, create based on args
     if len(args.campaign) == 1 and not os.path.exists(args.campaign[0]):
