@@ -230,7 +230,7 @@ class TraceParser:
                 if m:
                     addr = int(m.group(1),16)
                     func = m.group(2)
-                    lino = m.group(3)
+                    lino = m.group(3).strip('./')
                     #print(f"parse addr2line: {line}: '{func}' @ '{lino}'")
                     self.addr2lifu[addr] = (lino, func)
                     self.line2addr.setdefault(lino, list()).append(addr)
@@ -240,7 +240,7 @@ class TraceParser:
                     if m:
                         # addr = previous addr
                         func = m.group(1)
-                        lino = m.group(2)
+                        lino = m.group(2).strip('./')
                         #print(f"parse addr2line: {line}: '{func}' @ '{lino}'")
                         self.addr2lifu[addr] = (lino, func)
                         self.line2addr.setdefault(lino, list()).append(addr)
