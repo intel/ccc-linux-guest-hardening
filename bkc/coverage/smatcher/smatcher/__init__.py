@@ -201,7 +201,8 @@ def start(args):
         cov_pctg_funcs = 100 * len(cl_covered_funcs)/(len(cl_covered_funcs) + len(cl_not_covered_funcs)) if len(cl_covered_funcs) + len(cl_not_covered_funcs) > 0 else 0
         funcs_stats_str = "functions {}/{} => {:.2f}%".format(len(cl_covered_funcs), len(cl_not_covered_funcs) + len(cl_covered_funcs), cov_pctg_funcs)
         print(IND + "Covered '{}' smatch entries: {}/{} => {:.2f}% ({})".format(cl, len(covered_class), len(covered_class) + len(not_covered_class), cov_pctg, funcs_stats_str))
-    print(IND + "Total coverage (disregard 'unclassified', 'exclude', and 'wrapper' entries): {}/{} => {:.2f}%".format(len(cov_non_excl), (len(cov_non_excl) + len(not_cov_non_excl)) ,100*len(cov_non_excl)/(len(cov_non_excl) + len(not_cov_non_excl))))
+    total_cov_pctg = 100 * len(cov_non_excl)/(len(cov_non_excl) + len(not_cov_non_excl)) if len(cov_non_excl)  > 0 else 0
+    print(IND + "Total coverage (disregard 'unclassified', 'exclude', and 'wrapper' entries): {}/{} => {:.2f}%".format(len(cov_non_excl), (len(cov_non_excl) + len(not_cov_non_excl)), total_cov_pctg))
 
     # Exit if only printing summary stats
     if args.only_summary:
@@ -305,7 +306,8 @@ def start(args):
 
             cov_tot = set(cov_non_excl)
             not_cov_tot = set(not_cov_non_excl) - non_reachable_non_covered
-            print(IND + "Total coverage (disregard unreachable, 'exclude' and 'wrapper' entries): {}/{} => {:.2f}%".format(len(cov_tot), (len(cov_tot) + len(not_cov_tot)) ,100*len(cov_tot)/(len(cov_tot) + len(not_cov_tot))))
+            tot_pctg = 100*len(cov_tot)/(len(cov_tot) + len(not_cov_tot)) if (len(cov_tot) + len(not_cov_tot)) > 0 else 0
+            print(IND + "Total coverage (disregard unreachable, 'exclude' and 'wrapper' entries): {}/{} => {:.2f}%".format(len(cov_tot), (len(cov_tot) + len(not_cov_tot)), tot_pctg))
 
 
 
