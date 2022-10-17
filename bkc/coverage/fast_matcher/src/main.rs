@@ -281,7 +281,7 @@ fn get_addr_frame_lineinfo<R: addr2line::gimli::Reader>(
             let file = l.file.unwrap();
             let line = l.line.unwrap();
             let f_path = Path::new(file);
-            let path = f_path.strip_prefix(prefix).unwrap();
+            let path = f_path.strip_prefix(prefix).unwrap_or(f_path);
             //let lineinfo = LineInfo::from(frame.location.unwrap());
             let lineinfo = LineInfo::new(path, line);
             return Some(lineinfo);
@@ -308,7 +308,7 @@ fn get_addr_frame_lineinfos<R: addr2line::gimli::Reader>(
             let file = l.file.unwrap();
             let line = l.line.unwrap();
             let f_path = Path::new(file);
-            let path = f_path.strip_prefix(prefix).unwrap();
+            let path = f_path.strip_prefix(prefix).unwrap_or(f_path);
             //let lineinfo = LineInfo::from(frame.location.unwrap());
             let lineinfo = LineInfo::new(path, line);
             result.insert(lineinfo);
@@ -332,7 +332,7 @@ fn get_addr_lineinfo<R: addr2line::gimli::Reader>(
         let file = l.file.unwrap();
         let line = l.line.unwrap();
         let f_path = Path::new(file);
-        let path = f_path.strip_prefix(prefix).unwrap();
+        let path = f_path.strip_prefix(prefix).unwrap_or(f_path);
         //println!("{}:{}", path.display(), line);
         let lineinfo = LineInfo::new(path, line);
         return Some(lineinfo);
@@ -354,7 +354,7 @@ fn get_addr_lineinfo_range<R: addr2line::gimli::Reader>(
         let file = l.file.unwrap();
         let line = l.line.unwrap();
         let f_path = Path::new(file);
-        let path = f_path.strip_prefix(prefix).unwrap();
+        let path = f_path.strip_prefix(prefix).unwrap_or(f_path);
         //println!("{}:{}", path.display(), line);
         let lineinfo = LineInfo::new(path, line);
         result.push(lineinfo);
