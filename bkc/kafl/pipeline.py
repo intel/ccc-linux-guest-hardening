@@ -172,9 +172,9 @@ def task_triage(args):
 
     # generate stats output
     if args.stats_helper.exists():
-        with open(args.campaign_root/'stats.html', 'w') as stats_html:
-            subprocess.run([args.stats_helper, args.campaign_root],
-                    shell=False, check=True, stdout=stats_html, stderr=None)
+        with open(args.campaign_root/'stats.log', 'w') as stats_log:
+            subprocess.run([args.stats_helper, '--html', args.campaign_root/'stats.html', args.campaign_root],
+                    shell=False, check=True, stdout=stats_log, stderr=subprocess.STDOUT)
 
     # sort / decode / summarize crash reports
     if args.triage_helper.exists():
