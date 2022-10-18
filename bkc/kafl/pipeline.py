@@ -111,7 +111,7 @@ def task_build(args, harness_dir, build_dir, target_dir,
         shutil.rmtree(build_dir)
 
 @python_app
-def task_fuzz(args, harness_dir, target_dir, work_dir):
+def task_fuzz(args, pipe_id, harness_dir, target_dir, work_dir):
 
     import os
     import subprocess
@@ -126,7 +126,9 @@ def task_fuzz(args, harness_dir, target_dir, work_dir):
 
     print(f"Starting fuzzer job at {work_dir} (log: {logfile.name})")
     with open(logfile, 'w') as log:
-        subprocess.run([args.fuzz_sh, "run", target_dir, *args.kafl_extra, "-p", str(args.workers)],
+        subprocess.run([args.fuzz_sh, "run", target_dir, *args.kafl_extra,
+                        "--cpu-offset", str(args.workers*pipe_id),
+                        "-p", str(args.workers)],
                 shell=False, check=True, env=env, cwd=harness_dir,
                 stdout=log, stderr=subprocess.STDOUT)
 
@@ -222,15 +224,21 @@ def run_campaign(args, harness_dirs):
     [t.result() for t in build_tasks]
 
     fuzz_tasks = []
+    pipe_id = 0
     for p in pipeline:
         t = task_fuzz(
                 args,
+                pipe_id,
                 p['harness_dir'],
                 p['target_dir'],
                 p['work_dir'])
         fuzz_tasks.append(t)
+        pipe_id += 1
+        if pipe_id >= args.pipes:
+            [t.result() for t in fuzz_tasks]
+            pipe_id = 0
 
-    # wait for all fuzz tasks to complete
+    # wait for remaining fuzz tasks to complete
     [t.result() for t in fuzz_tasks]
 
     trace_tasks = []
