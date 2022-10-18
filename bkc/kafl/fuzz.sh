@@ -176,6 +176,32 @@ function single()
 		--action single -n 1 --input $TARGET_PAYLOAD "$@"
 }
 
+function triage()
+{
+	TARGET_PAYLOAD="$1"
+	shift || fatal "Missing argument <file>"
+	test -f "$TARGET_PAYLOAD" || fatal "Provided <file> is not a regular file: $TARGET_PAYLOAD"
+
+	echo -e "\033[33m"
+	echo "Resume from workdir: $WORK_DIR"
+	echo "Target kernel location:  $TARGET_BIN"
+	echo "Target payload: $TARGET_PAYLOAD"
+	echo -e "\033[00m"
+
+	get_ip_regions
+
+	kafl_debug.py \
+		--resume --memory $MEMSIZE \
+		-ip0 $ip0_a-$ip0_b \
+		-ip1 $ip1_a-$ip1_b \
+		--bios $BIOS_IMAGE \
+		--initrd $INITRD_IMAGE \
+		--kernel $TARGET_BIN \
+		--work-dir $WORK_DIR \
+		--sharedir $SHARE_DIR \
+		--action triage --input $TARGET_PAYLOAD "$@"
+}
+
 function noise()
 {
 	TARGET_PAYLOAD="$1"
@@ -294,6 +320,10 @@ case $ACTION in
 		;;
 	"single")
 		single "$@"
+		echo
+		;;
+	"triage")
+		triage "$@"
 		echo
 		;;
 	"debug")
