@@ -1,0 +1,41 @@
+- name: Copy BKC folder
+  copy:
+    src: "{{ playbook_dir }}/../bkc"
+    dest: "{{ install_root }}/"
+  when: ansible_connection != 'local'
+
+- name: Install BKC system dependencies
+  package:
+    name:
+      - busybox   # to generate initrd
+      - elfutils  # for eu-addr2line
+      - cargo     # fast_smatcher
+  become: yes
+
+- name: Install BKC python dependencies
+  ansible.builtin.pip:
+    requirements: "{{ install_root }}/bkc/kafl/requirements.txt"
+    virtualenv: "{{ fuzzer_venv_root }}"
+    virtualenv_command: "python3 -m venv"
+  changed_when: true
+  when: not ansible_check_mode
+  tags:
+    - build
+
+- name: Install BKC smatcher
+  ansible.builtin.pip:
+    name: "file://{{ install_root }}/bkc/coverage/smatcher"
+    editable: true
+    virtualenv: "{{ fuzzer_venv_root }}"
+    virtualenv_command: "python3 -m venv"
+  changed_when: true
+  when: not ansible_check_mode
+  tags:
+    - build
+
+- name: Install BKC fast_matcher
+  ansible.builtin.command: cargo install --path "{{ install_root }}/bkc/coverage/fast_matcher"
+  changed_when: true
+  when: not ansible_check_mode
+  tags:
+    - build
