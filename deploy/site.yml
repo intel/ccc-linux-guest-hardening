@@ -21,6 +21,9 @@
         kafl_install_root: "{{ playbook_dir | dirname if ansible_connection == 'local' else ansible_env.HOME + '/ccc'}}/kafl"
         install_nyx_packer: true
 
+    - role: bkc
+      tags:
+        - bkc
     - role: tdvf
       tags:
         - tdvf
@@ -30,9 +33,7 @@
     - role: smatch
       tags:
         - smatch
-    - role: bkc
-      tags:
-        - bkc
+
 
   post_tasks:
     - name: Install env file
