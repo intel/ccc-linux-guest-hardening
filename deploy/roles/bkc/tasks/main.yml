@@ -1,0 +1,35 @@
+- name: Copy BKC folder
+  copy:
+    src: "{{ playbook_dir }}/../bkc"
+    dest: "{{ install_root }}/"
+  when: ansible_connection != 'local'
+
+- name: Install BKC system dependencies
+  package:
+    name:
+      - busybox   # to generate initrd
+      - elfutils  # for eu-addr2line
+  become: yes
+
+- name: Install BKC python dependencies
+  ansible.builtin.command: |
+      .venv/bin/python -m pip install -r "{{ install_root }}/bkc/kafl/requirements.txt"
+  args:
+    chdir: "{{ kafl_install_root }}"
+  changed_when: true
+  when: not ansible_check_mode
+  tags:
+    - build
+
+- name: Install BKC smatcher
+  ansible.builtin.command: |
+      .venv/bin/python -m pip install -e "{{ install_root }}/bkc/coverage/smatcher"
+  args:
+    chdir: "{{ kafl_install_root }}"
+  changed_when: true
+  when: not ansible_check_mode
+  tags:
+    - build
+
+# - name: Install BKC fast_matcher
+#https://waylonwalker.com/install-rust/
