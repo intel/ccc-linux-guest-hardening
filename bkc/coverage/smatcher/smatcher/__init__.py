@@ -56,12 +56,12 @@ def parse_smatch_file(fname):
         # Get classified entries
         m = re.findall("(\S+)\t(\S+:[0-9]+) (\S+)\(\)", s)
         for c,l,f in m:
-            entries.add((c,os.path.normpath(l),f))
+            entries.add((c,os.path.normpath(l.strip('./')),f))
         # Get unclassified entries
         m = re.findall("^(\S+:[0-9]+) (\S+)\(\)", s, re.M)
         for l,f in m:
             if not f == "(null)":
-                entries.add((SMATCH_CAT_UNCLASSIFIED,os.path.normpath(l),f))
+                entries.add((SMATCH_CAT_UNCLASSIFIED,os.path.normpath(l.strip('./')),f))
     return entries
 
 def parse_line_coverage_file(fname):
@@ -69,9 +69,9 @@ def parse_line_coverage_file(fname):
     with open(fname, "r") as fh:
         try:
             s = fh.read()
-            m = re.findall("\S+:[0-9]+", s)
+            m = re.findall("[\w./]+:[0-9]+", s)
             for l in m:
-                lines.add(os.path.normpath(l))
+                lines.add(os.path.normpath(l.strip('./')))
         except UnicodeDecodeError as e:
             print(f"Error decoding file {fname}: {e}", file=sys.stderr)
             pass
