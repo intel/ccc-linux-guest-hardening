@@ -250,7 +250,7 @@ def main():
 
     candidates = Path(args.searchdir).rglob("stats.csv")
 
-    if args.html:
+    if args.html and args.html.exists():
         os.truncate(args.html,0)
 
     for c in sorted(candidates):

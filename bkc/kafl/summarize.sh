@@ -7,11 +7,11 @@
 # Also report any crash logs that could not be associated to a crash identifier
 
 usage() {
-	test -n "$1" && echo "Error: $1"
+	test -n "$1" && echo -e "\nError: $1" >&2
 	echo
-	echo "Scan crash logs in target campaign folder and summarize."
-	echo "Usage: $1 <path/to/campaigns>"
-	exit
+	echo "Scan crash logs in target campaign folder and summarize." >&2
+	echo "Usage: $1 <path/to/campaigns>" >&2
+	exit 1
 }
 
 LOGS_CRASH=$(mktemp)
@@ -333,3 +333,5 @@ repro_jobs=$(wc -l $REPRO_LIST|awk '{print $1}')
 
 test "$decode_jobs" -gt 0 && echo "Recorded $decode_jobs missing stack decode jobs in $DIR/$DECODE_LIST"
 test "$repro_jobs" -gt 0 && echo "Recorded $repro_jobs missing reproducer jobs in $DIR/$REPRO_LIST"
+
+exit 0
