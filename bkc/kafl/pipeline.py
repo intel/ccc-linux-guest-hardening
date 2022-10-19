@@ -192,6 +192,21 @@ def task_triage(args):
                     stdout=logfile, stderr=subprocess.STDOUT)
 
 
+@python_app
+def task_smatcher(args, pipeline):
+
+    import os
+    import subprocess
+
+    print(f"Starting smatcher job...")
+
+    # smacher report
+    with open(args.campaign_root/'smatch_errors.txt', 'w') as logfile:
+        with open(args.campaign_root/'smatch_report.txt', 'w') as report:
+        subprocess.run(['smatcher', '--combine-cov-files'] + [p['work_dir'] for p in pipeline],
+                shell=False, check=True, cwd=args.campaign_root,
+                stdout=report, stderr=logfile)
+
 def run_campaign(args, harness_dirs):
     global_smatch_warns = args.asset_root/'smatch_warns.txt'
     global_smatch_list = args.asset_root/'smatch_warns_annotated.txt'
@@ -252,12 +267,16 @@ def run_campaign(args, harness_dirs):
         #t.result()
         trace_tasks.append(t)
 
+    # triage does not depend on trace jobs
     t = task_triage(args)
     trace_tasks.append(t)
 
-    # wait for all tasks before exit
+    # wait for all trace jobs to finish
     [t.result() for t in trace_tasks]
 
+    # run smatch match analysis
+    t = task_smatcher(args, pipeline)
+    t.result()
 
 
 def init_campaign(args, campaign_dir):
