@@ -14,19 +14,21 @@
 # folder to be created and populated.
 #
 
+set -e
+
 TEMPLATE=$BKC_ROOT/bkc/kafl/userspace/initrd_template
 
 fatal() {
 	echo
 	echo -e "\nError: $@\n" >&2
-	echo "Usage:\n\t$(basename $0) <path/to/initrd.cpio.gz>\n" >&2
+	echo -e "Usage:\n\t$(basename $0) <path/to/initrd.cpio.gz>\n" >&2
 	exit 1
 }
 
 test -d "$TEMPLATE" || fatal "Could not find initrd template folder >>$TEMPLATE<<"
 
 echo "[*] Installing latest busybox-static tools..."
-sudo apt install busybox-static || fatal "Failed to install busybox?"
+#sudo apt install busybox-static || fatal "Failed to install busybox?"
 BUSYBOX=$(which busybox) || fatal "Could not find busybox binary."
 
 TARGET_INITRD="$(realpath $1)"
