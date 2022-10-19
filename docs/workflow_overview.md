@@ -10,7 +10,7 @@ Output of a full campaign are
 - fuzzer findings report, summarizing the identified crashes/bugs across all harnesses
 - fuzzer performance report, for tuning and spotting regressions in individual harnesses
 
-## 1. Basic Components
+## 1. Components Overview
 
 The overall workflow consists of multiple steps and tools executing in
 a pipeline. The pipeline is optimized to automate a campaign on a single server
