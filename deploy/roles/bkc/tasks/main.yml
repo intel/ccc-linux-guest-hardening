@@ -12,20 +12,21 @@
   become: yes
 
 - name: Install BKC python dependencies
-  ansible.builtin.command: |
-      .venv/bin/python -m pip install -r "{{ install_root }}/bkc/kafl/requirements.txt"
-  args:
-    chdir: "{{ kafl_install_root }}"
+  ansible.builtin.pip:
+    requirements: "{{ install_root }}/bkc/kafl/requirements.txt"
+    virtualenv: "{{ fuzzer_venv_root }}"
+    virtualenv_command: "python3 -m venv"
   changed_when: true
   when: not ansible_check_mode
   tags:
     - build
 
 - name: Install BKC smatcher
-  ansible.builtin.command: |
-      .venv/bin/python -m pip install -e "{{ install_root }}/bkc/coverage/smatcher"
-  args:
-    chdir: "{{ kafl_install_root }}"
+  ansible.builtin.pip:
+    name: "file://{{ install_root }}/bkc/coverage/smatcher"
+    editable: true
+    virtualenv: "{{ fuzzer_venv_root }}"
+    virtualenv_command: "python3 -m venv"
   changed_when: true
   when: not ansible_check_mode
   tags:
