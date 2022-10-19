@@ -276,10 +276,6 @@ def check_fast_matcher_built():
     if not os.path.exists(fast_matcher_bin):
         sys.exit(f"Cannot find fast_matcher binary '{fast_matcher_bin}'. Please build first. Exiting.")
 
-def dir_arg_type(d):
-    p = Path(d)
-    return p.resolve()
-
 def parse_args():
     default_ncpu = len(os.sched_getaffinity(0))
     bkc_root = Path(os.environ.get('BKC_ROOT'))
@@ -290,7 +286,7 @@ def parse_args():
     default_stats = bkc_root/'bkc/kafl/stats.py'
 
     parser = argparse.ArgumentParser(description='Campaign Automation')
-    parser.add_argument('campaign', metavar='<campaign>', type=dir_arg_type, nargs="+",
+    parser.add_argument('campaign_root', metavar='<campaign>', type=Path,
             help='root campaign dir or one or more harness dirs (files may be overwritten!))')
     parser.add_argument('--harness', metavar='<str>', type=str,
             help='only schedule harnesses containing this string (e.g. "BPH")'),
@@ -330,7 +326,9 @@ def parse_args():
     parser.add_argument('--stats-helper', metavar='<file>', default=default_stats,
             help=f"statistics helper script (default: {default_stats})")
 
-    return parser.parse_args()
+    args = parser.parse_args()
+    args.campaign_root = args.campaign_root.resolve()
+    return args
 
 
 def main():
@@ -341,23 +339,19 @@ def main():
         check_fast_matcher_built()
 
     # if campaign directory does not exist, create based on args
-    if len(args.campaign) == 1 and not os.path.exists(args.campaign[0]):
-        init_campaign(args, args.campaign[0])
+    if not os.path.exists(args.campaign_root):
+        init_campaign(args, args.campaign_root)
 
     harness_dirs = list()
-    for c in args.campaign:
-        for harness in Path(c).glob('**/kafl.yaml'):
-            if args.harness and args.harness not in harness.parent.name:
-                continue
-            harness_dirs.append(harness.parent)
+    for harness in Path(args.campaign_root).glob('**/kafl.yaml'):
+        if args.harness and args.harness not in harness.parent.name:
+            continue
+        harness_dirs.append(harness.parent)
 
     if len(harness_dirs) < 1:
         sys.exit(f"No matching harnesses found in campaign root. Abort.")
 
-    # pick root based on first harness' parent
-    args.campaign_root = Path(harness_dirs[0].parent)
-
-    print(f"Setting campaign root to {args.campaign_root}")
+    print(f"Setup campaign root at {args.campaign_root}")
     print(f"Scheduled for execution:\n%s" % pformat([str(h) for h in harness_dirs]))
 
 
