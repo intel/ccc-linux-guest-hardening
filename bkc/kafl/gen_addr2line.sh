@@ -16,37 +16,42 @@
 # corresponding larger (and very redundant) addr2line list. (slow)
 
 set -e
+set -u
+set -o pipefail
 
 USE_GHIDRA="${USE_GHIDRA:-0}"
 
-KAFL_TOOLS=$(realpath $KAFL_ROOT/scripts/)
-
-
 function fatal()
 {
-	echo $1
-	echo "Usage: $(basename $0) <path/to/work_dir>"
+	echo -e "\nError: $@\n" >&2
+	echo -e "Usage:\n\t$(basename $0) <path/to/work_dir>\n" >&2
 	exit
 }
 
-which eu-addr2line || fatal "Error: Could not fine eu-addr2line...exit.."
+which eu-addr2line || fatal "Could not find eu-addr2line...exit.."
 
-INPUT=$1; shift || fatal ""
+if test $USE_GHIDRA -gt 0; then
+	GHIDRA_RUNNER="$(realpath -e -- "$KAFL_ROOT/fuzzer/scripts/ghidra_run.sh")"
+	GHIDRA_PLUGIN="$(realpath -e -- "$KAFL_ROOT/fuzzer/scripts/ghidra_dump_blocks.py")"
+fi
+
+INPUT=$1; shift || fatal "Missing argument."
 if [ -d $INPUT ]; then
 	WORK_DIR=$(realpath $INPUT)
 	EDGE_LIST=$WORK_DIR/traces/edges_uniq.lst
 	BLOCK_LIST=$WORK_DIR/traces/blocks_uniq.lst
 	ADDR_LIST=$WORK_DIR/traces/addr_uniq.lst
 	LINES_LIST=$WORK_DIR/traces/addr2line.lst
-	test -f $EDGE_LIST || fatal "Error: Supplied workdir is missing coverage info at $EDGE_LIST"
+	test -f $EDGE_LIST || fatal "Supplied workdir is missing coverage info at $EDGE_LIST"
 elif [ -f $INPUT ]; then
+	WORK_DIR=$(realpath $(dirname $INPUT)/../)
 	EDGE_LIST=$(echo $INPUT|sed s/.lz4$/\.edges.lst/)
 	BLOCK_LIST=$(echo $INPUT|sed s/.lz4$/\.blocks.lst/)
 	ADDR_LIST=$(echo $INPUT|sed s/.lz4$/\.addr.lst/)
 	LINES_LIST=$(echo $INPUT|sed s/.lz4$/\.addr.lst/)
-	lz4cat $INPUT > $EDGE_LIST || fatal "Error: Expected lz4-compressed trace at $INPUT"
+	lz4cat $INPUT > $EDGE_LIST || fatal "Expected lz4-compressed trace at $INPUT"
 else
-	fatal "Error: Expected first argument to be target workdir or lz4 payload trace."
+	fatal "Expected first argument to be target workdir or lz4 payload trace."
 fi
 
 test -f $LINES_LIST && echo "Output $LINES_LIST already exists. Skipping.." && exit
@@ -63,22 +68,24 @@ else
 fi
 echo "Unique blocks found: $(wc -l $BLOCK_LIST)"
 
+if test -f $ADDR_LIST; then
+	echo "Output $ADDR_LIST already exists, skipping.."
+else
+	if test $USE_GHIDRA -gt 0; then
+		echo "Using Ghidra to generate complete list of seen code locations.."
 
-if test $USE_GHIDRA -gt 0  && test ! -f $ADDR_LIST; then
-	echo "Using Ghidra to generate complete list of seen code locations.."
+		GHIDRA_DUMP_LOG=$WORK_DIR/traces/ghidra_dump.log
+		REACHED_LOG=$WORK_DIR/traces/reached_addrs.lst
 
-	GHIDRA_DUMP_LOG=$WORK_DIR/traces/ghidra_dump.log
-	REACHED_LOG=$WORK_DIR/traces/reached_addrs.lst
+		$GHIDRA_RUNNER $WORK_DIR $TARGET_ELF $GHIDRA_PLUGIN |tee $GHIDRA_DUMP_LOG
+		grep reached $GHIDRA_DUMP_LOG |sed -e 's/reached: //' -e 's/\ .*//'  > $ADDR_LIST
 
-	$KAFL_TOOLS/ghidra_run.sh $WORK_DIR $TARGET_ELF $KAFL_TOOLS/ghidra_dump_blocks.py > $GHIDRA_DUMP_LOG
-	#grep ERROR $GHIDRA_DUMP_LOG && fatal "Ghidra run failed, please check $GHIDRA_DUMP_LOG"
-	grep reached $GHIDRA_DUMP_LOG |sed -e 's/reached: //' -e 's/\ .*//'  > $ADDR_LIST
-
-	echo "Identified visited code locations: $(wc -l $ADDR_LIST)"
+		echo "Identified visited code locations: $(wc -l $ADDR_LIST)"
+	fi
 fi
 
 echo "Generating addr2line dump for seen code locations.."
 test -f $ADDR_LIST || ADDR_LIST=$BLOCK_LIST
-eu-addr2line --pretty-print -afi -e $TARGET_ELF < $ADDR_LIST > $LINES_LIST
+eu-addr2line --pretty-print -afi -e $TARGET_ELF < $ADDR_LIST > $LINES_LIST || echo "Ignoring addr2line failure :-/" >&2
 
 echo "Generated addr2line table: $(wc -l $LINES_LIST)"

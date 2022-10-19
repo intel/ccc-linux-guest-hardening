@@ -4,7 +4,7 @@
 # Makefile recipies for managing kAFL workspace
 
 # declare all targets in this variable
-ALL_TARGETS:=deploy clean env sharedir
+ALL_TARGETS:=deploy clean env prepare
 # declare all target as PHONY
 .PHONY: $(ALL_TARGETS)
 
@@ -32,10 +32,26 @@ env: env.sh
 	@echo "Entering environment in sub-shell. Exit with 'Ctrl-d'."
 	@PROMPT_COMMAND='source env.sh; unset PROMPT_COMMAND' $(SHELL)
 
-sharedir: SHELL:=bash
-sharedir:
-	source env.sh && $$BKC_ROOT/bkc/kafl/userspace/gen_sharedir.sh $$BKC_ROOT/sharedir
+auditconf := bkc/kafl/linux_kernel_tdx_guest.config
+auditlogs := smatch_warns_annotated.txt
+assets := sharedir initrd.cpio.gz disk.img
 
-initrd.cpio.gz: SHELL:=bash
-initrd.cpio.gz:
-	source env.sh && $$BKC_ROOT/bkc/kafl/userspace/gen_buildroot.sh initrd.cpio.gz
+sharedir:
+	+BASH_ENV=env.sh bash bkc/kafl/userspace/gen_sharedir.sh $@
+
+initrd_buildroot.cpio.gz:
+	+BASH_ENV=env.sh bash bkc/kafl/userspace/gen_buildroot.sh $@
+
+initrd_busybox.cpio.gz:
+	+BASH_ENV=env.sh bash bkc/kafl/userspace/gen_initrd.sh $@
+
+initrd.cpio.gz: initrd_busybox.cpio.gz
+	+BASH_ENV=env.sh ln -sf $^ $@
+
+disk.img:
+	qemu-img create -f qcow2 $@ 1024M
+
+$(auditlogs): $(auditconf)
+	+BASH_ENV=env.sh bash bkc/audit/smatch_audit.sh . $^
+
+prepare: $(assets) $(auditlogs)

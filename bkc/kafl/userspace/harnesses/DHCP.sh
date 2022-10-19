@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # 
 # Copyright (C)  2022  Intel Corporation. 
@@ -15,10 +15,14 @@ echo "[*] kAFL userspace harness DHCP. Agent status:"
 grep . $KAFL_CTL/*
 grep . $KAFL_CTL/status/*
 
-## BEGIN HARNESS
+# guest prepare
+ip link
+ip link set eth0 up
 
+# BEGIN HARNESS
 echo "enable"  > $KAFL_CTL/control
+
 udhcpc 2>&1 |hcat
-echo "done"  > $KAFL_CTL/control
 
 ## END HARNESS
+echo "done"  > $KAFL_CTL/control

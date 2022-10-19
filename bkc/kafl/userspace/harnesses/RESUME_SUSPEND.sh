@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # 
 # Copyright (C)  2022  Intel Corporation. 
@@ -15,8 +15,7 @@ echo "[*] kAFL userspace harness RESUME_SUSPEND. Agent status:"
 grep . $KAFL_CTL/*
 grep . $KAFL_CTL/status/*
 
-## BEGIN HARNESS
-
+# guest prepare
 echo "ls /sys/power"
 ls /sys/power
 echo 1 > /sys/module/suspend/parameters/pm_test_delay
@@ -26,8 +25,11 @@ echo N > /sys/module/printk/parameters/console_suspend
 echo core > /sys/power/pm_test
 echo platform > /sys/power/disk
 #echo test_resume > /sys/power/disk
+
+## BEGIN HARNESS
 echo "start"  > $KAFL_CTL/control
+
 echo disk > /sys/power/state
-echo "done"  > $KAFL_CTL/control
 
 ## END HARNESS
+echo "done"  > $KAFL_CTL/control

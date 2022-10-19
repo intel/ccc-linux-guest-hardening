@@ -492,18 +492,19 @@ def main():
     trace_dir = args.work_dir + "/traces"
 
     if not os.path.isdir(trace_dir):
-        print("Could not find %s", trace_dir)
-        sys.exit()
+        sys.exit(f"Error: Could not find {trace_dir}.")
+
+    target_smatch_file = args.work_dir + "/target/smatch_warns.txt"
+    if os.path.exists(target_smatch_file):
+        smatch_file = target_smatch_file
+    elif os.path.exists(DEFAULT_SMATCH_FILE):
+        smatch_file = DEFAULT_SMATCH_FILE
+    else:
+        sys.exit(f"Error: Could not find smatch report at {target_smatch_file} or {DEFAULT_SMATCH_FILE}.")
 
     # TraceParse is not really used, just borrowing addr2line parser..
     traces = TraceParser(trace_dir)
     traces.parse_addr2line()
-
-    SMATCH_FILE = args.work_dir + "/target/smatch_warns.txt"
-    if os.path.exists(SMATCH_FILE):
-        smatch_file = SMATCH_FILE
-    else:
-        smatch_file = DEFAULT_SMATCH_FILE
 
     smatch_map = parse_smatch_file(smatch_file)
 
