@@ -291,10 +291,10 @@ def parse_args():
     parser.add_argument('--harness', metavar='<str>', type=str,
             help='only schedule harnesses containing this string (e.g. "BPH")'),
 
-    parser.add_argument('--ncpu', '-j', type=int, metavar='n', default=default_ncpu,
-            help=f'number of vCPUs to use (default: {default_ncpu})')
     parser.add_argument('--workers', '-p', type=int, metavar='n', default=16,
             help='number of kAFL workers (default: min(16,ncpu))')
+    parser.add_argument('--ncpu', '-j', type=int, metavar='n', default=default_ncpu,
+            help=f'number of vCPUs to use (default: {default_ncpu})')
     parser.add_argument('--threads', '-t', type=int, metavar='n', default=32,
             help='number of SW threads (default: 2*workers)')
 
@@ -308,8 +308,6 @@ def parse_args():
             help="keep kernel build trees")
     parser.add_argument('--verbose', '-v', action="store_true", help="verbose mode")
 
-    parser.add_argument('--asset-root', metavar='<dir>', default=bkc_root,
-            help=f"pre-compute / assets directory (default: {bkc_root})")
     parser.add_argument('--use-ghidra', metavar='<0|1>', type=bool, default=False,
             help="use Ghidra for deriving covered blocks from edges? (default=0)")
     parser.add_argument('--use-fast-matcher', metavar='<0|1>', type=bool, default=False,
@@ -317,14 +315,17 @@ def parse_args():
 
     parser.add_argument('--linux-conf', metavar='<file>', default=default_config,
             help=f"base config for kernel harness (default: {default_config})")
+
     parser.add_argument('--fuzz-sh', metavar='<file>', default=default_fuzzsh,
-            help=f"fuzz.sh runner script (default: {default_fuzzsh})")
+            help=argparse.SUPPRESS)
     parser.add_argument('--init-helper', metavar='<file>', default=default_init,
-            help=f"init_harness.py helper script (default: {default_init})")
+            help=argparse.SUPPRESS)
     parser.add_argument('--triage-helper', metavar='<file>', default=default_triage,
-            help=f"triage helper script (default: {default_triage})")
+            help=argparse.SUPPRESS)
     parser.add_argument('--stats-helper', metavar='<file>', default=default_stats,
-            help=f"statistics helper script (default: {default_stats})")
+            help=argparse.SUPPRESS)
+    parser.add_argument('--asset-root', metavar='<dir>', default=bkc_root,
+            help=argparse.SUPPRESS)
 
     args = parser.parse_args()
     args.campaign_root = args.campaign_root.resolve()
