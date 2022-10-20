@@ -12,6 +12,8 @@ Output of a full campaign are
 
 ## 1. Components Overview
 
+![pipeline overview](pipeline-overview.png)
+
 The overall workflow consists of multiple steps and tools executing in
 a pipeline. The pipeline is optimized to automate a campaign on a single server
 with many CPUs. However, the development of individual harnesses or debugging
