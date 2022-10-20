@@ -76,13 +76,19 @@ jobs:
 
       # the service container runs is accessible on 127.0.0.1:5000
       - name: Setup inventory
-        run: >
-          echo 'localhost
-          ansible_port=5000
-          ansible_user=root
-          ansible_ssh_pass=toor
-          ansible_ssh_common_args="-o StrictHostKeyChecking=no"'
-          > inventory
+        run: |
+          venv/bin/python - << '__HERE__'
+          import yaml
+
+          with open("host_vars/localhost.yml", "w") as f:
+            data = {
+              "ansible_port": 5000,
+              "ansible_user": "root",
+              "ansible_ssh_pass": "toor",
+              "ansible_ssh_common_args": "-o StrictHostKeyChecking=no"
+            }
+            yaml.dump(data, f)
+          __HERE__
         working-directory: deploy
 
       - name: Install Python3 on service container

@@ -4,7 +4,7 @@
 # Makefile recipies for managing kAFL workspace
 
 # declare all targets in this variable
-ALL_TARGETS:=deploy clean env prepare
+ALL_TARGETS:=deploy clean env update build prepare
 # declare all target as PHONY
 .PHONY: $(ALL_TARGETS)
 
@@ -21,6 +21,8 @@ endif
 
 all: deploy
 
+# User targets
+#---------------
 deploy:
 	make -C deploy $@ -- $(EXTRA_ARGS)
 
@@ -55,3 +57,13 @@ $(auditlogs): $(auditconf)
 	+BASH_ENV=env.sh bash bkc/audit/smatch_audit.sh . $^
 
 prepare: $(assets) $(auditlogs)
+
+# Developer targets
+#------------------
+# pull the latest changes from all components
+update:
+	make -C deploy $@ -- $(EXTRA_ARGS)
+
+# rebuild all components
+build:
+	make -C deploy $@ -- $(EXTRA_ARGS)
