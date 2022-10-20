@@ -7,6 +7,7 @@
 - name: Install BKC system dependencies
   package:
     name:
+      - qemu-utils     # for qemu-img
       - busybox-static # to generate initrd
       - elfutils       # for eu-addr2line
       - cargo          # fast_matcher
