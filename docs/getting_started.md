@@ -120,16 +120,17 @@ More more information about using kAFL, [see here (TBD)](https://wenzel.github.i
 
 ## 4. Define a new Harness
 
-Launching a custom harness is trivial at this point - just modify the
-Linux kernel build or kAFL fuzzer configuration and re-start the fuzzer.
+Launching a custom harness is almost trivial at this point: modify the
+Linux kernel build or `kafl.yaml` and re-start the fuzzer.
 
-The interesting part is to actually identify an interface/function that should
+The interesting part is to identify an interface/function that should
 be fuzzed, and interfacing with the guest kernel kAFL agent to perform the
-desired input injection. The detailed workings and configuration options
-for the guest-side input injection are described in [kAFL Agent
-Implementation](kafl_agent.md).
+desired input injection. To this end, start by reviewing the implementation and
+configuration options for the guest-side input injection are described in [kAFL Agent
+Implementation](kafl_agent.md). Take a look at some existing harness to understand
+how injection is performed.
 
-The following guides cover the main use-cases:
+The following guides describe the different approaches in more detail:
 
 - [Enumerating code paths with untrusted host input](https://intel.github.io/ccc-linux-guest-hardening-docs/tdx-guest-hardening.html#static-analyzer-and-code-audit)
 - [Enabling and fuzzing a new guest driver](https://intel.github.io/ccc-linux-guest-hardening-docs/tdx-guest-hardening.html#enabling-additional-kernel-drivers)
