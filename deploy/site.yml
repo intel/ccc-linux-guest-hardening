@@ -5,6 +5,12 @@
   vars:
     install_root: "{{ playbook_dir | dirname if ansible_connection == 'local' else ansible_env.HOME + '/ccc'}}"
 
+  pre_tasks:
+    - name: APT update
+      apt:
+        update_cache: true
+      become: true
+
   roles:
     - role: bkc
       tags:
