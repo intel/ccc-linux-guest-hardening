@@ -6,21 +6,6 @@
     install_root: "{{ playbook_dir | dirname if ansible_connection == 'local' else ansible_env.HOME + '/ccc'}}"
 
   roles:
-    - role: intellabs.kafl.fuzzer
-      tags:
-        - fuzzer
-      vars:
-        fuzzer_revision: kafl_tdx
-        qemu_revision: kafl_stable_tdx
-        libxdc_revision: kafl_stable_tdx
-        kernel_deb_urls:
-          - https://github.com/IntelLabs/kafl.linux/releases/download/sdv-nyx-5.6-rc1-v2/linux-image-5.6.0-rc1-tdfl+_5.6.0-rc1-tdfl+-15_amd64.deb
-        kernel_grep_string: '5.6.0-rc1-tdfl+'
-        # install kafl in its own subdir
-        # can't reuse install_root because of jinja templating recursion issue
-        kafl_install_root: "{{ playbook_dir | dirname if ansible_connection == 'local' else ansible_env.HOME + '/ccc'}}/kafl"
-        install_nyx_packer: true
-
     - role: bkc
       tags:
         - bkc
