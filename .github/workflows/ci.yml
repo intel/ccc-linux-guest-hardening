@@ -50,10 +50,12 @@ jobs:
 
     services:
       ssh:
-        image: eilandert/openssh:debian
+        image: wenzel/sshd:ubuntu22.04
         ports:
           # open SSH
           - 5000:22
+        env:
+          ROOT_PASSWORD: toor
 
     steps:
       - uses: actions/checkout@v2
