@@ -15,7 +15,7 @@
 
 - name: Upload check_host_input-add-a-pattern patch to remote node
   copy:
-    src: files/0001-check_host_input-add-a-pattern.patch
+    src: files/0001-Enable-check_host_input-pattern.patch
     dest: "{{ install_root }}/smatch.patch"
 
 - name: Check whether git committer identity is configured
