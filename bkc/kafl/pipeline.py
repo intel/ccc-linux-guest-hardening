@@ -176,6 +176,8 @@ def task_triage(args):
     import os
     import subprocess
 
+    print(f"Starting summary/triage job...")
+
     # generate stats output
     if args.stats_helper.exists():
         with open(args.campaign_root/'stats.log', 'w') as stats_log:
