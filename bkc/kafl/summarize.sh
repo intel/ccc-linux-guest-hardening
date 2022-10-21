@@ -37,35 +37,6 @@ OUTPUT_HTML="summary.html"
 OUTPUT_TEXT="summary.txt"
 OUTPUT_CSV="summary.csv"
 
-if ! test -d "$1"; then
-	usage
-fi
-
-DIR="$(realpath "$1" || usage "Failed to find path >>$1<<")"
-
-if ! cd "$DIR"; then
-	echo "Could not enter $DIR - exit."
-	exit
-fi
-
-if ! test -x "$DECODE_SCRIPT"; then
-	echo "Could not find "$DECODE_SCRIPT" - exit."
-	exit
-fi
-
-truncate -s 0 $DECODE_LIST
-truncate -s 0 $REPRO_LIST
-
-find */workdir_*/logs -name crash_\*log > $LOGS_CRASH
-find */workdir_*/logs -name kasan_\*log > $LOGS_KASAN
-find */workdir_*/logs -name timeo_\*log > $LOGS_TIMEO
-
-declare -A tag2msg
-declare -A tag2log
-declare -A class2tag
-declare -A log2note
-declare -A unique_logs
-
 register_issue() {
 	msg=$1
 	log=$2
@@ -188,69 +159,6 @@ decode_unique_logs() {
 	done
 }
 
-for log in $(cat $SCAN_LOGS); do
-	# explicit (outline?) KASAN results reported by bug() handler
-	msg=$(grep -A 1 '^BUG: KASAN:' $log|sed 's/^BUG: //')
-	register_issue "$msg" "$log" "KASAN" && continue
-
-	## catch KASAN reported as part of general #GP crash handler (CONFIG_KASAN_INLINE)
-	msg=$(grep -A 3 '^KASAN:' $log|grep '^RIP:\|^KASAN:')
-	register_issue "$msg" "$log" "KASAN" && continue
-
-	## catch common panic() handler, where RIP is shown shortly after error type + build flags "SMP KASAN NOPTI" string
-	# some of these may contain an additional KASAN: line but we probably cought those in previous rule..
-	msg=$(grep -v '^CPU:\|^Modules linked in:' $log|grep -m 2 -A 3 'KASAN NOPTI$'|grep '^RIP:\|^KASAN:\|KASAN NOPTI$'|sed s/'SMP KASAN NOPTI'//)
-	register_issue "$msg" "$log" "CRASH" && continue
-
-	## catch unchecked MSR access
-	msg=$(grep -m 1 '^unchecked MSR access error:' $log)
-	register_issue "$msg" "$log" "WARNS" && continue
-
-	## catch WARNING: and BUG:, - look at first two RIPs in case there is some useful output in between
-	msg=$(grep -v '^CPU:\|^Modules linked in:' $log|grep -m 2 '^WARNING:\|^BUG:'|sed s/'SMP KASAN NOPTI'//)
-	msg=$(echo "$msg"|grep -v '^ ? \|^Call Trace:\|^Code:\|^CR2:\|^CS:\|^FS:\|^R13:\|^R10:\|^RBP:\|^RDX:\|^RSP:')
-	register_issue "$msg" "$log" "WARNS" && continue
-
-	## fallback: look 2-3 lines backward from RIP extract any other issues
-	# look at first 2 RIP matches and remove CPU/stack info
-	#msg=$(grep -v '^ ? \|^Call Trace:' $log|grep -m 1 -B 2 ^RIP:|sed s/\(.*//)
-	msg=$(grep -v '^CPU:\|^Modules linked in:' $log| grep -m 2 -B 1 ^RIP:|sed s/\(.*//)
-	msg=$(echo "$msg"|grep -v '^ ? \|^Call Trace:\|^Code:\|^CR2:\|^CS:\|^FS:\|^R13:\|^R10:\|^RBP:\|^RDX:\|^RSP:')
-	register_issue "$msg" "$log" "WARNS" && continue
-
-	if grep -q $log $LOGS_TIMEO; then
-		register_issue "Unclassified HANGS" "$log" "HANGS"
-	else
-		register_issue "Unclassified CRASH" "$log" "WARNS"
-	fi
-done
-
-SCAN_LOGS_NUM=$(cat $SCAN_LOGS|wc -l)
-rm $LOGS_CRASH
-rm $LOGS_KASAN
-rm $LOGS_TIMEO
-
-get_unique_candidates
-decode_unique_logs
-
-for tag in ${!tag2msg[*]}; do
-	echo -e "$tag;${tag2msg[$tag]};${tag2log[$tag]};"
-done > "$OUTPUT_CSV"
-
-(
-	echo "Identified ${#tag2msg[*]} issues out of $SCAN_LOGS_NUM logs:"
-	for class in $CLASSES_ORDER; do
-		[ -n "${class2tag[$class]}" ] && echo -e "\t$class: ${class2tag[$class]}"
-	done
-	echo
-	for class in $CLASSES_ORDER; do
-		for tag in ${class2tag[$class]}; do
-			logs="$(echo "${tag2log[$tag]}"|sed 's/,/,\n\t/g')"
-			echo -e "[$tag] ${tag2msg[$tag]}\n\t$logs\n"
-		done
-	done
-) > "$OUTPUT_TEXT"
-
 get_best_stackdump() {
 	log=$1
 
@@ -278,7 +186,69 @@ get_best_stackdump() {
 	fi
 }
 
-(
+scan_logs() {
+	for log in $(cat $SCAN_LOGS); do
+		# explicit (outline?) KASAN results reported by bug() handler
+		msg=$(grep -A 1 '^BUG: KASAN:' $log|sed 's/^BUG: //')
+		register_issue "$msg" "$log" "KASAN" && continue
+	
+		## catch KASAN reported as part of general #GP crash handler (CONFIG_KASAN_INLINE)
+		msg=$(grep -A 3 '^KASAN:' $log|grep '^RIP:\|^KASAN:')
+		register_issue "$msg" "$log" "KASAN" && continue
+	
+		## catch common panic() handler, where RIP is shown shortly after error type + build flags "SMP KASAN NOPTI" string
+		# some of these may contain an additional KASAN: line but we probably cought those in previous rule..
+		msg=$(grep -v '^CPU:\|^Modules linked in:' $log|grep -m 2 -A 3 'KASAN NOPTI$'|grep '^RIP:\|^KASAN:\|KASAN NOPTI$'|sed s/'SMP KASAN NOPTI'//)
+		register_issue "$msg" "$log" "CRASH" && continue
+	
+		## catch unchecked MSR access
+		msg=$(grep -m 1 '^unchecked MSR access error:' $log)
+		register_issue "$msg" "$log" "WARNS" && continue
+	
+		## catch WARNING: and BUG:, - look at first two RIPs in case there is some useful output in between
+		msg=$(grep -v '^CPU:\|^Modules linked in:' $log|grep -m 2 '^WARNING:\|^BUG:'|sed s/'SMP KASAN NOPTI'//)
+		msg=$(echo "$msg"|grep -v '^ ? \|^Call Trace:\|^Code:\|^CR2:\|^CS:\|^FS:\|^R13:\|^R10:\|^RBP:\|^RDX:\|^RSP:')
+		register_issue "$msg" "$log" "WARNS" && continue
+	
+		## fallback: look 2-3 lines backward from RIP extract any other issues
+		# look at first 2 RIP matches and remove CPU/stack info
+		#msg=$(grep -v '^ ? \|^Call Trace:' $log|grep -m 1 -B 2 ^RIP:|sed s/\(.*//)
+		msg=$(grep -v '^CPU:\|^Modules linked in:' $log| grep -m 2 -B 1 ^RIP:|sed s/\(.*//)
+		msg=$(echo "$msg"|grep -v '^ ? \|^Call Trace:\|^Code:\|^CR2:\|^CS:\|^FS:\|^R13:\|^R10:\|^RBP:\|^RDX:\|^RSP:')
+		register_issue "$msg" "$log" "WARNS" && continue
+	
+		if grep -q $log $LOGS_TIMEO; then
+			register_issue "Unclassified HANGS" "$log" "HANGS"
+		else
+			register_issue "Unclassified CRASH" "$log" "WARNS"
+		fi
+	done
+}
+
+render_to_csv()
+{
+	for tag in ${!tag2msg[*]}; do
+		echo -e "$tag;${tag2msg[$tag]};${tag2log[$tag]};"
+	done
+}
+
+render_to_text()
+{
+	echo "Identified ${#tag2msg[*]} issues out of $SCAN_LOGS_NUM logs:"
+	for class in $CLASSES_ORDER; do
+		[ -n "${class2tag[$class]}" ] && echo -e "\t$class: ${class2tag[$class]}"
+	done
+	echo
+	for class in $CLASSES_ORDER; do
+		for tag in ${class2tag[$class]}; do
+			logs="$(echo "${tag2log[$tag]}"|sed 's/,/,\n\t/g')"
+			echo -e "[$tag] ${tag2msg[$tag]}\n\t$logs\n"
+		done
+	done
+}
+
+render_to_html()
+{
 	echo '<pre>'
 	echo "Identified ${#tag2msg[*]} issues out of $SCAN_LOGS_NUM logs:"
 	for class in $CLASSES_ORDER; do
@@ -326,12 +296,85 @@ get_best_stackdump() {
 		echo "</details>"
 	done
 	echo '</pre>'
-) > "$OUTPUT_HTML"
+}
 
-decode_jobs=$(wc -l $DECODE_LIST|awk '{print $1}')
-repro_jobs=$(wc -l $REPRO_LIST|awk '{print $1}')
+mass_decode_jobs()
+{
+	decode_jobs=$(wc -l $DECODE_LIST|awk '{print $1}')
+	repro_jobs=$(wc -l $REPRO_LIST|awk '{print $1}')
 
-test "$decode_jobs" -gt 0 && echo "Recorded $decode_jobs missing stack decode jobs in $DIR/$DECODE_LIST"
-test "$repro_jobs" -gt 0 && echo "Recorded $repro_jobs missing reproducer jobs in $DIR/$REPRO_LIST"
+	if test "$decode_jobs" -gt 0; then
+		echo "Processing $decode_jobs stack decode jobs from $DIR/$DECODE_LIST.."
+		TMPDIR=$(mktemp -d)
+		split -n "l/$(nproc)" $DIR/$DECODE_LIST "$TMPDIR/job."
+		for job in $TMPDIR/job.*; do
+			bash $job &
+			echo "$!" > $TMPDIR/pid."$!"
+		done
+		for pidfile in $TMPDIR/pid.*; do
+			while test -d /proc/$(cat $pidfile); do
+				sleep 1
+			done
+		done
+		rm -rf $TMPDIR
+
+		echo "Decode jobs done.."
+	fi
+
+	#if test "$repro_jobs" -gt 0; then
+	#   echo "Ignoring $repro_jobs missing reproducer jobs in $DIR/$REPRO_LIST"
+	#fi
+}
+
+#
+# main()
+#
+
+if ! test -d "$1"; then
+	usage
+fi
+
+DIR="$(realpath "$1" || usage "Failed to find path >>$1<<")"
+
+if ! cd "$DIR"; then
+	echo "Could not enter $DIR - exit."
+	exit
+fi
+
+if ! test -x "$DECODE_SCRIPT"; then
+	echo "Could not find "$DECODE_SCRIPT" - exit."
+	exit
+fi
+
+truncate -s 0 $DECODE_LIST
+truncate -s 0 $REPRO_LIST
+
+declare -A tag2msg
+declare -A tag2log
+declare -A class2tag
+declare -A log2note
+declare -A unique_logs
+
+find */workdir_*/logs -name crash_\*log > $LOGS_CRASH
+find */workdir_*/logs -name kasan_\*log > $LOGS_KASAN
+find */workdir_*/logs -name timeo_\*log > $LOGS_TIMEO
+SCAN_LOGS_NUM=$(cat $SCAN_LOGS|wc -l)
+
+scan_logs
+get_unique_candidates
+decode_unique_logs
+mass_decode_jobs
+
+render_to_csv > "$OUTPUT_CSV"
+render_to_text > "$OUTPUT_TEXT"
+render_to_html > "$OUTPUT_HTML"
+
+## html rendering may lead to additional triage + decode jobs
+# mass_decode_jobs
+# render_to_html > "$OUTPUT_HTML"
+
+rm $LOGS_CRASH
+rm $LOGS_KASAN
+rm $LOGS_TIMEO
 
 exit 0
