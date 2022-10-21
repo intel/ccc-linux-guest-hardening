@@ -1,0 +1,26 @@
+From 22aaaf9abb86996238b5cfcc31cef59b9035da38 Mon Sep 17 00:00:00 2001
+From: Elena Reshetova <elena.reshetova@intel.com>
+Date: Sat, 22 Oct 2022 02:56:17 +0300
+Subject: [PATCH] Enable check_host_input pattern
+
+Signed-off-by: Elena Reshetova <elena.reshetova@intel.com>
+---
+ check_list.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/check_list.h b/check_list.h
+index d8304706..0ab3ddff 100644
+--- a/check_list.h
++++ b/check_list.h
+@@ -225,7 +225,7 @@ CK(check_returns_negative_error_code)
+ CK(check_platform_get_irq_return)
+ CK(check_kvmalloc_NOFS)
+ CK(check_uaf_netdev_priv)
+-//CK(check_host_input)
++CK(check_host_input)
+ 
+ /* wine specific stuff */
+ CK(check_wine_filehandles)
+-- 
+2.34.1
+
