@@ -41,7 +41,7 @@ else
 fi
 
 # virtfs needs some default folder to serve to guest
-test -d /tmp/kafl || mkdir /tmp/kafl
+test -d /tmp/kafl || mkdir -p /tmp/kafl
 
 function usage()
 {
