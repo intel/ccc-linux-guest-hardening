@@ -166,11 +166,19 @@ impl<'a> Iterator for TraceFileIter<'a> {
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(Ok(next)) = self.lines.next() {
             let d: Vec<&str> = next.trim_end().split(",").collect();
-            //let src_str = d[0].to_string();
-            //let dst_str = d[1].to_string();
-
-            let src = u64::from_str_radix(d[0], 16).unwrap();
-            let dst = u64::from_str_radix(d[1], 16).unwrap();
+            if d.len() != 2 {
+                // ptdump timeout may lead to partly written files..
+                eprintln!("Failed to parse trace, line input \"{}\" - skipping..", next);
+                return None;
+            }
+            let src = match u64::from_str_radix(d[0], 16) {
+                Ok(src) => src,
+                Err(e) => panic!("Failed to parse line input \"{}\": {}", next, e)
+            };
+            let dst = match u64::from_str_radix(d[1], 16) {
+                Ok(dst) => dst,
+                Err(e) => panic!("Failed to parse line input \"{}\": {}", next, e)
+            };
             // Filter out PT_TOKEN edges
             if dst == PT_TOKEN {
                 if let Some((src_next, dst_next)) = self.next() {
