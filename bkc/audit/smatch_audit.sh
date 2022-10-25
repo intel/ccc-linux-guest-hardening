@@ -3,7 +3,7 @@
 #
 # Perform smatch analysis on linux kernel
 #
-# Cleans + builds the kernel at $LINUX_GUEST and copies smatch reports to provided target dir.
+# Cleans + builds the kernel at $LINUX_GUEST and copies smatch reports to provided output dir.
 #
 
 set -e
@@ -17,7 +17,7 @@ function usage()
 Usage: $0 <dir> <config>
 
 Where:
-  <target>  - output directory for storing smatch results
+  <output>  - output directory for storing smatch results
   <config>  - kernel config to be used in build/audit
 HERE
 	exit
@@ -53,8 +53,8 @@ analyze_kernel()
 	$SMATCH_FILTER --force -o $SMATCH_FILTERED $SMATCH_WARNS
 	$SMATCH_TRANSFER --force -o $SMATCH_TRANSFERRED $SMATCH_ANNOTATED $SMATCH_FILTERED
 
-	cp $SMATCH_WARNS $SMATCH_LOG $TARGET_DIR/
-	cp $SMATCH_FILTERED $SMATCH_TRANSFERRED $TARGET_DIR/
+	cp $SMATCH_WARNS $SMATCH_LOG $OUTPUT_DIR/
+	cp $SMATCH_FILTERED $SMATCH_TRANSFERRED $OUTPUT_DIR/
 }
 
 # Helpers
@@ -78,7 +78,7 @@ test -f $SMATCH_BIN    || fail "Could not find $SMATCH_BIN - try to 'make deploy
 test "$#" -eq 2        || usage "Bad or missing arguments"
 
 
-TARGET_DIR="$(realpath -e -- "$1")"; shift
+OUTPUT_DIR="$(realpath -e -- "$1")"; shift
 CONFIG_NEW="$(realpath -e -- "$1")"; shift
 CONFIG_OLD="$LINUX_GUEST/.config"
 
