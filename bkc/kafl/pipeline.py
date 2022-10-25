@@ -267,8 +267,13 @@ def init_campaign(args, campaign_dir):
     else:
         pattern = "all"
 
+    if args.seeds:
+        seeds = ['--seeds', str(args.seeds)]
+    else:
+        seeds = []
+
     # generate harness configs
-    subprocess.run([args.init_helper, campaign_dir, pattern, '--config', args.linux_conf],
+    subprocess.run([args.init_helper, campaign_dir, pattern, '--config', args.linux_conf] + seeds,
             shell=False, check=True)
     print("")
 
@@ -288,10 +293,12 @@ def parse_args():
     default_stats = bkc_root/'bkc/kafl/stats.py'
 
     parser = argparse.ArgumentParser(description='Campaign Automation')
-    parser.add_argument('campaign_root', metavar='<campaign>', type=Path,
-            help='root campaign dir or one or more harness dirs (files may be overwritten!))')
+    parser.add_argument('campaign_root', metavar='<output-directory>', type=Path,
+            help='new or existing campaign directory (files may be overwritten!))')
     parser.add_argument('--harness', metavar='<str>', type=str,
             help='only schedule harnesses containing this string (e.g. "BPH")'),
+    parser.add_argument('--seeds', metavar='<dir>', type=Path,
+            help='seed corpus directory (as recognized by init_harness.py)'),
 
     parser.add_argument('--workers', '-p', type=int, metavar='n', default=16,
             help='number of kAFL workers (default: min(16,ncpu))')
@@ -331,6 +338,7 @@ def parse_args():
 
     args = parser.parse_args()
     args.campaign_root = args.campaign_root.resolve()
+    args.seeds = args.seeds.resolve()
     return args
 
 
