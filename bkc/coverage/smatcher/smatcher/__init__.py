@@ -87,7 +87,7 @@ def try_find_smatch_file(args, input_item):
     # Treat as linecov input
     if os.path.isfile(input_item) and args.smatch is None:
         #TODO: add default global/ cwd smatch file??
-        print(f"Could not auto-detect smatch file. Please set '--smatch' parameter", file=sys.stderr)
+        print("Could not auto-detect smatch file. Please set '--smatch' parameter", file=sys.stderr)
         sys.exit(1)
 
     # Treat as kAFL workdir
@@ -332,17 +332,17 @@ def main():
     parser.add_argument('--combine-cov-files', action="store_true",
             help=f'use the combined coverage of the files {LINECOV_FILES}')
     parser.add_argument('--ignore-errors', action="store_true",
-            help=f'do not exit on errors')
+            help='do not exit on errors')
     parser.add_argument('--smatch-reachability-db-file', metavar='<db_file>', type=str, default=SMATCH_REACHABILITY_DB_FILE,
             help=f'Global db file to use. Defaults to {GLOBAL_DB_FILE}')
     parser.add_argument('--db-file', metavar='<db_file>', type=str, default=GLOBAL_DB_FILE,
             help=f'Global db file to use. Defaults to {GLOBAL_DB_FILE}')
     parser.add_argument('--save', action="store_true",
-            help=f'save coverage in global db')
+            help='save coverage in global db')
     parser.add_argument('--load', action="store_true",
-            help=f'load earlier coverage from global db')
+            help='load earlier coverage from global db')
     parser.add_argument('--reachability', action="store_true",
-            help=f'do reachability analysis on results. Requires smatch_db.sqlite in your current dir (generated using smatch_scripts/build_kernel_data.sh)')
+            help='do reachability analysis on results. Requires smatch_db.sqlite in your current dir (generated using smatch_scripts/build_kernel_data.sh)')
 
     args = parser.parse_args()
 

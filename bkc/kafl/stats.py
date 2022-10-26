@@ -5,15 +5,12 @@
 import os
 import sys
 
-import glob
 import msgpack
 import argparse
 import subprocess
 
 from pathlib import Path
-from pprint import pprint
 
-from time import strftime
 from datetime import timedelta
 
 import humanize
@@ -186,7 +183,6 @@ def stats_aggregate(stats):
             ret[fav][state] = ret[fav].get(state, 0) + 1
 
     for method, num in stats['yield'].items():
-        name=methods[method]
         ret['yield'][methods[method]] = num
 
     stats['aggregate'] = ret
