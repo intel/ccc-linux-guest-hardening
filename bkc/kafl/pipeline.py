@@ -26,10 +26,8 @@
 import os
 import sys
 
-import glob
 import tempfile
 import argparse
-import shutil
 import time
 import subprocess
 
@@ -38,8 +36,7 @@ from pathlib import Path
 from pprint import pformat
 
 import parsl
-from parsl.app.app import python_app, bash_app
-from parsl.data_provider.files import File
+from parsl.app.app import python_app
 
 from parsl.config import Config
 from parsl.executors.threads import ThreadPoolExecutor
@@ -135,7 +132,6 @@ def task_fuzz(args, pipe_id, harness_dir, target_dir, work_dir):
 @python_app
 def task_trace(args, harness_dir, work_dir):
 
-    import os
     import subprocess
 
     logfile = work_dir/'task_trace.log'
@@ -173,7 +169,6 @@ def task_smatch(args, work_dir, smatch_list, wait_task=None):
 @python_app
 def task_triage(args):
 
-    import os
     import subprocess
 
     # generate stats output
@@ -350,10 +345,10 @@ def main():
         harness_dirs.append(harness.parent)
 
     if len(harness_dirs) < 1:
-        sys.exit(f"No matching harnesses found in campaign root. Abort.")
+        sys.exit("No matching harnesses found in campaign root. Abort.")
 
     print(f"Setup campaign root at {args.campaign_root}")
-    print(f"Scheduled for execution:\n%s" % pformat([str(h) for h in harness_dirs]))
+    print("Scheduled for execution:\n%s" % pformat([str(h) for h in harness_dirs]))
 
 
     # for few CPUs, use single pipes and all available cores
@@ -385,7 +380,7 @@ def main():
     if args.dry_run:
         args.kafl_extra = ["--abort-exec", "500"]
 
-    print(f"\nExecuting %d harnesses in %d pipelines (%d workers, %d threads, %d cpus).\n" % (
+    print("\nExecuting %d harnesses in %d pipelines (%d workers, %d threads, %d cpus).\n" % (
         len(harness_dirs), args.pipes, args.workers, args.threads, args.ncpu))
 
     for i in "321":

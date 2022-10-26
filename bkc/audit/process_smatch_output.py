@@ -8,7 +8,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-import os, sys, string, re, argparse
+import os, sys, re, argparse
 
 smatch_pattern_name = "check_host_input"
 

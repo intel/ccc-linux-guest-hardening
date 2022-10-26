@@ -8,14 +8,13 @@
 #
 # SPDX-License-Identifier: MIT
 
-import re
 import os
 import sys
 import shutil
 import argparse
 import yaml
 
-from pprint import pprint, pformat
+from pprint import pformat
 
 boot_harnesses = [
         "BOOT_POST_TRAP",
@@ -277,7 +276,7 @@ def parse_args():
     # pre-process harness pattern before complaining about output path..
     selected = list()
     if args.harness in ["help", "list"]:
-        sys.exit(f"Supported harnesses:\n%s" % pformat(HARNESSES))
+        sys.exit("Supported harnesses:\n%s" % pformat(HARNESSES))
 
     if args.harness == "all":
         selected = HARNESSES

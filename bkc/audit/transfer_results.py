@@ -8,7 +8,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-import os, sys, string, re, argparse
+import os, sys, re, argparse
 
 
 def main(args):
@@ -124,7 +124,7 @@ if __name__ == "__main__":
     parser.add_argument('-o', '--output_file', metavar='<output_file>', type=str, default="smatch_warns.txt.analyzed",
             help='Store output to specified file')
     parser.add_argument('-f', '--force', action="store_true",
-            help=f'Force overwrite existing output files')
+            help='Force overwrite existing output files')
     parser.add_argument('-t', action="store_true",
             help='Store intermediate files for debugging (.tmp.new, .tmp.old).')
     args = parser.parse_args()

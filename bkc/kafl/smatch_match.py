@@ -18,22 +18,15 @@ import sys
 
 import time
 import glob
-import shutil
 import msgpack
 import lz4.frame as lz4
 import re
-import signal
 import multiprocessing as mp
 
-from tqdm import trange, tqdm
 from operator import itemgetter
-from math import ceil
 
-import json
-import csv
 
 import argparse
-import pickle
 
 def read_binary_file(filename):
     with open(filename, 'rb') as f:
@@ -326,7 +319,6 @@ class TraceParser:
 
     def callsite_trace_func(self, func, levels=4):
         # for known IPs in a function, build the unique set of caller IPs and trace them
-        callers = set()
         addrs = self.func2addrs(func)
         for addr in addrs:
             #print("trace_by_func(%s) -> %016x" % (func, addr))
@@ -468,7 +460,7 @@ def main():
                 if not m:
                     continue
                 lino = m.group(1)
-                func = m.group(2)
+                # func = m.group(2)
 
                 #func2lino.setdefault(func, set()).add(lino)
                 #lino2func[lino] = func
@@ -488,7 +480,6 @@ def main():
 
     args = parser.parse_args()
 
-    nproc = min(args.p, os.cpu_count())
     trace_dir = args.work_dir + "/traces"
 
     if not os.path.isdir(trace_dir):
