@@ -203,9 +203,9 @@ def task_smatcher(args, pipeline):
     # smacher report
     with open(args.campaign_root/'smatch_errors.txt', 'w') as logfile:
         with open(args.campaign_root/'smatch_report.txt', 'w') as report:
-        subprocess.run(['smatcher', '--combine-cov-files'] + [p['work_dir'] for p in pipeline],
-                shell=False, check=True, cwd=args.campaign_root,
-                stdout=report, stderr=logfile)
+            subprocess.run(['smatcher', '--combine-cov-files'] + [p['work_dir'] for p in pipeline],
+                    shell=False, check=True, cwd=args.campaign_root,
+                    stdout=report, stderr=logfile)
 
 def run_campaign(args, harness_dirs):
     global_smatch_warns = args.asset_root/'smatch_warns.txt'
