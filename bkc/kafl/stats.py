@@ -214,10 +214,7 @@ def process_workdir(workdir):
     nodes = dict()
 
     stats_path = workdir/"stats"
-    stats_path = workdir/"stats"
-    if stats_path.is_file():
-        #pprint(stats)
-        stats = msgpack_read(stats_path)
+    stats = msgpack_read(stats_path)
 
     for num in range(stats['num_workers']):
         workers_path = workdir/f"worker_stats_{num}"
