@@ -1,17 +1,18 @@
 - name: Copy BKC folder
-  copy:
+  ansible.builtin.copy:
     src: "{{ playbook_dir }}/../bkc"
     dest: "{{ install_root }}/"
+    mode: '0775'
   when: ansible_connection != 'local'
 
 - name: Install BKC system dependencies
-  package:
+  ansible.builtin.package:
     name:
       - qemu-utils     # for qemu-img
       - busybox-static # to generate initrd
       - elfutils       # for eu-addr2line
       - cargo          # fast_matcher
-  become: yes
+  become: true
 
 - name: Install BKC python dependencies
   ansible.builtin.pip:

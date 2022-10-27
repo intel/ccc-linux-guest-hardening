@@ -1,5 +1,6 @@
 - name: Download TDVF binary
-  get_url:
+  ansible.builtin.get_url:
     url: https://github.com/IntelLabs/kafl.edk2/releases/download/tdvf-sdv-v0.1/TDVF_sdv_1G.fd
     dest: "{{ install_root }}/TDVF.fd"
     checksum: sha256:12fb25c9338065fcfaac5311e0e72a0fcef7292bb4e470fe4af5d29aca1bba62
+    mode: '0660'
