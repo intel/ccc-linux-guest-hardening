@@ -1,31 +1,32 @@
 - name: Install TDVF build dependencies
-  package:
+  ansible.builtin.package:
     name:
       - nasm
       - iasl
       - uuid-dev
       - python
     state: present
-  become: yes
+  become: true
 
 - name: Clone TDVF repo
-  git:
+  ansible.builtin.git:
     repo: "{{ tdvf_url }}"
     dest: "{{ tdvf_root }}"
     version: "{{ tdvf_revision | default(omit) }}"
     depth: "{{ git_clone_depth | default(omit) }}"
-    force: yes
+    force: true
 
 - name: Build BaseTools
-  make:
+  ansible.builtin.make:
     chdir: "{{ tdvf_root }}/BaseTools"
     params:
       --jobs: "{{ ansible_processor_nproc }}"
 
 - name: Build TDVF
-  shell: >
+  ansible.builtin.shell: >
     source edksetup.sh --reconfig &&
     build -n $(nproc) -p OvmfPkg/OvmfPkgX64.dsc -t GCC5 -a X64 -D TDX_EMULATION_ENABLE=FALSE -D DEBUG_ON_SERIAL_PORT=TRUE
   args:
     executable: /bin/bash
     chdir: "{{ tdvf_root }}"
+  changed_when: false
