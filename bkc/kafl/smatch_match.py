@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# 
+#
 # Copyright (C)  2022  Intel Corporation. 
 #
 # This software and the related documents are Intel copyrighted materials, and
@@ -28,9 +28,11 @@ from operator import itemgetter
 
 import argparse
 
+
 def read_binary_file(filename):
     with open(filename, 'rb') as f:
         return f.read()
+
 
 EXIT_IP = 0xffffffffffffffff
 
@@ -38,6 +40,8 @@ EXIT_IP = 0xffffffffffffffff
 DEFAULT_SMATCH_FILE = os.path.expandvars("$BKC_ROOT/smatch_warns.txt")
 
 # should reset this between different trace startpoints (-f)
+
+
 class TraceParser:
 
     def __init__(self, trace_dir):
@@ -61,7 +65,6 @@ class TraceParser:
     def print_addr(self, addr, prefix="\t"):
         print("%s%x: %s at %s" % (prefix, addr, self.addr2func(addr), self.addr2line(addr)))
 
-
     def is_valid_addr(self, addr):
         return addr != None and addr != 0xffffffffffffffff
 
@@ -72,9 +75,8 @@ class TraceParser:
         # search backward through all collected traces - slooow
         edge_str = "%016x,%016x" % (src, dst)
         for prior_edge_str in self.global_back_edges[edge_str]:
-            src,dst = prior_edge_str.split(',')
-            yield([int(src,16),int(dst,16)])
-
+            src, dst = prior_edge_str.split(',')
+            yield ([int(src, 16), int(dst, 16)])
 
     def addr2caller(self, addr):
         return self.callers.get(addr, [None])
@@ -95,16 +97,16 @@ class TraceParser:
         return self.func2addr[func]
 
     def func2lines(self, func):
-        return set([ self.addr2line(addr) for addr in self.func2addrs(func) ])
+        return set([self.addr2line(addr) for addr in self.func2addrs(func)])
 
     @staticmethod
-    def edge_to_str(src,dst):
+    def edge_to_str(src, dst):
         return "%016x,%016x" % (src, dst)
 
     @staticmethod
     def edge_str_to_tuple(edge_str):
-        src,dst = edge_str.split(',')
-        return [int(src,16),int(dst,16)]
+        src, dst = edge_str.split(',')
+        return [int(src, 16), int(dst, 16)]
 
     @staticmethod
     def parse_trace_file(trace_file):
@@ -118,17 +120,17 @@ class TraceParser:
         with lz4.open(trace_file, 'r') as f:
             for line in f.read().decode(errors="ignore").splitlines():
                 try:
-                    src,dst,num = line.split(",")
+                    src, dst, num = line.split(",")
                 except:
-                    src,dst = line.split(",")
+                    src, dst = line.split(",")
                     num = '1'
 
-                src = int(src,16)
-                dst = int(dst,16)
-                num = int(num,16)
+                src = int(src, 16)
+                dst = int(dst, 16)
+                num = int(num, 16)
                 edges["%016x,%016x" % (src, dst)] = num
                 callers.setdefault(dst, set()).add(src)
-                bbs.update({src,dst})
+                bbs.update({src, dst})
 
         return {'bbs': bbs, 'edges': edges, 'callers': callers}
 
@@ -140,7 +142,8 @@ class TraceParser:
         print("Processing trace file %s.." % trace_file)
 
         splice_ips = set()
-        def do_splice_location(src,dst):
+
+        def do_splice_location(src, dst):
             if src not in splice_ips:
                 splice_ips.add(src)
                 #print("Splicing at %016x,%016x" % (src,dst))
@@ -155,25 +158,25 @@ class TraceParser:
         with lz4.open(trace_file, 'r') as f:
             for line in f.read().decode(errors="ignore").splitlines():
                 try:
-                    src,dst,num = line.split(",")
+                    src, dst, num = line.split(",")
                 except:
-                    src,dst = line.split(",")
+                    src, dst = line.split(",")
                     num = '1'
 
-                src = int(src,16)
-                dst = int(dst,16)
-                num = int(num,16)
+                src = int(src, 16)
+                dst = int(dst, 16)
+                num = int(num, 16)
 
                 # splice the trace at well-known entry/exit points
                 if dst == EXIT_IP:
-                    assert(prev_ip == 0)
+                    assert (prev_ip == 0)
                     prev_ip = src
                     # insert fake edge
                     prev_ip = (src % 0xffffffff << 32) + 0xffffffff
                     continue
                 if prev_ip != 0:
-                    assert(src == EXIT_IP)
-                    assert(dst != EXIT_IP)
+                    assert (src == EXIT_IP)
+                    assert (dst != EXIT_IP)
                     if do_splice_location(prev_ip, dst):
                         src = prev_ip
                         prev_ip = 0
@@ -182,11 +185,10 @@ class TraceParser:
                 edges[edge_str] = edges.get(edge_str, 0) + num
                 back_edges.setdefault(edge_str, set()).add(last_edge)
                 callers.setdefault(dst, set()).add(src)
-                bbs.update({src,dst})
+                bbs.update({src, dst})
                 last_edge = edge_str
 
         return {'bbs': bbs, 'edges': edges, 'callers': callers, 'back_edges': back_edges}
-
 
     def parse_trace_list(self, nproc, input_list):
         trace_files = list()
@@ -221,7 +223,7 @@ class TraceParser:
             for line in f.read().splitlines():
                 m = re.search("0x([\da-f]+): ([\S]+) at ([\S]+):[0-9]+$", line)
                 if m:
-                    addr = int(m.group(1),16)
+                    addr = int(m.group(1), 16)
                     func = m.group(2)
                     lino = m.group(3)
                     #print(f"parse addr2line: {line}: '{func}' @ '{lino}'")
@@ -249,19 +251,20 @@ class TraceParser:
             num_edges = 0
             num_traces = 0
             for timestamp, findings in self.trace_results:
-                if not findings: continue
+                if not findings:
+                    continue
 
                 new_bbs = len(findings['bbs'] - self.unique_bbs)
                 new_edges = len(set(findings['edges']) - set(self.unique_edges))
                 self.unique_bbs.update(findings['bbs'])
-                #self.callers.update(findings['callers'])
-                for dst,srcs in findings['callers'].items():
+                # self.callers.update(findings['callers'])
+                for dst, srcs in findings['callers'].items():
                     self.callers.setdefault(dst, set()).update(srcs)
                 edges = findings['edges']
-                for edge,num in edges.items():
+                for edge, num in edges.items():
                     self.unique_edges[edge] = self.unique_edges.get(edge, 0) + num
                 back_edges = findings['back_edges']
-                for dst,src_set in back_edges.items():
+                for dst, src_set in back_edges.items():
                     self.global_back_edges.setdefault(dst, set()).update(src_set)
 
                 num_traces += 1
@@ -270,24 +273,23 @@ class TraceParser:
                 f.write("%d;%d;%d\n" % (timestamp, num_bbs, num_edges))
 
         with open(edges_file, 'w') as f:
-            for edge,num in self.unique_edges.items():
-                f.write("%s,%x\n" % (edge,num))
+            for edge, num in self.unique_edges.items():
+                f.write("%s,%x\n" % (edge, num))
 
-        print(" Processed %d traces with a total of %d BBs (%d edges)." \
-                % (num_traces, num_bbs, num_edges))
+        print(" Processed %d traces with a total of %d BBs (%d edges)."
+              % (num_traces, num_bbs, num_edges))
 
         print(" Plot data written to %s" % plot_file)
         print(" Unique edges written to %s" % edges_file)
 
         return
 
-
     def callsite_trace_edge(self, edge_str, levels, level=0):
 
         if level > levels:
             print("%s abort trace at max level %d..)" % ("->", level))
             return True
-        if edge_str == "%016x,%016x" % (EXIT_IP,EXIT_IP):
+        if edge_str == "%016x,%016x" % (EXIT_IP, EXIT_IP):
             print("%s exit_ip..)" % ("->"))
             return True
 
@@ -298,7 +300,7 @@ class TraceParser:
         self.seen_edges.add(edge_str)
 
         for addr_str in edge_str.split(','):
-            addr = int(addr_str,16)
+            addr = int(addr_str, 16)
             func = self.addr2func(addr)
             lino = self.addr2line(addr)
             for func in self.smatch_lino_map.get(lino, []):
@@ -350,7 +352,6 @@ class TraceParser:
             if level < levels:
                 for func in sorted(set(self.addr2func(addr) for addr in callers)):
                     self.print_callers(func, levels, level=level+1, seen_callers=seen_callers)
-
 
     def collect_callers(self, func, levels=4, level=0, seen_callers=set()):
         callers = set()
@@ -406,18 +407,19 @@ def kafl_workdir_iterator(work_dir):
 
     return input_id_time
 
+
 def get_inputs_by_time(data_dir):
     # check if data_dir is kAFL or AFL type, then assemble sorted list of inputs/input IDs over time
     if (os.path.exists(data_dir + "/fuzzer_stats") and
         os.path.exists(data_dir + "/fuzz_bitmap") and
         os.path.exists(data_dir + "/plot_data") and
-        os.path.isdir(data_dir + "/queue")):
-            input_data = afl_workdir_iterator(data_dir)
+            os.path.isdir(data_dir + "/queue")):
+        input_data = afl_workdir_iterator(data_dir)
 
     elif (os.path.exists(data_dir + "/stats") and
           os.path.isdir(data_dir + "/corpus/regular") and
           os.path.isdir(data_dir + "/metadata")):
-            input_data = kafl_workdir_iterator(data_dir)
+        input_data = kafl_workdir_iterator(data_dir)
     else:
         print("Unrecognized target directory type «%s». Exit." % data_dir)
         sys.exit()
@@ -425,6 +427,7 @@ def get_inputs_by_time(data_dir):
     # timestamps may be off slightly but payload IDs are strictly ordered by kAFL master
     input_data.sort(key=itemgetter(2))
     return input_data
+
 
 def graceful_exit(workers):
     for w in workers:
@@ -440,6 +443,7 @@ def graceful_exit(workers):
                 w.join(timeout=1)
             else:
                 workers.remove(w)
+
 
 def main():
 
@@ -467,16 +471,15 @@ def main():
                 lino2msg[lino] = line
         return lino2msg
 
-
     parser = argparse.ArgumentParser(description='kAFL Trace Processing.')
     parser.add_argument('work_dir', metavar='<work_dir>', type=str,
-            help='target workdir with trace files in /traces/')
+                        help='target workdir with trace files in /traces/')
     parser.add_argument('-f', '--func', metavar='<func>', type=str,
-            help='function to search for')
+                        help='function to search for')
     parser.add_argument('-p', metavar='<n>', type=int, default=default_nproc(),
-            help='number of threads')
+                        help='number of threads')
     parser.add_argument('-l', metavar='<n>', type=int, default=2,
-            help='max call depths to search')
+                        help='max call depths to search')
 
     args = parser.parse_args()
 

@@ -20,6 +20,7 @@ def msgpack_read(pathname):
     with open(pathname, 'rb') as f:
         return msgpack.unpackb(f.read(), strict_map_key=False)
 
+
 def pprint_last_findings(stats):
     last = dict()
     stop_time = stats['start_time'] + stats['runtime']
@@ -29,11 +30,12 @@ def pprint_last_findings(stats):
             last[exit] = "N/A"
         else:
             last[exit] = timedelta(
-                    seconds=int(stop_time-last_time[exit]))
+                seconds=int(stop_time-last_time[exit]))
     return last
 
+
 def estimate_done(stats):
-    num_favs  = stats['favs_total']
+    num_favs = stats['favs_total']
     num_norms = stats['findings']['regular'] - stats['favs_total']
 
     if stats['total_execs'] == 0 or num_favs + num_norms == 0:
@@ -52,6 +54,7 @@ def estimate_done(stats):
     done_total = 0.7*done_favs + 0.2*done_norms + 0.1*crash_fraction
     return done_total
 
+
 def print_stats(args, stats):
     last_find = pprint_last_findings(stats)
     done_total = estimate_done(stats)
@@ -62,6 +65,7 @@ def print_stats(args, stats):
     print(f"\n{workdir}\n  Runtime: {runtime}, {done_total:2.0f}% done")
     for i in ['regular', 'crash', 'kasan', 'timeout']:
         print(f"  {i:>10}: {stats['findings'][i]:4d} (last: {last_find[i]})")
+
 
 def print_html(args, stats, plotfile):
     last_find = pprint_last_findings(stats)
@@ -75,7 +79,7 @@ def print_html(args, stats, plotfile):
             "Total executions: %s\n" % humanize.intword(stats['total_execs']),
             "Edges in bitmap:  %s\n" % humanize.intcomma(stats['bytes_in_bitmap']),
             "Estimated done:  ~%d%%\n" % done_total,
-            ])
+        ])
 
         if done_total > 0:
             f.writelines([
@@ -89,24 +93,24 @@ def print_html(args, stats, plotfile):
                 "  crashes:   %4d (last: %s)\n" % (stats['findings']['crash'], last_find['crash']),
                 "  sanitizer: %4d (last: %s)\n" % (stats['findings']['kasan'], last_find['kasan']),
                 "  timeout:   %4d (last: %s)\n" % (stats['findings']['timeout'], last_find['timeout']),
-                ])
+            ])
 
             queue_stages = {
-                    'initial': 'init',
-                    'redq/grim': 'rq/gr',
-                    'deterministic': 'deter',
-                    'havoc': 'havoc',
-                    'final': 'final' }
+                'initial': 'init',
+                'redq/grim': 'rq/gr',
+                'deterministic': 'deter',
+                'havoc': 'havoc',
+                'final': 'final'}
 
             f.writelines([
                 "\nQueue Progress\n",
                 "  %5s  %4s    %4s\n" % ("Stage", "Favs", "Norm"),
-                ])
+            ])
 
             for stage in queue_stages:
                 f.write("  %5s: %4d  / %4d\n" % (queue_stages[stage],
-                                          stats['aggregate']['fav_states'].get(stage, 0),
-                                          stats['aggregate']['norm_states'].get(stage, 0)))
+                                                 stats['aggregate']['fav_states'].get(stage, 0),
+                                                 stats['aggregate']['norm_states'].get(stage, 0)))
 
             f.write("\nMutation Yields\n")
             for method, num in stats['aggregate']['yield'].items():
@@ -119,54 +123,55 @@ def print_html(args, stats, plotfile):
         f.writelines([
             "</td></tr>\n",
             "</table>\n\n",
-            ])
+        ])
 
         #print("<tr><td><details><summary>kAFL config</summary><pre>")
-        #pprint(msgpack_read(workdir/"config"))
-        #print("</pre></details></td></tr>")
+        # pprint(msgpack_read(workdir/"config"))
+        # print("</pre></details></td></tr>")
+
 
 def stats_aggregate(stats):
 
     ret = {
-            "fav_states": {},
-            "norm_states": {},
-            "last_found": {"regular": 0, "crash": 0, "kasan": 0, "timeout": 0},
-            "yield": {},
-            }
+        "fav_states": {},
+        "norm_states": {},
+        "last_found": {"regular": 0, "crash": 0, "kasan": 0, "timeout": 0},
+        "yield": {},
+    }
 
     methods = {
-            'import': "seed/import",
-            'kickstart': "kickstart",
-            'calibrate': "calibrate",
-            'trim': "trim",
-            'trim_center': "trim_center",
-            'stream_color': "stream_color",
-            'stream_zero': "stream_zero",
-            'redq_color': "redq_color",
-            'redq_mutate': "redq_mutate",
-            'redq_dict': "redq_dict",
-            'grim_infer': "grim_infer",
-            'grim_havoc': "grim_havoc",
-            'afl_arith_1': "afl_arith",
-            'afl_arith_2': "afl_arith",
-            'afl_arith_4': "afl_arith",
-            'afl_flip_1/1': "afl_flip",
-            'afl_flip_2/1': "afl_flip",
-            'afl_flip_8/1': "afl_flip",
-            'afl_flip_8/2': "afl_flip",
-            'afl_flip_8/4': "afl_flip",
-            'afl_int_1': "afl_int",
-            'afl_int_2': "afl_int",
-            'afl_int_4': "afl_int",
-            'afl_havoc': "afl_havoc",
-            'afl_splice': "afl_splice",
-            'radamsa': "radamsa",
-            'trim_funky': "funky",
-            'stream_funky': "funky",
-            'validate_bits': "funky",
-            'fixme': "funky",
-            'redq_trace': "funky",
-            }
+        'import': "seed/import",
+        'kickstart': "kickstart",
+        'calibrate': "calibrate",
+        'trim': "trim",
+        'trim_center': "trim_center",
+        'stream_color': "stream_color",
+        'stream_zero': "stream_zero",
+        'redq_color': "redq_color",
+        'redq_mutate': "redq_mutate",
+        'redq_dict': "redq_dict",
+        'grim_infer': "grim_infer",
+        'grim_havoc': "grim_havoc",
+        'afl_arith_1': "afl_arith",
+        'afl_arith_2': "afl_arith",
+        'afl_arith_4': "afl_arith",
+        'afl_flip_1/1': "afl_flip",
+        'afl_flip_2/1': "afl_flip",
+        'afl_flip_8/1': "afl_flip",
+        'afl_flip_8/2': "afl_flip",
+        'afl_flip_8/4': "afl_flip",
+        'afl_int_1': "afl_int",
+        'afl_int_2': "afl_int",
+        'afl_int_4': "afl_int",
+        'afl_havoc': "afl_havoc",
+        'afl_splice': "afl_splice",
+        'radamsa': "radamsa",
+        'trim_funky': "funky",
+        'stream_funky': "funky",
+        'validate_bits': "funky",
+        'fixme': "funky",
+        'redq_trace': "funky",
+    }
 
     for node in stats['nodes'].values():
         reason = node['info']['exit_reason']
@@ -175,7 +180,7 @@ def stats_aggregate(stats):
 
         if reason == "regular":
             state = node['state']['name']
-            if len(node['fav_bits']) >0:
+            if len(node['fav_bits']) > 0:
                 fav = "fav_states"
             else:
                 fav = "norm_states"
@@ -187,16 +192,17 @@ def stats_aggregate(stats):
 
     stats['aggregate'] = ret
 
+
 def generate_plots(workdir):
-    GNUPLOT_SCRIPT=Path(os.environ.get("BKC_ROOT"))/"bkc"/"kafl"/"stats.plot"
-    STATS_INPUT=workdir/"stats.csv"
-    STATS_OUTPUT=workdir/"stats.png"
+    GNUPLOT_SCRIPT = Path(os.environ.get("BKC_ROOT"))/"bkc"/"kafl"/"stats.plot"
+    STATS_INPUT = workdir/"stats.csv"
+    STATS_OUTPUT = workdir/"stats.png"
 
     if not STATS_OUTPUT.is_file():
-        cmd = [ "gnuplot",
-                "-e", f'set terminal png size 900,800 enhanced; set output "{STATS_OUTPUT}"',
-                "-c", f"{GNUPLOT_SCRIPT}",
-                f"{STATS_INPUT}"]
+        cmd = ["gnuplot",
+               "-e", f'set terminal png size 900,800 enhanced; set output "{STATS_OUTPUT}"',
+               "-c", f"{GNUPLOT_SCRIPT}",
+               f"{STATS_INPUT}"]
 
         p = subprocess.run(cmd, text=True, capture_output=True, timeout=10)
         if p.returncode != 0:
@@ -204,6 +210,7 @@ def generate_plots(workdir):
             print(p.stderr, file=sys.stderr)
 
     return STATS_OUTPUT
+
 
 def process_workdir(workdir):
     workers = dict()
@@ -233,18 +240,19 @@ def process_workdir(workdir):
 
     return stats
 
+
 def main():
 
     parser = argparse.ArgumentParser(description="kAFL Workdir Summary")
     parser.add_argument("searchdir", help="folder to scan for kAFL workdirs")
     parser.add_argument("--html", metavar='<file>', type=Path,
-            help="produce more detailed html output")
+                        help="produce more detailed html output")
     args = parser.parse_args()
 
     candidates = Path(args.searchdir).rglob("stats.csv")
 
     if args.html and args.html.exists():
-        os.truncate(args.html,0)
+        os.truncate(args.html, 0)
 
     for c in sorted(candidates):
         stats = process_workdir(c.parent)
@@ -253,7 +261,7 @@ def main():
             plotfile = generate_plots(c.parent)
             print_html(args, stats, plotfile)
         else:
-            print_stats(args,stats)
+            print_stats(args, stats)
 
 
 if __name__ == "__main__":
