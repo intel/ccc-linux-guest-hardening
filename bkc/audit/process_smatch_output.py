@@ -28,11 +28,15 @@ def main(args):
     print("Input file is " + input_file, file=sys.stderr)
 
     if not os.path.isfile(input_file):
-        print(f"Error: Input file {input_file} does not exists", file=sys.stderr)
+        print(f"Error: Input file {input_file} does not exist",
+              file=sys.stderr)
         exit(1)
 
     if os.path.isfile(output_file) and not args.force:
-        print(f"Error: Output file {output_file} already exists. Supply --force to overwrite.", file=sys.stderr)
+        print(
+            f"Error: Output {output_file} already exists."
+            "Add --force to overwrite.",
+            file=sys.stderr)
         exit(1)
 
     with open(input_file, 'r') as finput:
@@ -78,8 +82,11 @@ def main(args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Smatch result filter script. Filters out excluded subsystems from the smatch report.')
-    parser.add_argument('input_file', metavar='<input_file>', type=str, help='Smatch report to be filtered (smatch_warns.txt)')
+    parser = argparse.ArgumentParser(
+        description='Smatch result filter script.\n'
+                    'Filters out excluded subsystems from the smatch report.')
+    parser.add_argument('input_file', metavar='<input_file>', type=str,
+                        help='Smatch report to be filtered (smatch_warns.txt)')
     parser.add_argument('-o', '--output_file', metavar='<output_file>', type=str, default="smatch_warns.txt.filtered",
                         help='Store output to specified file')
     parser.add_argument('-f', '--force', action="store_true",

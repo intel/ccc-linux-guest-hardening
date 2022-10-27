@@ -20,13 +20,17 @@ def main(args):
     output_file = args.output_file
 
     if not os.path.isfile(input_new):
-        print(f"Error: New input file {input_new} does not exist.", file=sys.stderr)
+        print(f"Error: New input file {input_new} does not exist.",
+              file=sys.stderr)
         exit(1)
     if not os.path.isfile(input_analyzed):
-        print(f"Error: Analyzed input file {input_analyzed} does not exist.", file=sys.stderr)
+        print(f"Error: Analyzed input file {input_analyzed} does not exist.",
+              file=sys.stderr)
         exit(1)
     if os.path.isfile(output_file) and not args.force:
-        print(f"Error: Output file {output_file} already exists. Supply --force to overwrite.", file=sys.stderr)
+        print(
+            f"Error: Output {output_file} already exists. Add --force to overwrite.",
+            file=sys.stderr)
         exit(1)
 
     with open(input_analyzed, 'r') as fanalysed:
@@ -52,7 +56,8 @@ def main(args):
                     path_new = result_new.split(':')[0]
                     path_new = path_new.strip()
                     #print ("path_new is  " + path_new + "\n")
-                    result_id_new = re.search(r"\{([A-Za-z0-9_]+)\}", result_new)
+                    result_id_new = re.search(
+                        r"\{([A-Za-z0-9_]+)\}", result_new)
                     if (not result_id_new):
                         continue
                     #print ("result_id_new is  " + result_id_new.group(1) + "\n")
@@ -120,7 +125,10 @@ def main(args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Smatch result transfer script. Transfer previous audit results to a new kernel version.')
+    parser = argparse.ArgumentParser(
+        description='Smatch result transfer script.\n'
+        'Transfer previous audit results to a new kernel version.')
+
     parser.add_argument('input_analyzed', metavar='<input_analyzed>', type=str,
                         help='Previously annotated smatch results to be tranferred to new results')
     parser.add_argument('input_new', metavar='<input_new>', type=str,

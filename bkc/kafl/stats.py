@@ -43,14 +43,17 @@ def estimate_done(stats):
         return 0
 
     if num_favs > 0:
-        done_favs = 100*stats['aggregate']['fav_states'].get('final', 0) / num_favs
+        done_favs = 100 * \
+            stats['aggregate']['fav_states'].get('final', 0) / num_favs
     else:
         done_favs = 0
     if num_norms > 0:
-        done_norms = 100*stats['aggregate']['norm_states'].get('final', 0) / num_norms
+        done_norms = 100 * \
+            stats['aggregate']['norm_states'].get('final', 0) / num_norms
     else:
         done_norms = 100
-    crash_fraction = (stats['paths_total']-stats['findings']['regular'])/stats['paths_total']*100
+    crash_fraction = (stats['paths_total']-stats['findings']
+                      ['regular'])/stats['paths_total']*100
     done_total = 0.7*done_favs + 0.2*done_norms + 0.1*crash_fraction
     return done_total
 
@@ -75,9 +78,11 @@ def print_html(args, stats, plotfile):
         f.writelines([
             "<table>\n<tr><th align=left>%s</th></tr>\n" % stats['name'],
             "<tr><td><pre>\n",
-            "Total runtime:    %s\n" % humanize.naturaldelta(timedelta(seconds=stats['runtime'])),
+            "Total runtime:    %s\n" % humanize.naturaldelta(
+                timedelta(seconds=stats['runtime'])),
             "Total executions: %s\n" % humanize.intword(stats['total_execs']),
-            "Edges in bitmap:  %s\n" % humanize.intcomma(stats['bytes_in_bitmap']),
+            "Edges in bitmap:  %s\n" % humanize.intcomma(
+                stats['bytes_in_bitmap']),
             "Estimated done:  ~%d%%\n" % done_total,
         ])
 

@@ -338,7 +338,8 @@ def parse_args():
                         help="abort fuzzer after 500 execs")
     parser.add_argument('--keep', action="store_true",
                         help="keep kernel build trees")
-    parser.add_argument('--verbose', '-v', action="store_true", help="verbose mode")
+    parser.add_argument('--verbose', '-v', action="store_true",
+                        help="verbose mode")
 
     parser.add_argument('--use-ghidra', metavar='<0|1>', type=bool, default=False,
                         help="use Ghidra for deriving covered blocks from edges? (default=0)")
@@ -384,7 +385,8 @@ def main():
         sys.exit("No matching harnesses found in campaign root. Abort.")
 
     print(f"Setup campaign root at {args.campaign_root}")
-    print("Scheduled for execution:\n%s" % pformat([str(h) for h in harness_dirs]))
+    print("Scheduled for execution:\n%s" %
+          pformat([str(h) for h in harness_dirs]))
 
     # for few CPUs, use single pipes and all available cores
     if args.ncpu < args.workers:

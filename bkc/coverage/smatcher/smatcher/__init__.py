@@ -43,7 +43,9 @@ SMATCH_CAT_WRAPPER = "wrapper"
 SMATCH_CAT_UNCLASSIFIED = "unclassified"
 SMATCH_CAT_TRUSTED = "trusted"
 
-LINECOV_FILES = ["traces/linecov.lst", "traces/smatch_match_rust.lst", "traces/smatch_match.lst", "traces/addr2line.lst"]
+LINECOV_FILES = ["traces/linecov.lst", "traces/smatch_match_rust.lst",
+                 "traces/smatch_match.lst", "traces/addr2line.lst"]
+
 KERNEL_ANALYSIS_START_FUNCS = ["start_kernel", "kernel_init"]
 
 
@@ -61,7 +63,8 @@ def parse_smatch_file(fname):
         m = re.findall("^(\S+:[0-9]+) (\S+)\(\)", s, re.M)
         for l, f in m:
             if not f == "(null)":
-                entries.add((SMATCH_CAT_UNCLASSIFIED, os.path.normpath(l.strip('./')), f))
+                entries.add((SMATCH_CAT_UNCLASSIFIED,
+                            os.path.normpath(l.strip('./')), f))
     return entries
 
 
@@ -82,7 +85,8 @@ def parse_line_coverage_file(fname):
 def try_find_smatch_file(args, input_item):
     if args.smatch:
         if not os.path.isfile(args.smatch):
-            print(f"Could not find provided smatch file '{args.smatch}'.", file=sys.stderr)
+            print(
+                f"Could not find provided smatch file '{args.smatch}'.", file=sys.stderr)
             sys.exit(1)
         return args.smatch
 
@@ -94,17 +98,20 @@ def try_find_smatch_file(args, input_item):
 
     # Treat as kAFL workdir
     work_dir = input_item
-    smatch_file = os.path.join(work_dir, "target/smatch_warns.txt_results_analyzed")
+    smatch_file = os.path.join(work_dir,
+                               "target/smatch_warns.txt_results_analyzed")
     if os.path.isfile(smatch_file):
         return smatch_file
 
-    print(f"Could not find smatch file '{smatch_file}'. Trying other options...", file=sys.stderr)
+    print(f"Could not find '{smatch_file}'. Trying others...",
+          file=sys.stderr)
 
     smatch_file = os.path.join(work_dir, "target/smatch_warns.txt")
     if os.path.isfile(smatch_file):
         return smatch_file
 
-    print(f"Could not find smatch file '{smatch_file}'. Giving up.", file=sys.stderr)
+    print(f"Could not find smatch file '{smatch_file}'. Giving up.",
+          file=sys.stderr)
     if not args.ignore_errors:
         sys.exit(1)
 
@@ -119,7 +126,8 @@ def try_get_coverage(args, input_item):
 
     # The input item is a workdir
     if not os.path.isdir(input_item):
-        print(f"Interpreting '{input_item}' as a kAFL workdir, but it is not a valid workdir", file=sys.stderr)
+        print(f"Provided path '{input_item}' is not a valid kAFL workdir",
+              file=sys.stderr)
         if not args.ignore_errors:
             sys.exit(1)
 
@@ -127,7 +135,8 @@ def try_get_coverage(args, input_item):
     for f in LINECOV_FILES:
         line_coverage_path = os.path.join(work_dir, f)
         if not os.path.isfile(line_coverage_path):
-            print(f"Could not find coverage file '{line_coverage_path}'. Trying next option...", file=sys.stderr)
+            print(f"Could not find coverage file '{line_coverage_path}'. Trying next...",
+                  file=sys.stderr)
             continue
         existing_files += 1
         if args.combine_cov_files:
@@ -136,7 +145,9 @@ def try_get_coverage(args, input_item):
             return parse_line_coverage_file(line_coverage_path)
 
     if existing_files == 0:
-        print(f"Could not find and of the coverage files '{LINECOV_FILES}'. Please make sure one exists, or provide an alternative file with --cov.", file=sys.stderr)
+        print(f"Could not find and of the coverage files '{LINECOV_FILES}'.\n"
+              "Please make sure one exists, or provide an alternative file with --cov.",
+              file=sys.stderr)
         if not args.ignore_errors:
             sys.exit(1)
     return cov
@@ -147,7 +158,7 @@ def start(args):
     if args.load:
         with open(args.db_file, "rb") as fh:
             covered |= pickle.load(fh)
-            print("Loaded {} lines from db".format(len(covered)), file=sys.stderr)
+            print("Loaded %d lines from db" % len(covered), file=sys.stderr)
 
     smatch_set = set()
     for input_item in args.input_items:
@@ -312,7 +323,10 @@ def start(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Smatch trace matching and analysis. Match line coverage file against smatch report. Symbols: [\'+\' -> covered, \'-\' -> not covered, \'/\' -> partially covered]')
+    parser = argparse.ArgumentParser(
+        description='Smatch trace matching and analysis.\n'
+        'Match line coverage file against smatch report.\n'
+        '\tSymbols: [\'+\' -> covered, \'-\' -> not covered, \'/\' -> partially covered]')
     parser.add_argument('input_items', metavar='<input_item>', type=str, nargs='+',
                         help='Line coverage files or kAFL workdirs to match against smatch. \
             If a kAFL workdir, input_item should be a kAFL workdir with target  \

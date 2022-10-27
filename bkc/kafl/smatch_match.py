@@ -63,7 +63,8 @@ class TraceParser:
         self.lino_matches = dict()
 
     def print_addr(self, addr, prefix="\t"):
-        print("%s%x: %s at %s" % (prefix, addr, self.addr2func(addr), self.addr2line(addr)))
+        print("%s%x: %s at %s" %
+              (prefix, addr, self.addr2func(addr), self.addr2line(addr)))
 
     def is_valid_addr(self, addr):
         return addr != None and addr != 0xffffffffffffffff
@@ -201,7 +202,8 @@ class TraceParser:
                 trace_files.append(trace_file)
                 timestamps.append(timestamp)
             else:
-                print("Could not find trace: %s => %s" % (input_file, trace_file))
+                print("Could not find trace: %s => %s" %
+                      (input_file, trace_file))
         print("Parsing trace: %s => %s" % (input_file, trace_file))
 
         print("Parsing traces on %d/%d cores..." % (nproc, os.cpu_count()))
@@ -231,7 +233,8 @@ class TraceParser:
                     self.line2addr.setdefault(lino, list()).append(addr)
                     self.func2addr.setdefault(func, set()).add(addr)
                 else:
-                    m = re.search(" \(inlined by\) ([\S]+) at ([\S]+):[0-9]+$", line)
+                    m = re.search(
+                        " \(inlined by\) ([\S]+) at ([\S]+):[0-9]+$", line)
                     if m:
                         # addr = previous addr
                         func = m.group(1)
@@ -304,14 +307,16 @@ class TraceParser:
             func = self.addr2func(addr)
             lino = self.addr2line(addr)
             for func in self.smatch_lino_map.get(lino, []):
-                print("%s l_match: %24s at %016x, %s, src: %s" % ("->", func, addr, lino, self.addr2line(addr)))
+                print("%s l_match: %24s at %016x, %s, src: %s" %
+                      ("->", func, addr, lino, self.addr2line(addr)))
                 return True
 
         any_found = False
         for prior_edge_str in self.get_prior_edge_str(edge_str):
             #print("%sprior edge: %016x,%016x" % ("| "*level, edge[0], edge[1]))
             #self.print_addr(edge[0], prefix="| "*level)
-            found = self.callsite_trace_edge(prior_edge_str, levels, level=level+1)
+            found = self.callsite_trace_edge(
+                prior_edge_str, levels, level=level+1)
             if found:
                 #src = self.edge_str_to_tuple(prior_edge_str)[0]
                 #print("%s via: %s - %s" % ("| ", edge_str, self.addr2func(src)))
@@ -351,7 +356,8 @@ class TraceParser:
             self.print_addr(addr, prefix="| "*level)
             if level < levels:
                 for func in sorted(set(self.addr2func(addr) for addr in callers)):
-                    self.print_callers(func, levels, level=level+1, seen_callers=seen_callers)
+                    self.print_callers(
+                        func, levels, level=level+1, seen_callers=seen_callers)
 
     def collect_callers(self, func, levels=4, level=0, seen_callers=set()):
         callers = set()
@@ -376,7 +382,8 @@ class TraceParser:
             #self.print_addr(addr, prefix="| "*level)
             if level < levels:
                 for func in sorted(set(self.addr2func(addr) for addr in callers)):
-                    result |= self.collect_callers(func, levels, level=level+1, seen_callers=seen_callers)
+                    result |= self.collect_callers(
+                        func, levels, level=level+1, seen_callers=seen_callers)
         return result
 
 
@@ -386,7 +393,9 @@ def kafl_workdir_iterator(work_dir):
     for stats_file in glob.glob(work_dir + "/slave_stats_*"):
         if not stats_file:
             return None
-        slave_stats = msgpack.unpackb(read_binary_file(stats_file), raw=False, strict_map_key=False)
+        slave_stats = msgpack.unpackb(
+            read_binary_file(stats_file),
+            raw=False, strict_map_key=False)
         start_time = min(start_time, slave_stats['start_time'])
 
     # enumerate inputs from corpus/ and match against metainfo in metadata/
@@ -398,7 +407,9 @@ def kafl_workdir_iterator(work_dir):
             return None
         input_id = os.path.basename(input_file).replace("payload_", "")
         meta_file = work_dir + "/metadata/node_{}".format(input_id)
-        metadata = msgpack.unpackb(read_binary_file(meta_file), raw=False, strict_map_key=False)
+        metadata = msgpack.unpackb(
+            read_binary_file(meta_file),
+            raw=False, strict_map_key=False)
 
         seconds = metadata["info"]["time"] - start_time
         nid = metadata["id"]

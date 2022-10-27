@@ -118,7 +118,8 @@ default_us_options = {
 harness_options = {
     "BOOT_EARLYBOOT": {"CONFIG_TDX_FUZZ_KAFL_SKIP_PARAVIRT_REWRITE": "n"},
     "BOOT_FULL_BOOT": {"CONFIG_TDX_FUZZ_KAFL_SKIP_PARAVIRT_REWRITE": "y"},
-    "BOOT_POST_TRAP": {"CONFIG_TDX_FUZZ_KAFL_SKIP_ACPI_PIO": "y", "CONFIG_TDX_FUZZ_KAFL_SKIP_PARAVIRT_REWRITE": "y"},
+    "BOOT_POST_TRAP": {"CONFIG_TDX_FUZZ_KAFL_SKIP_ACPI_PIO": "y",
+                       "CONFIG_TDX_FUZZ_KAFL_SKIP_PARAVIRT_REWRITE": "y"},
     "BOOT_DOINITCALLS_VIRTIO": {"CONFIG_TDX_FUZZ_KAFL_VIRTIO": "y"},
     "BOOT_DOINITCALLS_PCI": {"CONFIG_TDX_FUZZ_KAFL_SKIP_ACPI_PIO": "y"},
     "BOOT_DOINITCALLS_VIRTIO": {"CONFIG_TDX_FUZZ_KAFL_VIRTIO": "y"},
@@ -127,7 +128,12 @@ harness_options = {
     "DOINITCALLS_LEVEL_7": {"CONFIG_TDX_FUZZ_KAFL_VIRTIO": "y"},
     "DOINITCALLS_LEVEL_6": {"CONFIG_TDX_FUZZ_KAFL_VIRTIO": "y"},
     "BPH_VIRTIO_CONSOLE_INIT": {"CONFIG_TDX_FUZZ_KAFL_VIRTIO": "y"},
-    "US_RESUME_SUSPEND": {"CONFIG_PM": "y", "CONFIG_PM_DEBUG": "y", "CONFIG_PM_ADVANCED_DEBUG": "y", "CONFIG_SUSPEND": "y", "CONFIG_HIBERNATION": "y", "CONFIG_PM_AUTOSLEEP": "n", "CONFIG_PM_WAKELOCKS": "n", "CONFIG_PM_TRACE_RTC": "n", "CONFIG_ACPI_TAD": "n", "CONFIG_FW_CACHE": "y"},
+    "US_RESUME_SUSPEND": {"CONFIG_PM": "y", "CONFIG_PM_DEBUG": "y",
+                          "CONFIG_PM_ADVANCED_DEBUG": "y",
+                          "CONFIG_SUSPEND": "y", "CONFIG_HIBERNATION": "y",
+                          "CONFIG_PM_AUTOSLEEP": "n", "CONFIG_PM_WAKELOCKS": "n",
+                          "CONFIG_PM_TRACE_RTC": "n", "CONFIG_ACPI_TAD": "n",
+                          "CONFIG_FW_CACHE": "y"},
 }
 
 
@@ -136,7 +142,8 @@ def userspace_script_for_harness(harness):
         return None
 
     us_name = harness[len("US_"):]
-    us_script = os.path.expandvars(f"$BKC_ROOT/bkc/kafl/userspace/harnesses/{us_name}.sh")
+    us_script = os.path.expandvars(
+        f"$BKC_ROOT/bkc/kafl/userspace/harnesses/{us_name}.sh")
     return us_script
 
 
@@ -243,18 +250,23 @@ def kafl_sharedir(args, harness):
     INITRD_FILE = os.path.expandvars("$BKC_ROOT/initrd.cpio.gz")
 
     if not os.path.isdir(SHAREDIR_PATH):
-        sys.exit(f"Sharedir '{SHAREDIR_PATH}' does not exists. Please do `make sharedir`.")
+        sys.exit(f"Sharedir '{SHAREDIR_PATH}' does not exist.\n"
+                 "Please do `make sharedir`.")
     if not os.path.isfile(INITRD_FILE):
-        sys.exit(f"'{INITRD_FILE}' does not exists. Please do `make initrd.cpio.gz`.")
+        sys.exit(
+            f"'{INITRD_FILE}' does not exist.\n"
+            "Please do `make initrd.cpio.gz`.")
 
     userspace_harness_script = userspace_script_for_harness(harness)
     if not userspace_harness_script:
         return None
 
     if args.verbose:
-        print(f"Using sharedir template at {SHAREDIR_PATH}.\nStage 2 init.sh: {userspace_harness_script}")
+        print(f"Using sharedir template at {SHAREDIR_PATH}.\n"
+              f"Stage 2 init.sh: {userspace_harness_script}")
 
-    sharedir = shutil.copytree(SHAREDIR_PATH, args.configs['sharedir'], dirs_exist_ok=True)
+    sharedir = shutil.copytree(
+        SHAREDIR_PATH, args.configs['sharedir'], dirs_exist_ok=True)
     shutil.copy(userspace_harness_script, os.path.join(sharedir, "init.sh"))
     return sharedir
 
@@ -268,13 +280,15 @@ def process_args(args):
     def parse_as_file(filename):
         expanded = parse_as_path(filename)
         if not os.path.exists(expanded):
-            raise argparse.ArgumentTypeError("Failed to find file %s (expanded: %s)" % (filename, expanded))
+            raise argparse.ArgumentTypeError(
+                f"Failed to find file {filename} (expanded: {expanded})")
         return expanded
 
     def parse_as_dir(dirname):
         expanded = parse_as_path(dirname)
         if not os.path.isdir(expanded):
-            raise argparse.ArgumentTypeError(f"Failed to find directory {dirname} (expanded: {expanded})")
+            raise argparse.ArgumentTypeError(
+                f"Failed to find directory {dirname} (expanded: {expanded})")
         return expanded
 
     # resolve config file template is required, actually
@@ -287,11 +301,13 @@ def process_args(args):
     # prepare files in --output directory or die trying
     args.output = parse_as_path(args.output)
     if os.path.exists(args.output) and not os.path.isdir(args.output):
-        raise argparse.ArgumentTypeError(f"Provided output path is not a valid directory: {args.output}")
+        raise argparse.ArgumentTypeError(
+            f"Provided output path is not a valid directory: {args.output}")
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='kAFL TDX kernel config generator.')
+    parser = argparse.ArgumentParser(
+        description='kAFL TDX kernel config generator.')
     parser.add_argument('output', metavar='<output>', type=str,
                         help='output directory (existing files are overwritten!)')
     parser.add_argument('harness', metavar='<harness>', type=str,
@@ -301,7 +317,8 @@ def parse_args():
                         help='kernel .config template (default: $BKC_ROOT/bkc/kafl/linux_kernel_tdx_guest.config)')
     parser.add_argument('--seeds', '-s', metavar='<dir>', type=str,
                         help='root seeds directory, containing a subfolder <harness> or "generic"')
-    parser.add_argument('--verbose', '-v', action="store_true", help='verbose output')
+    parser.add_argument('--verbose', '-v', action="store_true",
+                        help='verbose output')
 
     #args,_ = parser.parse_known_args()
     args = parser.parse_args()
@@ -318,7 +335,8 @@ def parse_args():
             if args.harness in h:
                 selected.append(h)
     if len(selected) == 0:
-        sys.exit(f"Error: unrecognized harness `{args.harness}`.\nSupported patterns:\n%s" % pformat(HARNESSES))
+        sys.exit(f"Error: unrecognized harness `{args.harness}`.\n"
+                 "Supported patterns:\n%s" % pformat(HARNESSES))
     else:
         args.harness = selected
 
@@ -340,7 +358,8 @@ def main():
     if not args.seeds:
         print("No --seed-dir given, continuing without seeds..")
 
-    print(f"Preparing harness(es) at {args.output}:\n%s" % pformat(args.harness))
+    print(f"Preparing harness(es) at {args.output}:\n%s" %
+          pformat(args.harness))
     for h in args.harness:
 
         os.makedirs(os.path.join(args.output, h), exist_ok=True)
