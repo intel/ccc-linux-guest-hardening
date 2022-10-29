@@ -164,7 +164,7 @@ candidate kernel. The automation is currenrtly split three parts:
   basic `initd.cpio.gz`, `disk.img` and `sharedir` needed by some harnesses,
   as well as the smatch audit lists generated for the current kernel and config.
 
-- `init_campaign.py` is used to capture harness-specific configuration and
+- `init_harness.py` is used to capture harness-specific configuration and
   default resources. It generates a "campaign" directory with configuration and resources
   for the selected harnesses. The file layout is done in such a way that the `fuzz.sh`
   helper can also be executed directly from a generated harness directory, to
