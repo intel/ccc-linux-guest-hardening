@@ -346,7 +346,8 @@ def parse_args():
 
     args = parser.parse_args()
     args.campaign_root = args.campaign_root.resolve()
-    args.seeds = args.seeds.resolve()
+    if args.seeds:
+        args.seeds = args.seeds.resolve()
     return args
 
 
