@@ -291,12 +291,6 @@ def init_campaign(args, campaign_dir):
             shell=False, check=True)
     print("")
 
-def check_fast_matcher_built():
-    bkc_root = Path(os.environ.get('BKC_ROOT'))
-    fast_matcher_bin = bkc_root/'bkc/coverage/fast_matcher/target/release/fast_matcher'
-    if not os.path.exists(fast_matcher_bin):
-        sys.exit(f"Cannot find fast_matcher binary '{fast_matcher_bin}'. Please build first. Exiting.")
-
 def parse_args():
     default_ncpu = len(os.sched_getaffinity(0))
     bkc_root = Path(os.environ.get('BKC_ROOT'))
@@ -359,9 +353,6 @@ def parse_args():
 def main():
 
     args = parse_args()
-
-    if args.use_fast_matcher:
-        check_fast_matcher_built()
 
     # if campaign directory does not exist, create based on args
     if not os.path.exists(args.campaign_root):
