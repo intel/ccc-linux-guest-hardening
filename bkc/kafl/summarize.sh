@@ -105,6 +105,11 @@ get_hash_from_logname() {
 	basename $log|sed -e 's/.*_//' -e 's/.log.*//'
 }
 
+get_target_info() {
+	# get basic target info - should be done by fuzz.sh
+	find . -type f -name bzImage |grep target|xargs file -b |sed s/\#[0-9].*//|sort -u
+}
+
 get_unique_candidates() {
 	# populate unique_logs[] based on tag, harness and log excerpt
 	# for each interesting candidate, also try to find the corresponding payload based on bitmap hash
@@ -234,6 +239,7 @@ render_to_csv()
 
 render_to_text()
 {
+	echo "Target: $TARGET_INFO"
 	echo "Identified ${#tag2msg[*]} issues out of $SCAN_LOGS_NUM logs:"
 	for class in $CLASSES_ORDER; do
 		[ -n "${class2tag[$class]}" ] && echo -e "\t$class: ${class2tag[$class]}"
@@ -250,6 +256,7 @@ render_to_text()
 render_to_html()
 {
 	echo '<pre>'
+	echo "Target: $TARGET_INFO"
 	echo "Identified ${#tag2msg[*]} issues out of $SCAN_LOGS_NUM logs:"
 	for class in $CLASSES_ORDER; do
 		[ -z "${class2tag[$class]}" ] && continue
@@ -348,6 +355,9 @@ fi
 
 truncate -s 0 $DECODE_LIST
 truncate -s 0 $REPRO_LIST
+truncate -s 0 $LOGS_CRASH
+truncate -s 0 $LOGS_KASAN
+truncate -s 0 $LOGS_TIMEO
 
 declare -A tag2msg
 declare -A tag2log
@@ -355,15 +365,21 @@ declare -A class2tag
 declare -A log2note
 declare -A unique_logs
 
-find */workdir_*/logs -name crash_\*log > $LOGS_CRASH
-find */workdir_*/logs -name kasan_\*log > $LOGS_KASAN
-find */workdir_*/logs -name timeo_\*log > $LOGS_TIMEO
+# Be flexible about given $DIR argument,
+# first locate any included workdirs, then logs
+for wdir in $(find . -name stats.csv -printf "%h\n"); do
+	find $wdir/logs -name crash_\*log >> $LOGS_CRASH
+	find $wdir/logs -name kasan_\*log >> $LOGS_KASAN
+	find $wdir/logs -name timeo_\*log >> $LOGS_TIMEO
+done
 SCAN_LOGS_NUM=$(cat $SCAN_LOGS|wc -l)
 
 scan_logs
 get_unique_candidates
 decode_unique_logs
 mass_decode_jobs
+
+TARGET_INFO="$(get_target_info)"
 
 render_to_csv > "$OUTPUT_CSV"
 render_to_text > "$OUTPUT_TEXT"
