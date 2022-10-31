@@ -116,7 +116,7 @@ def task_fuzz(args, pipe_id, harness_dir, target_dir, work_dir):
     if ((work_dir/'stats').exists() and
         (work_dir/'worker_stats_0').exists()):
         print(f"Skip fuzzing for existing workdir {work_dir}..")
-        return
+        return pipe_id
 
     env = dict(os.environ, KAFL_WORKDIR=f"{work_dir}")
     logfile = work_dir/'task_fuzz.log'
@@ -128,6 +128,8 @@ def task_fuzz(args, pipe_id, harness_dir, target_dir, work_dir):
                         "-p", str(args.workers)],
                 shell=False, check=True, env=env, cwd=harness_dir,
                 stdout=log, stderr=subprocess.STDOUT)
+
+    return pipe_id
 
 @python_app
 def task_trace(args, harness_dir, work_dir):
@@ -235,20 +237,25 @@ def run_campaign(args, harness_dirs):
     # wait for all build tasks to complete
     [t.result() for t in build_tasks]
 
+    # manage available cpu sets based on args.pipes
+    # check for done status and start new jobs in freed pipes
+    pipes = set(list(range(args.pipes)))
+    fuzz_queue = pipeline.copy()
     fuzz_tasks = []
-    pipe_id = 0
-    for p in pipeline:
+    while fuzz_queue and pipes:
+        p = fuzz_queue.pop()
         t = task_fuzz(
                 args,
-                pipe_id,
+                pipes.pop(),
                 p['harness_dir'],
                 p['target_dir'],
                 p['work_dir'])
         fuzz_tasks.append(t)
-        pipe_id += 1
-        if pipe_id >= args.pipes:
-            [t.result() for t in fuzz_tasks]
-            pipe_id = 0
+        while not pipes:
+            time.sleep(2)
+            for t in fuzz_tasks:
+                if t.done():
+                    pipes.add(t.result())
 
     # wait for remaining fuzz tasks to complete
     [t.result() for t in fuzz_tasks]
