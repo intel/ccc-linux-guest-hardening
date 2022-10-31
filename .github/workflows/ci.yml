@@ -143,11 +143,13 @@ jobs:
           cache: 'pip'
 
       - name: install flake8
-        run: pip install flake8==5.0.4
+        run: |
+          pip install flake8==5.0.4
+          pip install flake8-bandit==4.1.1
 
       # select:
       #   F841 local variable 'xxx' is assigned to but never used
       #   F541 f-string is missing placeholders
       #   F401 'xxx' imported but unused
       - name: Lint python code
-        run: find bkc -name '*.py' -not -path '*venv*' -not -path '*qemu-4.2.0/*' -exec flake8 --statistics --select=F541,F401,F841 {} \;
+        run: find bkc -name '*.py' -not -path '*venv*' -not -path '*qemu-4.2.0/*' -exec flake8 --statistics --select=B,F541,F401,F841 {} \;
