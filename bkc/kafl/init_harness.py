@@ -91,8 +91,12 @@ KAFL_CONFIG_HARNESSES = {
             "qemu_extra: -drive file=$BKC_ROOT/disk.img,if=none,id=fuzzdev -device virtio-blk-pci,drive=fuzzdev -device virtio-rng"],
         }
 
-default_config_options = {"CONFIG_TDX_FUZZ_KAFL_DETERMINISTIC": "y",
-        "CONFIG_TDX_FUZZ_KAFL_DISABLE_CPUID_FUZZ": "y",
+default_kafl_options = {
+        "CONFIG_TDX_FUZZ_KAFL_DETERMINISTIC": "y",
+        "CONFIG_TDX_FUZZ_KAFL_TRACE_LOCATIONS": "n",
+        "CONFIG_TDX_FUZZ_KAFL_DEBUGFS": "n",
+        "CONFIG_TDX_FUZZ_KAFL_VIRTIO": "y",
+        "CONFIG_TDX_FUZZ_KAFL_SKIP_CPUID": "y",
         "CONFIG_TDX_FUZZ_KAFL_SKIP_IOAPIC_READS": "n",
         "CONFIG_TDX_FUZZ_KAFL_SKIP_ACPI_PIO": "n",
         "CONFIG_TDX_FUZZ_KAFL_SKIP_RNG_SEEDING": "y",
@@ -100,7 +104,18 @@ default_config_options = {"CONFIG_TDX_FUZZ_KAFL_DETERMINISTIC": "y",
         "CONFIG_TDX_FUZZ_KAFL_SKIP_PARAVIRT_REWRITE": "n",
         }
 
-harness_config_options = {
+default_bph_options = {
+        "CONFIG_KPROBES": "y",
+        "CONFIG_TDX_FUZZ_HARNESS_NONE": "y",
+        }
+
+default_us_options = {
+        "CONFIG_TDX_FUZZ_KAFL_DETERMINISTIC": "n",
+        "CONFIG_TDX_FUZZ_KAFL_DEBUGFS": "y",
+        "CONFIG_TDX_FUZZ_HARNESS_NONE": "y",
+        }
+
+harness_options = {
         "BOOT_EARLYBOOT": {"CONFIG_TDX_FUZZ_KAFL_SKIP_PARAVIRT_REWRITE": "n"},
         "BOOT_FULL_BOOT": {"CONFIG_TDX_FUZZ_KAFL_SKIP_PARAVIRT_REWRITE": "y"},
         "BOOT_POST_TRAP": {"CONFIG_TDX_FUZZ_KAFL_SKIP_ACPI_PIO": "y", "CONFIG_TDX_FUZZ_KAFL_SKIP_PARAVIRT_REWRITE": "y"},
@@ -112,7 +127,7 @@ harness_config_options = {
         "DOINITCALLS_LEVEL_7": {"CONFIG_TDX_FUZZ_KAFL_VIRTIO": "y"},
         "DOINITCALLS_LEVEL_6": {"CONFIG_TDX_FUZZ_KAFL_VIRTIO": "y"},
         "BPH_VIRTIO_CONSOLE_INIT": {"CONFIG_TDX_FUZZ_KAFL_VIRTIO": "y"},
-        "US_RESUME_SUSPEND": {"CONFIG_PM": "y", "CONFIG_PM_DEBUG": "y", "CONFIG_PM_ADVANCED_DEBUG": "y", "CONFIG_SUSPEND": "y", "CONFIG_HIBERNATE": "y", "CONFIG_PM_AUTOSLEEP": "n", "CONFIG_PM_WAKELOCKS": "n", "CONFIG_PM_TRACE_RTC": "n", "CONFIG_ACPI_TAD": "n", "CONFIG_FW_CACHE": "y"},
+        "US_RESUME_SUSPEND": {"CONFIG_PM": "y", "CONFIG_PM_DEBUG": "y", "CONFIG_PM_ADVANCED_DEBUG": "y", "CONFIG_SUSPEND": "y", "CONFIG_HIBERNATION": "y", "CONFIG_PM_AUTOSLEEP": "n", "CONFIG_PM_WAKELOCKS": "n", "CONFIG_PM_TRACE_RTC": "n", "CONFIG_ACPI_TAD": "n", "CONFIG_FW_CACHE": "y"},
         }
 
 def userspace_script_for_harness(harness):
@@ -131,19 +146,28 @@ def get_kafl_config_boot_params():
         return default_append
 
 def generate_setups(args, harness):
-    req_conf = tuple(default_config_options.items())
-    harness_options = harness_config_options.get(harness, None)
-    if harness_options:
-        req_conf = req_conf + tuple(harness_options.items())
+    req_conf = dict()
 
+    # baseline kafl guest config
+    req_conf.update(default_kafl_options)
+
+    # harness type
     if harness.startswith("BOOT_"):
         basename = harness[len("BOOT_"):]
-        req_conf = req_conf + ((f"CONFIG_TDX_FUZZ_HARNESS_{basename}", "y"),)
+        req_conf.update({f"CONFIG_TDX_FUZZ_HARNESS_{basename}": "y"})
     elif harness.startswith("DOINITCALLS_LEVEL"):
         level = harness[len("DOINITCALLS_LEVEL_"):]
-        req_conf = req_conf + (("CONFIG_TDX_FUZZ_HARNESS_DOINITCALLS", "y"), ("CONFIG_TDX_FUZZ_HARNESS_DOINITCALLS_LEVEL", level),)
-    elif harness.startswith("BPH_") or harness.startswith("US_"):
-        req_conf = req_conf + (("CONFIG_TDX_FUZZ_HARNESS_NONE", "y"),)
+        req_conf.update({
+            "CONFIG_TDX_FUZZ_HARNESS_DOINITCALLS": "y",
+            "CONFIG_TDX_FUZZ_HARNESS_DOINITCALLS_LEVEL": level })
+    elif harness.startswith("BPH_"):
+        req_conf.update(default_bph_options)
+    elif harness.startswith("US_"):
+        req_conf.update(default_us_options)
+
+    # harness-specific overrides
+    req_conf.update(harness_options.get(harness, {}))
+
     return req_conf
 
 def select_seed_root(seed_dir, harness):
@@ -162,7 +186,7 @@ def select_seed_root(seed_dir, harness):
 def linux_config(args, setup):
     if args.verbose:
         print("Setting linux config overrides:")
-        for conf,val in setup:
+        for conf,val in setup.items():
             print(f"  {conf}={val}")
         print("")
 
@@ -172,7 +196,7 @@ def linux_config(args, setup):
     # just copy the template and let build step finalize the .config
     # using e.g "cat a b > .config; make olddefconfig"
     with open(args.configs['linux'], 'w') as f:
-        for conf,val in setup:
+        for conf,val in setup.items():
             f.write(f"{conf}={val}\n")
     shutil.copy(args.template, args.configs['template'])
 

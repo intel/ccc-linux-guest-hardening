@@ -117,19 +117,22 @@ function set_workdir()
 		TARGET_BIN=$TARGET_ROOT/bzImage
 		TARGET_MAP=$TARGET_ROOT/System.map
 		TARGET_ELF=$TARGET_ROOT/vmlinux
+		TARGET_CONF=$TARGET_ROOT/.config
 		WORK_DIR=$DEFAULT_WORK_DIR
 	elif [ -f $TARGET_ROOT/arch/x86/boot/bzImage ]; then
 		TARGET_BIN=$TARGET_ROOT/arch/x86/boot/bzImage
 		TARGET_MAP=$TARGET_ROOT/System.map
 		TARGET_ELF=$TARGET_ROOT/vmlinux
+		TARGET_CONF=$TARGET_ROOT/.config
 		WORK_DIR=$DEFAULT_WORK_DIR
 	elif [ -f $TARGET_ROOT/target/bzImage ]; then
 		TARGET_BIN=$TARGET_ROOT/target/bzImage
 		TARGET_MAP=$TARGET_ROOT/target/System.map
 		TARGET_ELF=$TARGET_ROOT/target/vmlinux
+		TARGET_CONF=$TARGET_ROOT/target/config
 		WORK_DIR=$TARGET_ROOT
 	fi
-	
+
 	test -d "$TARGET_ROOT" || fatal "Invalid folder $TARGET_ROOT"
 	test -f "$TARGET_BIN" || fatal "Could not find bzImage in $TARGET_ROOT or $TARGET_ROOT/target/"
 	test -f "$TARGET_ELF" || fatal "Could not find vmlinux in $TARGET_ROOT or $TARGET_ROOT/target/"
@@ -153,7 +156,7 @@ function run()
 	mkdir -p $WORK_DIR/target || fatal "Could not create folder $WORK_DIR/target"
 	date > $WORK_DIR/target/timestamp.log
 	cp $TARGET_BIN $TARGET_MAP $TARGET_ELF $WORK_DIR/target/
-	cp $TARGET_BIN $TARGET_MAP $TARGET_ELF $WORK_DIR/target/
+	test -f $TARGET_CONF && cp $TARGET_CONF $WORK_DIR/target/config
 	echo "kAFL options: -m $MEMSIZE -ip0 $ip0_a-$ip0_b -ip1 $ip1_a-$ip1_b $KAFL_OPTS $*" > $WORK_DIR/target/kafl_args.txt
 
 	## collect some more detailed target-specific info to help reproduce
