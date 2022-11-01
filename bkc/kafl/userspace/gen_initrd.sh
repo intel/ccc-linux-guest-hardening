@@ -32,13 +32,9 @@ echo "[*] Installing latest busybox-static tools..."
 BUSYBOX=$(which busybox) || fatal "Could not find busybox binary."
 
 TARGET_INITRD="$(realpath $1)"
-TARGET_ROOT="$(dirname "$TARGET_INITRD")/busybox-rootfs"
+TARGET_ROOT="$(mktemp -d)"
 
 test -z "$TARGET_INITRD" && fatal "Output path $TARGET_INITRD is not set. Abort."
-test -e "$TARGET_INITRD" && fatal "Target folder $TARGET_INITRD already exists. Abort."
-test -e "$TARGET_ROOT"   && fatal "Target folder $TARGET_ROOT already exists. Abort."
-
-mkdir -p "$TARGET_ROOT" || fatal "Failed to create busybox rootfs at $TARGET_ROOT"
 
 echo "[*] Building busybox rootfs at $TARGET_ROOT..."
 
@@ -52,3 +48,6 @@ popd > /dev/null
 # bless and create final image
 $BKC_ROOT/bkc/kafl/userspace/bless_initrd.sh "$TARGET_ROOT"
 $TARGET_ROOT/build.sh "$TARGET_INITRD"
+
+# cleanup
+rm -rf "$TARGET_ROOT"
