@@ -19,15 +19,15 @@ ifneq ($(filter $(firstword $(MAKECMDGOALS)), $(ALL_TARGETS)),)
   $(eval $(EXTRA_ARGS):;@:)
 endif
 
-all: deploy
-
 # User targets
 #---------------
-deploy:
-	make -C deploy $@ -- $(EXTRA_ARGS)
+all: env.sh prepare
 
-clean:
-	make -C deploy $@
+env.sh:
+	$(MAKE) deploy
+
+deploy:
+	$(MAKE) -C deploy $@ -- $(EXTRA_ARGS)
 
 env: SHELL:=bash
 env: env.sh
@@ -36,7 +36,7 @@ env: env.sh
 
 auditconf := bkc/kafl/linux_kernel_tdx_guest.config
 auditlogs := smatch_warns_annotated.txt
-assets := sharedir initrd.cpio.gz disk.img
+assets := sharedir initrd.cpio.gz disk.img initrd_busybox.cpio.gz
 
 sharedir:
 	+BASH_ENV=env.sh bash bkc/kafl/userspace/gen_sharedir.sh $@
@@ -56,14 +56,23 @@ disk.img:
 $(auditlogs): $(auditconf)
 	+BASH_ENV=env.sh bash bkc/audit/smatch_audit.sh . $^
 
-prepare: $(assets) $(auditlogs)
+prepare: env.sh
+	$(MAKE) $(assets) $(auditlogs)
+
+clean:
+	rm -rf $(assets)
+
+distclean: clean
+	$(MAKE) -C deploy -- clean
+	rm -f $(auditlogs)
+	rm -f env.sh
 
 # Developer targets
 #------------------
 # pull the latest changes from all components
 update:
-	make -C deploy $@ -- $(EXTRA_ARGS)
+	$(MAKE) -C deploy $@ -- $(EXTRA_ARGS)
 
 # rebuild all components
 build:
-	make -C deploy $@ -- $(EXTRA_ARGS)
+	$(MAKE) -C deploy $@ -- $(EXTRA_ARGS)
