@@ -45,16 +45,19 @@ from parsl.executors.threads import ThreadPoolExecutor
 # Helpers
 #
 
+
 def check_inputs(inputs):
     for f in inputs:
         if not os.path.exists(f):
             raise parsl.app.errors.ParslError(f"Missing input file {f}")
+
 
 def mkjobdir(job_root, label):
     os.makedirs(job_root, exist_ok=True)
     tmpdir = tempfile.mkdtemp(dir=job_root, prefix=f"{label}_")
     os.chmod(tmpdir, 0o755)
     return Path(tmpdir)
+
 
 def all_exist(touchfiles):
     for f in touchfiles:
@@ -66,6 +69,7 @@ def all_exist(touchfiles):
 # Task wrappers
 #
 
+
 @python_app
 def task_build(args, harness_dir, build_dir, target_dir,
                global_smatch_warns, global_smatch_list):
@@ -75,12 +79,12 @@ def task_build(args, harness_dir, build_dir, target_dir,
     import shutil
 
     target_files = [
-            build_dir/'.config',
-            build_dir/'vmlinux',
-            build_dir/'System.map',
-            build_dir/'arch/x86/boot/bzImage',
-            global_smatch_warns,
-            global_smatch_list ]
+        build_dir/'.config',
+        build_dir/'vmlinux',
+        build_dir/'System.map',
+        build_dir/'arch/x86/boot/bzImage',
+        global_smatch_warns,
+        global_smatch_list]
 
     os.makedirs(target_dir, exist_ok=True)
 
@@ -95,8 +99,8 @@ def task_build(args, harness_dir, build_dir, target_dir,
     print(f"Starting build job at {build_dir} (log: {logfile.name})")
     with open(logfile, 'w') as log:
         p = subprocess.run([args.fuzz_sh, "build", harness_dir, build_dir],
-                shell=False, check=True, env=env,
-                stdout=log, stderr=subprocess.STDOUT)
+                           shell=False, check=True, env=env,
+                           stdout=log, stderr=subprocess.STDOUT)
 
     if p.returncode != 0:
         return
@@ -107,6 +111,7 @@ def task_build(args, harness_dir, build_dir, target_dir,
     if not args.keep:
         shutil.rmtree(build_dir)
 
+
 @python_app
 def task_fuzz(args, pipe_id, harness_dir, target_dir, work_dir):
 
@@ -114,7 +119,7 @@ def task_fuzz(args, pipe_id, harness_dir, target_dir, work_dir):
     import subprocess
 
     if ((work_dir/'stats').exists() and
-        (work_dir/'worker_stats_0').exists()):
+            (work_dir/'worker_stats_0').exists()):
         print(f"Skip fuzzing for existing workdir {work_dir}..")
         return pipe_id
 
@@ -126,10 +131,11 @@ def task_fuzz(args, pipe_id, harness_dir, target_dir, work_dir):
         subprocess.run([args.fuzz_sh, "run", target_dir, *args.kafl_extra,
                         "--cpu-offset", str(args.workers*pipe_id),
                         "-p", str(args.workers)],
-                shell=False, check=True, env=env, cwd=harness_dir,
-                stdout=log, stderr=subprocess.STDOUT)
+                       shell=False, check=True, env=env, cwd=harness_dir,
+                       stdout=log, stderr=subprocess.STDOUT)
 
     return pipe_id
+
 
 @python_app
 def task_trace(args, harness_dir, work_dir):
@@ -141,8 +147,9 @@ def task_trace(args, harness_dir, work_dir):
     print(f"Starting trace job at {work_dir} (log: {logfile.name})")
     with open(logfile, 'w') as log:
         subprocess.run([args.fuzz_sh, "cov", work_dir, "-p", str(args.workers)],
-                shell=False, check=True, cwd=harness_dir,
-                stdout=log, stderr=subprocess.STDOUT)
+                       shell=False, check=True, cwd=harness_dir,
+                       stdout=log, stderr=subprocess.STDOUT)
+
 
 @python_app
 def task_smatch(args, work_dir, smatch_list, wait_task=None):
@@ -155,17 +162,17 @@ def task_smatch(args, work_dir, smatch_list, wait_task=None):
         wait_task.result()
 
     env = dict(
-            os.environ,
-            MAKEFLAGS=f"-j{args.threads}",
-            USE_GHIDRA=str(int(args.use_ghidra)),
-            USE_FAST_MATCHER=str(int(args.use_fast_matcher)))
+        os.environ,
+        MAKEFLAGS=f"-j{args.threads}",
+        USE_GHIDRA=str(int(args.use_ghidra)),
+        USE_FAST_MATCHER=str(int(args.use_fast_matcher)))
     logfile = work_dir/'task_smatch.log'
 
     print(f"Starting smatch job at {work_dir} (log: {logfile.name})")
     with open(logfile, 'w') as log:
         subprocess.run([args.fuzz_sh, "smatch", work_dir],
-                shell=False, check=True, env=env,
-                stdout=log, stderr=subprocess.STDOUT)
+                       shell=False, check=True, env=env,
+                       stdout=log, stderr=subprocess.STDOUT)
 
 
 @python_app
@@ -173,41 +180,40 @@ def task_triage(args):
 
     import subprocess
 
-    print(f"Starting summary/triage job...")
+    print("Starting summary/triage job...")
 
     # generate stats output
     if args.stats_helper.exists():
         with open(args.campaign_root/'stats.log', 'w') as stats_log:
             subprocess.run([args.stats_helper, '--html', args.campaign_root/'stats.html', args.campaign_root],
-                    shell=False, check=True, stdout=stats_log, stderr=subprocess.STDOUT)
+                           shell=False, check=True, stdout=stats_log, stderr=subprocess.STDOUT)
 
     # sort / decode / summarize crash reports
     if args.triage_helper.exists():
         with open(args.campaign_root/'summary.log', 'w') as logfile:
             subprocess.run([args.triage_helper, args.campaign_root],
-                    shell=False, check=True, cwd=args.campaign_root,
-                    stdout=logfile, stderr=subprocess.STDOUT)
+                           shell=False, check=True, cwd=args.campaign_root,
+                           stdout=logfile, stderr=subprocess.STDOUT)
 
 
 @python_app
 def task_smatcher(args, pipeline):
 
-    import os
     import subprocess
 
-    print(f"Starting smatcher job...")
+    print("Starting smatcher job...")
 
     # smacher report
     with open(args.campaign_root/'smatch_errors.txt', 'w') as logfile:
         with open(args.campaign_root/'smatch_report.txt', 'w') as report:
             subprocess.run(['smatcher', '--combine-cov-files'] + [p['work_dir'] for p in pipeline],
-                    shell=False, check=True, cwd=args.campaign_root,
-                    stdout=report, stderr=logfile)
+                           shell=False, check=True, cwd=args.campaign_root,
+                           stdout=report, stderr=logfile)
+
 
 def run_campaign(args, harness_dirs):
     global_smatch_warns = args.asset_root/'smatch_warns.txt'
     global_smatch_list = args.asset_root/'smatch_warns_annotated.txt'
-
 
     pipeline = list()
     for harness in harness_dirs:
@@ -222,16 +228,16 @@ def run_campaign(args, harness_dirs):
                 'target_dir': harness/'target',
                 'build_dir': mkjobdir(harness, 'build'),
                 'work_dir': workdir
-                })
+            })
 
     build_tasks = []
     for p in pipeline:
         t = task_build(
-                args,
-                p['harness_dir'],
-                p['build_dir'],
-                p['target_dir'],
-                global_smatch_warns, global_smatch_list)
+            args,
+            p['harness_dir'],
+            p['build_dir'],
+            p['target_dir'],
+            global_smatch_warns, global_smatch_list)
         build_tasks.append(t)
 
     # wait for all build tasks to complete
@@ -245,11 +251,11 @@ def run_campaign(args, harness_dirs):
     while fuzz_queue and pipes:
         p = fuzz_queue.pop()
         t = task_fuzz(
-                args,
-                pipes.pop(),
-                p['harness_dir'],
-                p['target_dir'],
-                p['work_dir'])
+            args,
+            pipes.pop(),
+            p['harness_dir'],
+            p['target_dir'],
+            p['work_dir'])
         fuzz_tasks.append(t)
         while not pipes:
             time.sleep(2)
@@ -263,10 +269,10 @@ def run_campaign(args, harness_dirs):
     trace_tasks = []
     for p in pipeline:
         t = task_trace(args, p['harness_dir'], p['work_dir'])
-        #t.result()
+        # t.result()
         trace_tasks.append(t)
         t = task_smatch(args, p['work_dir'], global_smatch_list, wait_task=t)
-        #t.result()
+        # t.result()
         trace_tasks.append(t)
 
     # triage does not depend on trace jobs
@@ -295,61 +301,63 @@ def init_campaign(args, campaign_dir):
 
     # generate harness configs
     subprocess.run([args.init_helper, campaign_dir, pattern, '--config', args.linux_conf] + seeds,
-            shell=False, check=True)
+                   shell=False, check=True)
     print("")
+
 
 def parse_args():
     default_ncpu = len(os.sched_getaffinity(0))
     bkc_root = Path(os.environ.get('BKC_ROOT'))
     default_fuzzsh = bkc_root/'bkc/kafl/fuzz.sh'
-    default_init  = bkc_root/'bkc/kafl/init_harness.py'
+    default_init = bkc_root/'bkc/kafl/init_harness.py'
     default_config = bkc_root/'bkc/kafl/linux_kernel_tdx_guest.config'
     default_triage = bkc_root/'bkc/kafl/summarize.sh'
     default_stats = bkc_root/'bkc/kafl/stats.py'
 
     parser = argparse.ArgumentParser(description='Campaign Automation')
     parser.add_argument('campaign_root', metavar='<output-directory>', type=Path,
-            help='new or existing campaign directory (files may be overwritten!))')
+                        help='new or existing campaign directory (files may be overwritten!))')
     parser.add_argument('--harness', metavar='<str>', type=str,
-            help='only schedule harnesses containing this string (e.g. "BPH")'),
+                        help='only schedule harnesses containing this string (e.g. "BPH")'),
     parser.add_argument('--seeds', metavar='<dir>', type=Path,
-            help='seed corpus directory (as recognized by init_harness.py)'),
+                        help='seed corpus directory (as recognized by init_harness.py)'),
 
     parser.add_argument('--workers', '-p', type=int, metavar='n', default=16,
-            help='number of kAFL workers (default: min(16,ncpu))')
+                        help='number of kAFL workers (default: min(16,ncpu))')
     parser.add_argument('--ncpu', '-j', type=int, metavar='n', default=default_ncpu,
-            help=f'number of vCPUs to use (default: {default_ncpu})')
+                        help=f'number of vCPUs to use (default: {default_ncpu})')
     parser.add_argument('--threads', '-t', type=int, metavar='n', default=32,
-            help='number of SW threads (default: 2*workers)')
+                        help='number of SW threads (default: 2*workers)')
 
     parser.add_argument('--rebuild', action="store_true",
-            help="rebuild fuzz kernels")
+                        help="rebuild fuzz kernels")
     parser.add_argument('--refuzz', action="store_true",
-            help="ignore existing workdirs in the campaign root (default: resume the pipeline)")
+                        help="ignore existing workdirs in the campaign root (default: resume the pipeline)")
     parser.add_argument('--dry-run', '-n', action="store_true",
-            help="abort fuzzer after 500 execs")
+                        help="abort fuzzer after 500 execs")
     parser.add_argument('--keep', action="store_true",
-            help="keep kernel build trees")
-    parser.add_argument('--verbose', '-v', action="store_true", help="verbose mode")
+                        help="keep kernel build trees")
+    parser.add_argument('--verbose', '-v', action="store_true",
+                        help="verbose mode")
 
     parser.add_argument('--use-ghidra', metavar='<0|1>', type=bool, default=False,
-            help="use Ghidra for deriving covered blocks from edges? (default=0)")
+                        help="use Ghidra for deriving covered blocks from edges? (default=0)")
     parser.add_argument('--use-fast-matcher', metavar='<0|1>', type=bool, default=False,
-            help="use fast_matcher for coverage mapping? (default=0)")
+                        help="use fast_matcher for coverage mapping? (default=0)")
 
     parser.add_argument('--linux-conf', metavar='<file>', default=default_config,
-            help=f"base config for kernel harness (default: {default_config})")
+                        help=f"base config for kernel harness (default: {default_config})")
 
     parser.add_argument('--fuzz-sh', metavar='<file>', default=default_fuzzsh,
-            help=argparse.SUPPRESS)
+                        help=argparse.SUPPRESS)
     parser.add_argument('--init-helper', metavar='<file>', default=default_init,
-            help=argparse.SUPPRESS)
+                        help=argparse.SUPPRESS)
     parser.add_argument('--triage-helper', metavar='<file>', default=default_triage,
-            help=argparse.SUPPRESS)
+                        help=argparse.SUPPRESS)
     parser.add_argument('--stats-helper', metavar='<file>', default=default_stats,
-            help=argparse.SUPPRESS)
+                        help=argparse.SUPPRESS)
     parser.add_argument('--asset-root', metavar='<dir>', default=bkc_root,
-            help=argparse.SUPPRESS)
+                        help=argparse.SUPPRESS)
 
     args = parser.parse_args()
     args.campaign_root = args.campaign_root.resolve()
@@ -376,8 +384,8 @@ def main():
         sys.exit("No matching harnesses found in campaign root. Abort.")
 
     print(f"Setup campaign root at {args.campaign_root}")
-    print("Scheduled for execution:\n%s" % pformat([str(h) for h in harness_dirs]))
-
+    print("Scheduled for execution:\n%s" %
+          pformat([str(h) for h in harness_dirs]))
 
     # for few CPUs, use single pipes and all available cores
     if args.ncpu < args.workers:
@@ -385,7 +393,7 @@ def main():
         args.workers = args.ncpu
         args.threads = 2*args.ncpu
     else:
-        args.pipes = max(1,(args.ncpu-2)//args.workers)
+        args.pipes = max(1, (args.ncpu-2)//args.workers)
         args.threads = 2*args.workers
 
     # if we don't need so many pipes, scale up the threads (but not workers)
