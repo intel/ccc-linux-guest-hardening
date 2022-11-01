@@ -123,7 +123,8 @@ harness_options = {
     "BOOT_DOINITCALLS_VIRTIO": {"CONFIG_TDX_FUZZ_KAFL_VIRTIO": "y"},
     "BOOT_DOINITCALLS_PCI": {"CONFIG_TDX_FUZZ_KAFL_SKIP_ACPI_PIO": "y"},
     "BOOT_START_KERNEL": {"CONFIG_TDX_FUZZ_KAFL_SKIP_ACPI_PIO": "y"},
-    "CONFIG_TDX_FUZZ_HARNESS_DOINITCALLS": {"CONFIG_TDX_FUZZ_KAFL_SKIP_IOAPIC_READS": "y", "CONFIG_TDX_FUZZ_KAFL_SKIP_ACPI_PIO": "y"},
+    "DOINITCALLS_LEVEL_ANY": {"CONFIG_TDX_FUZZ_KAFL_SKIP_IOAPIC_READS": "y",
+                              "CONFIG_TDX_FUZZ_KAFL_SKIP_ACPI_PIO": "y"},
     "DOINITCALLS_LEVEL_7": {"CONFIG_TDX_FUZZ_KAFL_VIRTIO": "y"},
     "DOINITCALLS_LEVEL_6": {"CONFIG_TDX_FUZZ_KAFL_VIRTIO": "y"},
     "BPH_VIRTIO_CONSOLE_INIT": {"CONFIG_TDX_FUZZ_KAFL_VIRTIO": "y"},
@@ -166,6 +167,7 @@ def generate_setups(args, harness):
         req_conf.update({f"CONFIG_TDX_FUZZ_HARNESS_{basename}": "y"})
     elif harness.startswith("DOINITCALLS_LEVEL"):
         level = harness[len("DOINITCALLS_LEVEL_"):]
+        req_conf.update(harness_options.get("DOINITCALLS_LEVEL_ANY", {}))
         req_conf.update({
             "CONFIG_TDX_FUZZ_HARNESS_DOINITCALLS": "y",
             "CONFIG_TDX_FUZZ_HARNESS_DOINITCALLS_LEVEL": level})
