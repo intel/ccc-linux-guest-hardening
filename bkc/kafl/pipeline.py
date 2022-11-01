@@ -180,7 +180,7 @@ def task_triage(args):
 
     import subprocess
 
-    print(f"Starting summary/triage job...")
+    print("Starting summary/triage job...")
 
     # generate stats output
     if args.stats_helper.exists():
@@ -199,10 +199,9 @@ def task_triage(args):
 @python_app
 def task_smatcher(args, pipeline):
 
-    import os
     import subprocess
 
-    print(f"Starting smatcher job...")
+    print("Starting smatcher job...")
 
     # smacher report
     with open(args.campaign_root/'smatch_errors.txt', 'w') as logfile:

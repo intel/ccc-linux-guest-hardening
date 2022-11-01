@@ -96,9 +96,9 @@ def main(args):
                             comment_analyzed = re.findall(r'\[.*?\]', result_analyzed.split('\n\t')[2])
                         # if comment_analyzed:
                             #print ("comment_analyzed is  " + comment_analyzed[0] + "\n")
-                        if ((path_analyzed == path_new)
-                            and (result_id_analyzed.group(1) == result_id_new.group(1))
-                                and (func_name_analyzed == func_name_new)):
+                        if ((path_analyzed == path_new) and
+                                (result_id_analyzed.group(1) == result_id_new.group(1)) and
+                                (func_name_analyzed == func_name_new)):
                             found = 1
                             if status_analyzed:
                                 #print ("result_new is  " + result_new + "\n")

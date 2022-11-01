@@ -21,7 +21,7 @@ try:
     sys.path.insert(0, os.path.join(SMATCH_PATH, "smatch_data/db"))
     import smdb
     smdb_available = True
-except:
+except Exception:
     smdb_available = False
 
 __author__ = "Sebastian Österlund <sebastian.osterlund@intel.com>"
@@ -205,7 +205,7 @@ def start(args):
     for cl in [SMATCH_CAT_SAFE, SMATCH_CAT_CONCERN, SMATCH_CAT_WRAPPER, SMATCH_CAT_EXCLUDED, SMATCH_CAT_TRUSTED, SMATCH_CAT_UNCLASSIFIED]:
         covered_class = list(filter(lambda e: e[0] == cl, covered))
         not_covered_class = list(filter(lambda e: e[0] == cl, not_covered))
-        if not cl in ["excluded", "wrapper", "unclassified"]:
+        if cl not in ["excluded", "wrapper", "unclassified"]:
             cov_non_excl.extend(covered_class)
             not_cov_non_excl.extend(not_covered_class)
         cov_pctg = 100 * len(covered_class)/(len(covered_class) + len(not_covered_class)) if len(covered_class) + len(not_covered_class) > 0 else 0
@@ -230,7 +230,9 @@ def start(args):
     function_filter = args.function_filter
     class_re = re.compile(class_filter) if len(class_filter) > 0 else None
     function_re = re.compile(function_filter) if len(function_filter) > 0 else None
-    def func_name_key(e): return e[2]  # Sort by function name
+
+    def func_name_key(e):
+        return e[2]  # Sort by function name
 
     for k, v in groupby(sorted(smatch_set, key=func_name_key), func_name_key):
         if function_re and not function_re.match(k):

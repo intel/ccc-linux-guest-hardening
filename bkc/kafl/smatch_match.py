@@ -67,7 +67,7 @@ class TraceParser:
               (prefix, addr, self.addr2func(addr), self.addr2line(addr)))
 
     def is_valid_addr(self, addr):
-        return addr != None and addr != 0xffffffffffffffff
+        return addr is not None and addr != 0xffffffffffffffff
 
     def get_prior_edge_str(self, edge_str):
         return self.global_back_edges[edge_str]
@@ -122,7 +122,7 @@ class TraceParser:
             for line in f.read().decode(errors="ignore").splitlines():
                 try:
                     src, dst, num = line.split(",")
-                except:
+                except ValueError:
                     src, dst = line.split(",")
                     num = '1'
 
@@ -160,7 +160,7 @@ class TraceParser:
             for line in f.read().decode(errors="ignore").splitlines():
                 try:
                     src, dst, num = line.split(",")
-                except:
+                except ValueError:
                     src, dst = line.split(",")
                     num = '1'
 
@@ -420,16 +420,9 @@ def kafl_workdir_iterator(work_dir):
 
 
 def get_inputs_by_time(data_dir):
-    # check if data_dir is kAFL or AFL type, then assemble sorted list of inputs/input IDs over time
-    if (os.path.exists(data_dir + "/fuzzer_stats") and
-        os.path.exists(data_dir + "/fuzz_bitmap") and
-        os.path.exists(data_dir + "/plot_data") and
-            os.path.isdir(data_dir + "/queue")):
-        input_data = afl_workdir_iterator(data_dir)
-
-    elif (os.path.exists(data_dir + "/stats") and
-          os.path.isdir(data_dir + "/corpus/regular") and
-          os.path.isdir(data_dir + "/metadata")):
+    if (os.path.exists(data_dir + "/stats") and
+            os.path.isdir(data_dir + "/corpus/regular") and
+            os.path.isdir(data_dir + "/metadata")):
         input_data = kafl_workdir_iterator(data_dir)
     else:
         print("Unrecognized target directory type «%s». Exit." % data_dir)
