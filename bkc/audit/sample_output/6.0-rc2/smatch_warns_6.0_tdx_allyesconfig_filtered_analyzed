@@ -1058,10 +1058,12 @@ unclassified	arch/x86/mm/numa.c:942 phys_to_target_node() warn: {150158337681309
 	'check_host_input' a tainted value from the host 'start' used in function 'meminfo_to_nid';
 unclassified	arch/x86/mm/numa.c:951 phys_to_target_node() warn: {18153653175201306978}
 	'check_host_input' a tainted value from the host 'start' used in function 'meminfo_to_nid';
-unclassified	arch/x86/realmode/init.c:148 setup_real_mode() warn: {14964247779256195260}
-	'check_host_input' read from the host using function 'paravirt_read_msr' into a variable 'efer';
-unclassified	arch/x86/realmode/init.c:149 setup_real_mode() warn: {8149846832210171439}
-	'check_host_input' propagating read value from the host 'efer & ~(1 << 10)' into a different variable 'trampoline_header->efer';
+excluded	arch/x86/realmode/init.c:148 setup_real_mode() warn: {14964247779256195260}
+	'check_host_input' read from the host using function 'paravirt_read_msr' into a variable 'efer'
+	[The trampoline_header is a component of the AMD call stack. IA32_EFER is trusted];
+excluded	arch/x86/realmode/init.c:149 setup_real_mode() warn: {8149846832210171439}
+	'check_host_input' propagating read value from the host 'efer & ~(1 << 10)' into a different variable 'trampoline_header->efer'
+	[The trampoline_header is a component of the AMD call stack. IA32_EFER is trusted];
 excluded	arch/x86/hyperv/ivm.c:158 hv_ghcb_negotiate_protocol() warn: {9240908342802842477}
 	'check_host_input' an expression containing a propagated value from the host '(val & 4095) != 1' used in if/switch statement;
 excluded	arch/x86/hyperv/ivm.c:161 hv_ghcb_negotiate_protocol() warn: {8333750240104204185}
@@ -2031,103 +2033,105 @@ unclassified	arch/x86/events/intel/core.c:4989 check_msr() warn: {19577280132799
 	'check_host_input' a tainted value from the host 'val_old' used in function 'lbr_from_signext_quirk_wr';
 unclassified	arch/x86/events/intel/core.c:4994 check_msr() warn: {3230786820664726248}
 	'check_host_input' a tainted value from the host 'val_old' used in function 'wrmsrl';
-unclassified	arch/x86/events/intel/core.c:5587 intel_pmu_check_num_counters() warn: {5702935191332407608}
+trusted	arch/x86/events/intel/core.c:5587 intel_pmu_check_num_counters() warn: {5702935191332407608}
 	'check_host_input' an expression containing a propagated value from the host '*num_counters > 32' used in if/switch statement;
-unclassified	arch/x86/events/intel/core.c:5588 intel_pmu_check_num_counters() warn: {6870074860045964916}
+trusted	arch/x86/events/intel/core.c:5588 intel_pmu_check_num_counters() warn: {6870074860045964916}
 	'check_host_input' a tainted value from the host '*num_counters' used in function '__warn_printk';
-unclassified	arch/x86/events/intel/core.c:5594 intel_pmu_check_num_counters() warn: {6975506649439866896}
+trusted	arch/x86/events/intel/core.c:5594 intel_pmu_check_num_counters() warn: {6975506649439866896}
 	'check_host_input' an expression containing a propagated value from the host '*num_counters_fixed > 16' used in if/switch statement;
-unclassified	arch/x86/events/intel/core.c:5595 intel_pmu_check_num_counters() warn: {14638554473407338620}
+trusted	arch/x86/events/intel/core.c:5595 intel_pmu_check_num_counters() warn: {14638554473407338620}
 	'check_host_input' a tainted value from the host '*num_counters_fixed' used in function '__warn_printk';
-unclassified	arch/x86/events/intel/core.c:5600 intel_pmu_check_num_counters() warn: {16548686067503065345}
+trusted	arch/x86/events/intel/core.c:5600 intel_pmu_check_num_counters() warn: {16548686067503065345}
 	'check_host_input' propagating read value from the host 'fixed_mask << 32' into a different variable 'intel_ctrl';
-unclassified	arch/x86/events/intel/core.c:5627 intel_pmu_check_event_constraints() warn: {11752375550650775827}
+trusted	arch/x86/events/intel/core.c:5627 intel_pmu_check_event_constraints() warn: {11752375550650775827}
 	'check_host_input' an expression containing a propagated value from the host '!((1 << (32 + 3)) & intel_ctrl)' used in if/switch statement;
-unclassified	arch/x86/events/intel/core.c:5635 intel_pmu_check_event_constraints() warn: {9092769482393274976}
+trusted	arch/x86/events/intel/core.c:5635 intel_pmu_check_event_constraints() warn: {9092769482393274976}
 	'check_host_input' propagating read value from the host 'intel_ctrl' into a different variable 'c->idxmsk64';
-unclassified	arch/x86/events/intel/core.c:5646 intel_pmu_check_event_constraints() warn: {17256067632508866078}
+trusted	arch/x86/events/intel/core.c:5646 intel_pmu_check_event_constraints() warn: {17256067632508866078}
 	'check_host_input' a tainted value from the host 'c->idxmsk64' used in function '__arch_hweight64';
-unclassified	arch/x86/events/intel/core.c:5678 intel_pmu_check_hybrid_pmus() warn: {9280285510378384404}
+trusted	arch/x86/events/intel/core.c:5678 intel_pmu_check_hybrid_pmus() warn: {9280285510378384404}
 	'check_host_input' a tainted value from the host 'fixed_mask' used in function 'intel_pmu_check_num_counters';
-unclassified	arch/x86/events/intel/core.c:5691 intel_pmu_check_hybrid_pmus() warn: {5016016908574970401}
+trusted	arch/x86/events/intel/core.c:5691 intel_pmu_check_hybrid_pmus() warn: {5016016908574970401}
 	'check_host_input' a tainted value from the host 'pmu->intel_ctrl' used in function 'intel_pmu_check_event_constraints';
-unclassified	arch/x86/events/intel/core.c:5732 intel_pmu_init() warn: {3228922053256370768}
+trusted	arch/x86/events/intel/core.c:5732 intel_pmu_init() warn: {3228922053256370768}
 	'check_host_input' read from the host using function 'cpuid' into a non-local variable '&eax.full';
-unclassified	arch/x86/events/intel/core.c:5732 intel_pmu_init() warn: {3228922053256370768}
+trusted	arch/x86/events/intel/core.c:5732 intel_pmu_init() warn: {3228922053256370768}
 	'check_host_input' read from the host using function 'cpuid' into a non-local variable '&ebx.full';
-unclassified	arch/x86/events/intel/core.c:5732 intel_pmu_init() warn: {3228922053256370768}
+trusted	arch/x86/events/intel/core.c:5732 intel_pmu_init() warn: {3228922053256370768}
 	'check_host_input' read from the host using function 'cpuid' into a non-local variable '&fixed_mask';
-unclassified	arch/x86/events/intel/core.c:5732 intel_pmu_init() warn: {3228922053256370768}
+trusted	arch/x86/events/intel/core.c:5732 intel_pmu_init() warn: {3228922053256370768}
 	'check_host_input' read from the host using function 'cpuid' into a non-local variable '&edx.full';
-unclassified	arch/x86/events/intel/core.c:5733 intel_pmu_init() warn: {303294835711710188}
+trusted	arch/x86/events/intel/core.c:5733 intel_pmu_init() warn: {303294835711710188}
 	'check_host_input' an expression containing a propagated value from the host 'eax.split.mask_length < 7' used in if/switch statement;
-unclassified	arch/x86/events/intel/core.c:5736 intel_pmu_init() warn: {12443647556524379748}
+trusted	arch/x86/events/intel/core.c:5736 intel_pmu_init() warn: {12443647556524379748}
 	'check_host_input' propagating read value from the host 'eax.split.version_id' into a different variable 'version';
-unclassified	arch/x86/events/intel/core.c:5737 intel_pmu_init() warn: {15919975454148876478}
+trusted	arch/x86/events/intel/core.c:5737 intel_pmu_init() warn: {15919975454148876478}
 	'check_host_input' an expression containing a propagated value from the host 'version < 2' used in if/switch statement;
-unclassified	arch/x86/events/intel/core.c:5742 intel_pmu_init() warn: {11921836245209891709}
+trusted	arch/x86/events/intel/core.c:5742 intel_pmu_init() warn: {11921836245209891709}
 	'check_host_input' propagating read value from the host 'version' into a different variable 'x86_pmu.version';
-unclassified	arch/x86/events/intel/core.c:5743 intel_pmu_init() warn: {3046449890731428380}
+trusted	arch/x86/events/intel/core.c:5743 intel_pmu_init() warn: {3046449890731428380}
 	'check_host_input' propagating read value from the host 'eax.split.num_counters' into a different variable 'x86_pmu.num_counters';
-unclassified	arch/x86/events/intel/core.c:5744 intel_pmu_init() warn: {5337244555312094544}
+trusted	arch/x86/events/intel/core.c:5744 intel_pmu_init() warn: {5337244555312094544}
 	'check_host_input' propagating read value from the host 'eax.split.bit_width' into a different variable 'x86_pmu.cntval_bits';
-unclassified	arch/x86/events/intel/core.c:5748 intel_pmu_init() warn: {9352998940541900616}
+trusted	arch/x86/events/intel/core.c:5748 intel_pmu_init() warn: {9352998940541900616}
 	'check_host_input' propagating read value from the host 'eax.split.mask_length' into a different variable 'x86_pmu.events_mask_len';
-unclassified	arch/x86/events/intel/core.c:5757 intel_pmu_init() warn: {2032408518224527222}
+trusted	arch/x86/events/intel/core.c:5757 intel_pmu_init() warn: {2032408518224527222}
 	'check_host_input' an expression containing a propagated value from the host 'version > 1 && version < 5' used in if/switch statement;
-unclassified	arch/x86/events/intel/core.c:5764 intel_pmu_init() warn: {8850355923048873531}
+trusted	arch/x86/events/intel/core.c:5764 intel_pmu_init() warn: {8850355923048873531}
 	'check_host_input' an expression containing a propagated value from the host 'version >= 5' used in if/switch statement;
-unclassified	arch/x86/events/intel/core.c:5765 intel_pmu_init() warn: {9219623344029733367}
+trusted	arch/x86/events/intel/core.c:5765 intel_pmu_init() warn: {9219623344029733367}
 	'check_host_input' a tainted value from the host 'fixed_mask' used in function 'fls';
-unclassified	arch/x86/events/intel/core.c:5770 intel_pmu_init() warn: {5381495614604455866}
-	'check_host_input' read from the host using function 'paravirt_read_msr' into a variable 'capabilities';
-unclassified	arch/x86/events/intel/core.c:5771 intel_pmu_init() warn: {15487575926583102111}
-	'check_host_input' propagating read value from the host 'capabilities' into a different variable 'x86_pmu.intel_cap.capabilities';
-unclassified	arch/x86/events/intel/core.c:5786 intel_pmu_init() warn: {8850355923048873553}
+trusted	arch/x86/events/intel/core.c:5770 intel_pmu_init() warn: {5381495614604455866}
+	'check_host_input' read from the host using function 'paravirt_read_msr' into a variable 'capabilities'
+	[Reading from MSR_IA32_PERF_CAPABILITIES is either native or disabled];
+trusted	arch/x86/events/intel/core.c:5771 intel_pmu_init() warn: {15487575926583102111}
+	'check_host_input' propagating read value from the host 'capabilities' into a different variable 'x86_pmu.intel_cap.capabilities'
+	[Reading from MSR_IA32_PERF_CAPABILITIES is either native or disabled];
+trusted	arch/x86/events/intel/core.c:5786 intel_pmu_init() warn: {8850355923048873553}
 	'check_host_input' an expression containing a propagated value from the host 'version >= 5' used in if/switch statement;
-unclassified	arch/x86/events/intel/core.c:5787 intel_pmu_init() warn: {2531164452858991396}
+trusted	arch/x86/events/intel/core.c:5787 intel_pmu_init() warn: {2531164452858991396}
 	'check_host_input' propagating read value from the host 'edx.split.anythread_deprecated' into a different variable 'x86_pmu.intel_cap.anythread_deprecated';
-unclassified	arch/x86/events/intel/core.c:5788 intel_pmu_init() warn: {16789222470301305071}
+trusted	arch/x86/events/intel/core.c:5788 intel_pmu_init() warn: {16789222470301305071}
 	'check_host_input' an expression containing a propagated value from the host 'x86_pmu.intel_cap.anythread_deprecated' used in if/switch statement;
-unclassified	arch/x86/events/intel/core.c:6378 intel_pmu_init() warn: {8738101655227189323}
+trusted	arch/x86/events/intel/core.c:6378 intel_pmu_init() warn: {8738101655227189323}
 	'check_host_input' propagating read value from the host 'x86_pmu.num_counters + 2' into a different variable 'pmu->num_counters';
-unclassified	arch/x86/events/intel/core.c:6379 intel_pmu_init() warn: {14978135118963520489}
+trusted	arch/x86/events/intel/core.c:6379 intel_pmu_init() warn: {14978135118963520489}
 	'check_host_input' propagating read value from the host 'x86_pmu.num_counters_fixed + 1' into a different variable 'pmu->num_counters_fixed';
-unclassified	arch/x86/events/intel/core.c:6381 intel_pmu_init() warn: {2512975926451994961}
+trusted	arch/x86/events/intel/core.c:6381 intel_pmu_init() warn: {2512975926451994961}
 	'check_host_input' propagating read value from the host 'x86_pmu.num_counters' into a different variable 'pmu->num_counters';
-unclassified	arch/x86/events/intel/core.c:6382 intel_pmu_init() warn: {8474865165985725968}
+trusted	arch/x86/events/intel/core.c:6382 intel_pmu_init() warn: {8474865165985725968}
 	'check_host_input' propagating read value from the host 'x86_pmu.num_counters_fixed' into a different variable 'pmu->num_counters_fixed';
-unclassified	arch/x86/events/intel/core.c:6392 intel_pmu_init() warn: {18257939982007163752}
+trusted	arch/x86/events/intel/core.c:6392 intel_pmu_init() warn: {18257939982007163752}
 	'check_host_input' an expression containing a propagated value from the host '(pmu->num_counters > 8) || (pmu->num_counters_fixed > 4)' used in if/switch statement;
-unclassified	arch/x86/events/intel/core.c:6393 intel_pmu_init() warn: {2512975926451994973}
+trusted	arch/x86/events/intel/core.c:6393 intel_pmu_init() warn: {2512975926451994973}
 	'check_host_input' propagating read value from the host 'x86_pmu.num_counters' into a different variable 'pmu->num_counters';
-unclassified	arch/x86/events/intel/core.c:6394 intel_pmu_init() warn: {8474865165985725980}
+trusted	arch/x86/events/intel/core.c:6394 intel_pmu_init() warn: {8474865165985725980}
 	'check_host_input' propagating read value from the host 'x86_pmu.num_counters_fixed' into a different variable 'pmu->num_counters_fixed';
-unclassified	arch/x86/events/intel/core.c:6401 intel_pmu_init() warn: {4002226858895462735}
+trusted	arch/x86/events/intel/core.c:6401 intel_pmu_init() warn: {4002226858895462735}
 	'check_host_input' propagating read value from the host 'x86_pmu.intel_cap.capabilities' into a different variable 'pmu->intel_cap.capabilities';
-unclassified	arch/x86/events/intel/core.c:6416 intel_pmu_init() warn: {2512975926451994996}
+trusted	arch/x86/events/intel/core.c:6416 intel_pmu_init() warn: {2512975926451994996}
 	'check_host_input' propagating read value from the host 'x86_pmu.num_counters' into a different variable 'pmu->num_counters';
-unclassified	arch/x86/events/intel/core.c:6417 intel_pmu_init() warn: {8474865165985726003}
+trusted	arch/x86/events/intel/core.c:6417 intel_pmu_init() warn: {8474865165985726003}
 	'check_host_input' propagating read value from the host 'x86_pmu.num_counters_fixed' into a different variable 'pmu->num_counters_fixed';
-unclassified	arch/x86/events/intel/core.c:6418 intel_pmu_init() warn: {6889065310963547896}
+trusted	arch/x86/events/intel/core.c:6418 intel_pmu_init() warn: {6889065310963547896}
 	'check_host_input' propagating read value from the host 'x86_pmu.max_pebs_events' into a different variable 'pmu->max_pebs_events';
-unclassified	arch/x86/events/intel/core.c:6422 intel_pmu_init() warn: {4002226858895462756}
+trusted	arch/x86/events/intel/core.c:6422 intel_pmu_init() warn: {4002226858895462756}
 	'check_host_input' propagating read value from the host 'x86_pmu.intel_cap.capabilities' into a different variable 'pmu->intel_cap.capabilities';
-unclassified	arch/x86/events/intel/core.c:6437 intel_pmu_init() warn: {13457530844220705137}
+trusted	arch/x86/events/intel/core.c:6437 intel_pmu_init() warn: {13457530844220705137}
 	'check_host_input' an expression containing a propagated value from the host 'x86_pmu.version' used in if/switch statement;
-unclassified	arch/x86/events/intel/core.c:6461 intel_pmu_init() warn: {12069115318648532761}
+trusted	arch/x86/events/intel/core.c:6461 intel_pmu_init() warn: {12069115318648532761}
 	'check_host_input' an expression containing a propagated value from the host 'x86_pmu.num_counters_fixed > 16' used in if/switch statement;
-unclassified	arch/x86/events/intel/core.c:6490 intel_pmu_init() warn: {3666982850312410842}
+trusted	arch/x86/events/intel/core.c:6490 intel_pmu_init() warn: {3666982850312410842}
 	'check_host_input' a tainted value from the host 'fixed_mask' used in function 'intel_pmu_check_num_counters';
-unclassified	arch/x86/events/intel/core.c:6496 intel_pmu_init() warn: {16789222470301305779}
+trusted	arch/x86/events/intel/core.c:6496 intel_pmu_init() warn: {16789222470301305779}
 	'check_host_input' an expression containing a propagated value from the host 'x86_pmu.intel_cap.anythread_deprecated' used in if/switch statement;
-unclassified	arch/x86/events/intel/core.c:6499 intel_pmu_init() warn: {11609125895552210059}
+trusted	arch/x86/events/intel/core.c:6499 intel_pmu_init() warn: {11609125895552210059}
 	'check_host_input' a tainted value from the host 'x86_pmu.num_counters' used in function 'intel_pmu_check_event_constraints';
-unclassified	arch/x86/events/intel/core.c:6499 intel_pmu_init() warn: {11609125895552210059}
+trusted	arch/x86/events/intel/core.c:6499 intel_pmu_init() warn: {11609125895552210059}
 	'check_host_input' a tainted value from the host 'x86_pmu.num_counters_fixed' used in function 'intel_pmu_check_event_constraints';
-unclassified	arch/x86/events/intel/core.c:6499 intel_pmu_init() warn: {11609125895552210059}
+trusted	arch/x86/events/intel/core.c:6499 intel_pmu_init() warn: {11609125895552210059}
 	'check_host_input' a tainted value from the host 'x86_pmu.intel_ctrl' used in function 'intel_pmu_check_event_constraints';
-unclassified	arch/x86/events/intel/core.c:6546 intel_pmu_init() warn: {10753703099111785262}
+trusted	arch/x86/events/intel/core.c:6546 intel_pmu_init() warn: {10753703099111785262}
 	'check_host_input' a tainted value from the host 'fixed_mask' used in function 'intel_pmu_check_hybrid_pmus';
 trusted	arch/x86/events/intel/ds.c:667 intel_pmu_enable_bts() warn: {8331168523358730273}
 	'check_host_input' a tainted value from the host 'debugctlmsr' used in function 'update_debugctlmsr'
@@ -2560,39 +2564,43 @@ unclassified	arch/x86/lib/msr.c:119 do_trace_write_msr() warn: {4477812799404383
 	'check_host_input' a tainted value from the host 'val' used in function 'trace_write_msr';
 wrapper	arch/x86/lib/msr.c:126 do_trace_read_msr() warn: {1483022359401441509}
 	'check_host_input' a tainted value from the host 'val' used in function 'trace_read_msr';
-unclassified	arch/x86/lib/insn-eval.c:705 insn_get_seg_base() warn: {2083293191208731229}
-	'check_host_input' read from the host using function 'paravirt_read_msr' into a variable 'base';
-unclassified	arch/x86/lib/insn-eval.c:712 insn_get_seg_base() warn: {2083293191208758461}
-	'check_host_input' read from the host using function 'paravirt_read_msr' into a variable 'base';
-unclassified	arch/x86/lib/insn-eval.c:714 insn_get_seg_base() warn: {2083293191208732327}
-	'check_host_input' read from the host using function 'paravirt_read_msr' into a variable 'base';
+trusted	arch/x86/lib/insn-eval.c:705 insn_get_seg_base() warn: {2083293191208731229}
+	'check_host_input' read from the host using function 'paravirt_read_msr' into a variable 'base'
+	[MSR MSR_FS_BASE value is native];
+trusted	arch/x86/lib/insn-eval.c:712 insn_get_seg_base() warn: {2083293191208758461}
+	'check_host_input' read from the host using function 'paravirt_read_msr' into a variable 'base'
+	[MSR MSR_FS_BASE value is native];
+trusted	arch/x86/lib/insn-eval.c:714 insn_get_seg_base() warn: {2083293191208732327}
+	'check_host_input' read from the host using function 'paravirt_read_msr' into a variable 'base'
+	[MSR MSR_FS_BASE value is native];
 trusted	arch/x86/lib/insn-eval.c:718 insn_get_seg_base() warn: {210707384485}
 	'check_host_input' return an expression containing a propagated value from the host 'base'
 	[MSR MSR_GS_BASE value is native];
-unclassified	arch/x86/lib/insn-eval.c:930 get_seg_base_limit() warn: {12073391352531035696}
+trusted	arch/x86/lib/insn-eval.c:930 get_seg_base_limit() warn: {12073391352531035696}
 	'check_host_input' an expression containing a propagated value from the host '*base == -1' used in if/switch statement;
-unclassified	arch/x86/lib/insn-eval.c:1272 get_addr_ref_16() warn: {3480064587381449131}
+trusted	arch/x86/lib/insn-eval.c:1272 get_addr_ref_16() warn: {3480064587381449131}
 	'check_host_input' propagating read value from the host '(eff_addr & 65535) + seg_base' into a different variable 'linear_addr';
-unclassified	arch/x86/lib/insn-eval.c:1279 get_addr_ref_16() warn: {15420475031712830631}
+trusted	arch/x86/lib/insn-eval.c:1279 get_addr_ref_16() warn: {15420475031712830631}
 	'check_host_input' return an expression containing a propagated value from the host 'linear_addr';
-unclassified	arch/x86/lib/insn-eval.c:1361 get_addr_ref_32() warn: {13457697987495054901}
+trusted	arch/x86/lib/insn-eval.c:1361 get_addr_ref_32() warn: {13457697987495054901}
 	'check_host_input' propagating read value from the host '(eff_addr & 4294967295) + seg_base' into a different variable 'linear_addr';
-unclassified	arch/x86/lib/insn-eval.c:1368 get_addr_ref_32() warn: {15420475031712830656}
+trusted	arch/x86/lib/insn-eval.c:1368 get_addr_ref_32() warn: {15420475031712830656}
 	'check_host_input' return an expression containing a propagated value from the host 'linear_addr';
-unclassified	arch/x86/lib/insn-eval.c:1423 get_addr_ref_64() warn: {11101191899683370629}
+trusted	arch/x86/lib/insn-eval.c:1423 get_addr_ref_64() warn: {11101191899683370629}
 	'check_host_input' propagating read value from the host 'eff_addr + seg_base' into a different variable 'linear_addr';
-unclassified	arch/x86/lib/insn-eval.c:1426 get_addr_ref_64() warn: {15420475031712830620}
+trusted	arch/x86/lib/insn-eval.c:1426 get_addr_ref_64() warn: {15420475031712830620}
 	'check_host_input' return an expression containing a propagated value from the host 'linear_addr';
-unclassified	arch/x86/lib/insn-eval.c:1477 insn_get_effective_ip() warn: {709406516032128578}
+trusted	arch/x86/lib/insn-eval.c:1477 insn_get_effective_ip() warn: {709406516032128578}
 	'check_host_input' an expression containing a propagated value from the host 'seg_base == -1' used in if/switch statement;
-unclassified	arch/x86/lib/insn-eval.c:1481 insn_get_effective_ip() warn: {9351739847694617134}
+trusted	arch/x86/lib/insn-eval.c:1481 insn_get_effective_ip() warn: {9351739847694617134}
 	'check_host_input' propagating read value from the host 'seg_base + regs->ip' into a different variable 'ip';
-unclassified	arch/x86/lib/insn-eval.c:1508 insn_fetch_from_user() warn: {11807083033690491966}
+trusted	arch/x86/lib/insn-eval.c:1508 insn_fetch_from_user() warn: {11807083033690491966}
 	'check_host_input' a tainted value from the host 'ip' used in function 'copy_from_user';
-unclassified	arch/x86/lib/insn-eval.c:1536 insn_fetch_from_user_inatomic() warn: {8300674554177703663}
+trusted	arch/x86/lib/insn-eval.c:1536 insn_fetch_from_user_inatomic() warn: {8300674554177703663}
 	'check_host_input' a tainted value from the host 'ip' used in function '__copy_from_user_inatomic';
-unclassified	arch/x86/lib/kaslr.c:97 kaslr_get_random_long() warn: {229480999310358}
-	'check_host_input' return an expression containing a propagated value from the host 'random';
+excluded	arch/x86/lib/kaslr.c:97 kaslr_get_random_long() warn: {229480999310358}
+	'check_host_input' return an expression containing a propagated value from the host 'random'
+	[RDRAND is now enforced by default for TDX guest so it cannot fall back to i8254 for obtaining randomness];
 excluded	arch/x86/lib/kaslr.c:41 i8254() warn: {12848555704968628959}
 	'check_host_input' read from the host using function '__inb' into a variable 'status'
 	[RDRAND is now enforced by default for TDX guest so it cannot fall back to i8254 for obtaining randomness];
@@ -2652,7 +2660,7 @@ excluded	arch/x86/xen/suspend.c:60 xen_vcpu_notify_suspend() warn: {172288945598
 	'check_host_input' read from the host using function 'paravirt_read_msr' into a variable 'tmp';
 excluded	arch/x86/xen/suspend.c:61 xen_vcpu_notify_suspend() warn: {4734120405302575726}
 	'check_host_input' propagating read value from the host 'tmp' into a different variable 'pto_val__';
-unclassified	./arch/x86/include/asm/xen/page.h:316 mfn_pte() warn: {1175375444989667988}
+excluded	./arch/x86/include/asm/xen/page.h:316 mfn_pte() warn: {1175375444989667988}
 	'check_host_input' propagating read value from the host '(page_nr << 12) | massage_pgprot(pgprot)' into a different variable 'pte.pte';
 excluded	arch/x86/xen/mmu_pv.c:2034 xen_set_fixmap() warn: {1335467658238368100}
 	'check_host_input' a tainted value from the host 'phys' used in function 'pfn_pte';
@@ -2698,7 +2706,7 @@ excluded	arch/x86/xen/enlighten_hvm.c:124 init_hvm_pv_info() warn: {179536578866
 	'check_host_input' an expression containing a propagated value from the host 'eax & (1 << 3)' used in if/switch statement;
 excluded	arch/x86/xen/enlighten_hvm.c:125 init_hvm_pv_info() warn: {17136054570888862580}
 	'check_host_input' propagating read value from the host 'ebx & 4294967295' into a different variable 'pto_val__';
-unclassified	./arch/x86/include/asm/processor.h:606 cpuid() warn: {15580194012057425233}
+wrapper	./arch/x86/include/asm/processor.h:606 cpuid() warn: {15580194012057425233}
 	'check_host_input' a tainted value from the host 'eax' used in function '__cpuid';
 excluded	arch/x86/xen/enlighten_hvm.c:268 msi_ext_dest_id() warn: {1646786423768056072}
 	'check_host_input' return an expression containing a propagated value from the host 'cpuid_eax(xen_cpuid_base() + 4) & (1 << 5)';
@@ -2885,10 +2893,12 @@ wrapper	./arch/x86/include/asm/msr.h:121 native_read_msr() warn: {93508187673603
 	'check_host_input' a tainted value from the host 'val' used in function 'do_trace_read_msr';
 wrapper	./arch/x86/include/asm/msr.h:123 native_read_msr() warn: {6385790673}
 	'check_host_input' return an expression containing a propagated value from the host 'val';
-unclassified	./arch/x86/include/asm/spec-ctrl.h:43 x86_spec_ctrl_restore_host() warn: {1968764857531718040}
-	'check_host_input' a tainted value from the host 'guest_spec_ctrl' used in function 'x86_virt_spec_ctrl';
-unclassified	./arch/x86/include/asm/spec-ctrl.h:43 x86_spec_ctrl_restore_host() warn: {1968764857531718040}
-	'check_host_input' a tainted value from the host 'guest_virt_spec_ctrl' used in function 'x86_virt_spec_ctrl';
+excluded	./arch/x86/include/asm/spec-ctrl.h:43 x86_spec_ctrl_restore_host() warn: {1968764857531718040}
+	'check_host_input' a tainted value from the host 'guest_spec_ctrl' used in function 'x86_virt_spec_ctrl'
+	[currently only used in amd code];
+excluded	./arch/x86/include/asm/spec-ctrl.h:43 x86_spec_ctrl_restore_host() warn: {1968764857531718040}
+	'check_host_input' a tainted value from the host 'guest_virt_spec_ctrl' used in function 'x86_virt_spec_ctrl'
+	[currently only used in amd code];
 excluded	arch/x86/kvm/svm/svm.c:4119 is_disabled() warn: {11675788186023667973}
 	'check_host_input' read from the host using function 'paravirt_read_msr' into a variable 'vm_cr';
 excluded	arch/x86/kvm/svm/svm.c:4120 is_disabled() warn: {2217487368192939541}
@@ -4631,12 +4641,15 @@ trusted	arch/x86/kernel/traps.c:1047 exc_debug_kernel() warn: {18065423834101204
 trusted	arch/x86/kernel/traps.c:1049 exc_debug_kernel() warn: {11752669102895161396}
 	'check_host_input' a tainted value from the host 'debugctl' used in function 'wrmsrl'
 	[reading MSR_IA32_DEBUGCTLMSR is controlled by TDX module];
-unclassified	arch/x86/kernel/traps.c:1285 handle_xfd_event() warn: {18223874569917547446}
-	'check_host_input' read from the host using function 'paravirt_read_msr' into a variable 'xfd_err';
-unclassified	arch/x86/kernel/traps.c:1286 handle_xfd_event() warn: {249791859024160473}
-	'check_host_input' an expression containing a propagated value from the host '!xfd_err' used in if/switch statement;
-unclassified	arch/x86/kernel/traps.c:1297 handle_xfd_event() warn: {11423044649307687655}
-	'check_host_input' a tainted value from the host 'xfd_err' used in function 'xfd_enable_feature';
+trusted	arch/x86/kernel/traps.c:1285 handle_xfd_event() warn: {18223874569917547446}
+	'check_host_input' read from the host using function 'paravirt_read_msr' into a variable 'xfd_err'
+	[MSR_IA32_XFD_ERR is #GP or native];
+trusted	arch/x86/kernel/traps.c:1286 handle_xfd_event() warn: {249791859024160473}
+	'check_host_input' an expression containing a propagated value from the host '!xfd_err' used in if/switch statement
+	[MSR_IA32_XFD_ERR is #GP or native];
+trusted	arch/x86/kernel/traps.c:1297 handle_xfd_event() warn: {11423044649307687655}
+	'check_host_input' a tainted value from the host 'xfd_err' used in function 'xfd_enable_feature'
+	[MSR_IA32_XFD_ERR is #GP or native];
 excluded	arch/x86/kernel/early_printk.c:39 early_vga_write() warn: {2680099060294283073}
 	'check_host_input' a tainted value from the host 'readw((page_offset_base + 753664) + 2 * (max_xpos * k + i))' used in function 'writew';
 excluded	arch/x86/kernel/early_printk.c:99 io_serial_in() warn: {5569389723027142492}
@@ -5213,7 +5226,7 @@ unclassified	arch/x86/kernel/apic/apic.c:1795 setup_nox2apic() warn: {2631920674
 	'check_host_input' an expression containing a propagated value from the host 'apicid >= 255' used in if/switch statement;
 unclassified	arch/x86/kernel/apic/apic.c:1796 setup_nox2apic() warn: {666752490993439437}
 	'check_host_input' a tainted value from the host 'apicid' used in function '_printk';
-unclassified	./arch/x86/include/asm/apic.h:220 native_apic_msr_read() warn: {16277818865962776857}
+wrapper	./arch/x86/include/asm/apic.h:220 native_apic_msr_read() warn: {16277818865962776857}
 	'check_host_input' read from the host using function 'paravirt_read_msr' into a variable 'msr';
 wrapper	./arch/x86/include/asm/apic.h:221 native_apic_msr_read() warn: {6385487039}
 	'check_host_input' return an expression containing a propagated value from the host 'msr';
@@ -5649,30 +5662,42 @@ unclassified	./arch/x86/include/asm/e820/api.h:52 is_ISA_range() warn: {10623635
 	'check_host_input' return an expression containing a propagated value from the host 'start >= 655360 && end <= 1048576';
 unclassified	arch/x86/kernel/apic/x2apic_uv_x.c:89 is_GRU_range() warn: {17760477810461708354}
 	'check_host_input' return an expression containing a propagated value from the host 'start >= gru_start_paddr && end <= gru_end_paddr';
-unclassified	arch/x86/kernel/apic/x2apic_uv_x.c:256 set_x2apic_bits() warn: {1780174851727847494}
-	'check_host_input' read from the host using function 'cpuid' into a non-local variable '&eax';
-unclassified	arch/x86/kernel/apic/x2apic_uv_x.c:256 set_x2apic_bits() warn: {1780174851727847494}
-	'check_host_input' read from the host using function 'cpuid' into a non-local variable '&ebx';
-unclassified	arch/x86/kernel/apic/x2apic_uv_x.c:256 set_x2apic_bits() warn: {1780174851727847494}
-	'check_host_input' read from the host using function 'cpuid' into a non-local variable '&ecx';
-unclassified	arch/x86/kernel/apic/x2apic_uv_x.c:256 set_x2apic_bits() warn: {1780174851727847494}
-	'check_host_input' read from the host using function 'cpuid' into a non-local variable '&edx';
-unclassified	arch/x86/kernel/apic/x2apic_uv_x.c:257 set_x2apic_bits() warn: {249886535127169287}
-	'check_host_input' an expression containing a propagated value from the host 'eax < 11' used in if/switch statement;
-unclassified	arch/x86/kernel/apic/x2apic_uv_x.c:263 set_x2apic_bits() warn: {13904993549960839306}
-	'check_host_input' an expression containing a propagated value from the host 'ebx == 0 || (((ecx >> 8) & 255) != 1)' used in if/switch statement;
-unclassified	arch/x86/kernel/apic/x2apic_uv_x.c:268 set_x2apic_bits() warn: {3684103072104900329}
-	'check_host_input' propagating read value from the host 'eax & 31' into a different variable 'sid_shift';
-unclassified	arch/x86/kernel/apic/x2apic_uv_x.c:270 set_x2apic_bits() error: {13347452675704775614}
-	'check_host_input' an expression containing a propagated value from the host '((ecx >> 8) & 255) != 0' used in iterator;
-unclassified	arch/x86/kernel/apic/x2apic_uv_x.c:272 set_x2apic_bits() warn: {13347452675737981470}
-	'check_host_input' an expression containing a propagated value from the host '((ecx >> 8) & 255) == 2' used in if/switch statement;
-unclassified	arch/x86/kernel/apic/x2apic_uv_x.c:273 set_x2apic_bits() warn: {3684103072104900334}
-	'check_host_input' propagating read value from the host 'eax & 31' into a different variable 'sid_shift';
-unclassified	arch/x86/kernel/apic/x2apic_uv_x.c:280 set_x2apic_bits() warn: {16463668394778034740}
-	'check_host_input' propagating read value from the host '~(-1 << sid_shift)' into a different variable 'uv_cpuid.apicid_mask';
-unclassified	arch/x86/kernel/apic/x2apic_uv_x.c:281 set_x2apic_bits() warn: {11529728112794005213}
-	'check_host_input' propagating read value from the host 'sid_shift' into a different variable 'uv_cpuid.socketid_shift';
+trusted	arch/x86/kernel/apic/x2apic_uv_x.c:256 set_x2apic_bits() warn: {1780174851727847494}
+	'check_host_input' read from the host using function 'cpuid' into a non-local variable '&eax'
+	[cpuid 0 is trusted];
+trusted	arch/x86/kernel/apic/x2apic_uv_x.c:256 set_x2apic_bits() warn: {1780174851727847494}
+	'check_host_input' read from the host using function 'cpuid' into a non-local variable '&ebx'
+	[cpuid 0 is trusted];
+trusted	arch/x86/kernel/apic/x2apic_uv_x.c:256 set_x2apic_bits() warn: {1780174851727847494}
+	'check_host_input' read from the host using function 'cpuid' into a non-local variable '&ecx'
+	[cpuid 0 is trusted];
+trusted	arch/x86/kernel/apic/x2apic_uv_x.c:256 set_x2apic_bits() warn: {1780174851727847494}
+	'check_host_input' read from the host using function 'cpuid' into a non-local variable '&edx'
+	[cpuid 0 is trusted];
+trusted	arch/x86/kernel/apic/x2apic_uv_x.c:257 set_x2apic_bits() warn: {249886535127169287}
+	'check_host_input' an expression containing a propagated value from the host 'eax < 11' used in if/switch statement
+	[cpuid 0 is trusted];
+trusted	arch/x86/kernel/apic/x2apic_uv_x.c:263 set_x2apic_bits() warn: {13904993549960839306}
+	'check_host_input' an expression containing a propagated value from the host 'ebx == 0 || (((ecx >> 8) & 255) != 1)' used in if/switch statement
+	[cpuid leaf 0xb returns zero inside TDX guest];
+trusted	arch/x86/kernel/apic/x2apic_uv_x.c:268 set_x2apic_bits() warn: {3684103072104900329}
+	'check_host_input' propagating read value from the host 'eax & 31' into a different variable 'sid_shift'
+	[cpuid leaf 0xb returns zero inside TDX guest];
+trusted	arch/x86/kernel/apic/x2apic_uv_x.c:270 set_x2apic_bits() error: {13347452675704775614}
+	'check_host_input' an expression containing a propagated value from the host '((ecx >> 8) & 255) != 0' used in iterator
+	[cpuid leaf 0xb returns zero inside TDX guest];
+trusted	arch/x86/kernel/apic/x2apic_uv_x.c:272 set_x2apic_bits() warn: {13347452675737981470}
+	'check_host_input' an expression containing a propagated value from the host '((ecx >> 8) & 255) == 2' used in if/switch statement
+	[cpuid leaf 0xb returns zero inside TDX guest];
+trusted	arch/x86/kernel/apic/x2apic_uv_x.c:273 set_x2apic_bits() warn: {3684103072104900334}
+	'check_host_input' propagating read value from the host 'eax & 31' into a different variable 'sid_shift'
+	[cpuid leaf 0xb returns zero inside TDX guest];
+trusted	arch/x86/kernel/apic/x2apic_uv_x.c:280 set_x2apic_bits() warn: {16463668394778034740}
+	'check_host_input' propagating read value from the host '~(-1 << sid_shift)' into a different variable 'uv_cpuid.apicid_mask'
+	[cpuid leaf 0xb returns zero inside TDX guest];
+trusted	arch/x86/kernel/apic/x2apic_uv_x.c:281 set_x2apic_bits() warn: {11529728112794005213}
+	'check_host_input' propagating read value from the host 'sid_shift' into a different variable 'uv_cpuid.socketid_shift'
+	[cpuid leaf 0xb returns zero inside TDX guest];
 unclassified	arch/x86/kernel/apic/x2apic_uv_x.c:801 x2apic_get_apic_id() warn: {193494644}
 	'check_host_input' return an expression containing a propagated value from the host 'id';
 unclassified	arch/x86/kernel/apic/x2apic_uv_x.c:811 uv_read_apic_id() warn: {4269776124388371508}
@@ -6083,23 +6108,26 @@ unclassified	arch/x86/kernel/cpu/scattered.c:61 init_scattered_cpuid_features() 
 trusted	arch/x86/kernel/cpu/bugs.c:141 check_bugs() warn: {2122516161916814020}
 	'check_host_input' read from the host using function 'paravirt_read_msr' into a variable 'x86_spec_ctrl_base'
 	[MSR_IA32_SPEC_CTRL is trusted];
-unclassified	arch/x86/kernel/cpu/bugs.c:205 x86_virt_spec_ctrl() warn: {6723405409623442069}
-	'check_host_input' propagating read value from the host 'guest_spec_ctrl' into a different variable 'guestval';
-unclassified	arch/x86/kernel/cpu/bugs.c:209 x86_virt_spec_ctrl() warn: {8254533333334147797}
-	'check_host_input' an expression containing a propagated value from the host 'hostval != guestval' used in if/switch statement;
-unclassified	arch/x86/kernel/cpu/bugs.c:210 x86_virt_spec_ctrl() warn: {16443561006223271305}
-	'check_host_input' propagating read value from the host 'guestval' into a different variable 'msrval';
-unclassified	arch/x86/kernel/cpu/bugs.c:211 x86_virt_spec_ctrl() warn: {13263078940794641871}
+excluded	arch/x86/kernel/cpu/bugs.c:205 x86_virt_spec_ctrl() warn: {6723405409623442069}
+	'check_host_input' propagating read value from the host 'guest_spec_ctrl' into a different variable 'guestval'
+	[currently only used in amd code];
+excluded	arch/x86/kernel/cpu/bugs.c:209 x86_virt_spec_ctrl() warn: {8254533333334147797}
+	'check_host_input' an expression containing a propagated value from the host 'hostval != guestval' used in if/switch statement
+	[currently only used in amd code];
+excluded	arch/x86/kernel/cpu/bugs.c:210 x86_virt_spec_ctrl() warn: {16443561006223271305}
+	'check_host_input' propagating read value from the host 'guestval' into a different variable 'msrval'
+	[currently only used in amd code];
+excluded	arch/x86/kernel/cpu/bugs.c:211 x86_virt_spec_ctrl() warn: {13263078940794641871}
 	'check_host_input' a tainted value from the host 'msrval' used in function 'wrmsrl';
-unclassified	arch/x86/kernel/cpu/bugs.c:234 x86_virt_spec_ctrl() warn: {11780092217339765708}
+excluded	arch/x86/kernel/cpu/bugs.c:234 x86_virt_spec_ctrl() warn: {11780092217339765708}
 	'check_host_input' propagating read value from the host 'guest_virt_spec_ctrl & ((((1))) << (2))' into a different variable 'guestval';
-unclassified	arch/x86/kernel/cpu/bugs.c:236 x86_virt_spec_ctrl() warn: {8254533333334147824}
+excluded	arch/x86/kernel/cpu/bugs.c:236 x86_virt_spec_ctrl() warn: {8254533333334147824}
 	'check_host_input' an expression containing a propagated value from the host 'hostval != guestval' used in if/switch statement;
-unclassified	arch/x86/kernel/cpu/bugs.c:239 x86_virt_spec_ctrl() warn: {13364030678908945555}
+excluded	arch/x86/kernel/cpu/bugs.c:239 x86_virt_spec_ctrl() warn: {13364030678908945555}
 	'check_host_input' a tainted value from the host 'guestval' used in function 'ssbd_spec_ctrl_to_tif';
-unclassified	arch/x86/kernel/cpu/bugs.c:242 x86_virt_spec_ctrl() warn: {7819719852389263997}
+excluded	arch/x86/kernel/cpu/bugs.c:242 x86_virt_spec_ctrl() warn: {7819719852389263997}
 	'check_host_input' a tainted value from the host 'tif' used in function 'speculation_ctrl_update';
-unclassified	./arch/x86/include/asm/spec-ctrl.h:65 ssbd_spec_ctrl_to_tif() warn: {15874496549504906763}
+excluded	./arch/x86/include/asm/spec-ctrl.h:65 ssbd_spec_ctrl_to_tif() warn: {15874496549504906763}
 	'check_host_input' return an expression containing a propagated value from the host '(spec_ctrl & ((((1))) << (2))) << (5 - 2)';
 unclassified	arch/x86/kernel/cpu/bugs.c:374 taa_select_mitigation() warn: {11214401792457735863}
 	'check_host_input' an expression containing a propagated value from the host '(ia32_cap & ((((1))) << (5))) && !(ia32_cap & ((((1))) << (7)))' used in if/switch statement;
@@ -6107,10 +6135,12 @@ unclassified	arch/x86/kernel/cpu/bugs.c:461 mmio_select_mitigation() warn: {5346
 	'check_host_input' an expression containing a propagated value from the host '!(ia32_cap & ((((1))) << (14)))' used in if/switch statement;
 unclassified	arch/x86/kernel/cpu/bugs.c:471 mmio_select_mitigation() warn: {9069898379055337186}
 	'check_host_input' an expression containing a propagated value from the host '(ia32_cap & ((((1))) << (17))) || (((__builtin_constant_p((18 * 32 + 10)) && (((((18 * 32 + 10)) >> 5) == (0) && (1 << (((18 * 32 + 10)) & 31) & ((1 << ((0 * 32 + 0) & 31)) | 0 | (1 << ((0 * 32 + 5) & 31)) | (1 << ((0 * 32 + 6) & 31)) | (1 << ((0 * 32 + 8) & 31)) | 0 | (1 << ((0 * 32 + 24) & 31)) | (1 << ((0 * 32 + 15) & 31)) | (1 << ((0 * 32 + 25) & 31)) | (1 << ((0 * 32 + 26) & 31))))) || ((((18 * 32 + 10)) >> 5) == (1) && (1 << (((18 * 32 + 10)) & 31) & ((1 << ((1 * 32 + 29) & 31)) | 0))) || ((((18 * 32' used in if/switch statement;
-unclassified	arch/x86/kernel/cpu/bugs.c:600 update_srbds_msr() warn: {4653423504462853457}
-	'check_host_input' read from the host using function 'paravirt_read_msr' into a variable 'mcu_ctrl';
-unclassified	arch/x86/kernel/cpu/bugs.c:614 update_srbds_msr() warn: {9162768242553362048}
-	'check_host_input' a tainted value from the host 'mcu_ctrl' used in function 'wrmsrl';
+excluded	arch/x86/kernel/cpu/bugs.c:600 update_srbds_msr() warn: {4653423504462853457}
+	'check_host_input' read from the host using function 'paravirt_read_msr' into a variable 'mcu_ctrl'
+	[code is not enabled under X86_FEATURE_HYPERVISOR ];
+excluded	arch/x86/kernel/cpu/bugs.c:614 update_srbds_msr() warn: {9162768242553362048}
+	'check_host_input' a tainted value from the host 'mcu_ctrl' used in function 'wrmsrl'
+	[code is not enabled under X86_FEATURE_HYPERVISOR ];
 unclassified	arch/x86/kernel/cpu/bugs.c:630 srbds_select_mitigation() warn: {10971450138665222533}
 	'check_host_input' an expression containing a propagated value from the host '(ia32_cap & ((((1))) << (5))) && !((__builtin_constant_p((9 * 32 + 11)) && (((((9 * 32 + 11)) >> 5) == (0) && (1 << (((9 * 32 + 11)) & 31) & ((1 << ((0 * 32 + 0) & 31)) | 0 | (1 << ((0 * 32 + 5) & 31)) | (1 << ((0 * 32 + 6) & 31)) | (1 << ((0 * 32 + 8) & 31)) | 0 | (1 << ((0 * 32 + 24) & 31)) | (1 << ((0 * 32 + 15) & 31)) | (1 << ((0 * 32 + 25) & 31)) | (1 << ((0 * 32 + 26) & 31))))) || ((((9 * 32 + 11)) >> 5) == (1) && (1 << (((9 * 32 + 11)) & 31) & ((1 << ((1 * 32 + 29) & 31)) | 0))) || ((((9 * 32 + 11))' used in if/switch statement;
 unclassified	arch/x86/kernel/cpu/bugs.c:1333 spec_ctrl_disable_kernel_rrsba() warn: {7449499207676519486}
@@ -6254,9 +6284,9 @@ unclassified	arch/x86/kernel/cpu/topology.c:39 check_extended_topology_leaf() wa
 	'check_host_input' read from the host using function 'cpuid_count' into a non-local variable '&edx';
 unclassified	arch/x86/kernel/cpu/topology.c:41 check_extended_topology_leaf() warn: {13904993549960839300}
 	'check_host_input' an expression containing a propagated value from the host 'ebx == 0 || (((ecx >> 8) & 255) != 1)' used in if/switch statement;
-unclassified	arch/x86/kernel/cpu/topology.c:51 detect_extended_topology_leaf() warn: {17550123573679671328}
+trusted	arch/x86/kernel/cpu/topology.c:51 detect_extended_topology_leaf() warn: {17550123573679671328}
 	'check_host_input' an expression containing a propagated value from the host 'c->cpuid_level >= 31' used in if/switch statement;
-unclassified	arch/x86/kernel/cpu/topology.c:56 detect_extended_topology_leaf() warn: {17550123573679669155}
+trusted	arch/x86/kernel/cpu/topology.c:56 detect_extended_topology_leaf() warn: {17550123573679669155}
 	'check_host_input' an expression containing a propagated value from the host 'c->cpuid_level >= 11' used in if/switch statement;
 unclassified	arch/x86/kernel/cpu/topology.c:81 detect_extended_topology_early() warn: {17875570329332307924}
 	'check_host_input' propagating read value from the host 'edx' into a different variable 'c->initial_apicid';
@@ -6937,10 +6967,12 @@ unclassified	arch/x86/kernel/cpu/intel.c:619 init_cpuid_fault() warn: {650409739
 	'check_host_input' an expression containing a propagated value from the host 'msr & ((((1))) << (31))' used in if/switch statement;
 trusted	arch/x86/kernel/cpu/intel.c:671 init_intel() warn: {7096684248286720592}
 	'check_host_input' an expression containing a propagated value from the host 'c->cpuid_level > 9' used in if/switch statement;
-unclassified	arch/x86/kernel/cpu/intel.c:672 init_intel() warn: {13556117935970659167}
-	'check_host_input' read from the host using function 'cpuid_eax' into a variable 'eax';
-unclassified	arch/x86/kernel/cpu/intel.c:674 init_intel() warn: {14493365957665128565}
-	'check_host_input' an expression containing a propagated value from the host '(eax & 255) && (((eax >> 8) & 255) > 1)' used in if/switch statement;
+trusted	arch/x86/kernel/cpu/intel.c:672 init_intel() warn: {13556117935970659167}
+	'check_host_input' read from the host using function 'cpuid_eax' into a variable 'eax'
+	[cpuid leaf 10 is trusted];
+trusted	arch/x86/kernel/cpu/intel.c:674 init_intel() warn: {14493365957665128565}
+	'check_host_input' an expression containing a propagated value from the host '(eax & 255) && (((eax >> 8) & 255) > 1)' used in if/switch statement
+	[cpuid leaf 10 is trusted];
 trusted	arch/x86/kernel/cpu/intel.c:684 init_intel() warn: {5838355952606686741}
 	'check_host_input' read from the host using function 'paravirt_read_msr' into a variable '_l';
 trusted	arch/x86/kernel/cpu/intel.c:684 init_intel() warn: {7572552174457617}
@@ -8403,13 +8435,13 @@ excluded	arch/x86/kernel/cpu/cacheinfo.c:714 init_amd_cacheinfo() warn: {4179821
 	'check_host_input' an expression containing a propagated value from the host 'c->extended_cpuid_level >= 2147483654' used in if/switch statement;
 excluded	arch/x86/kernel/cpu/cacheinfo.c:715 init_amd_cacheinfo() warn: {7341351669233359618}
 	'check_host_input' an expression containing a propagated value from the host 'cpuid_edx(2147483654) & 61440' used in if/switch statement;
-unclassified	arch/x86/kernel/cpu/cacheinfo.c:738 init_intel_cacheinfo() warn: {7096684248286720379}
+trusted	arch/x86/kernel/cpu/cacheinfo.c:738 init_intel_cacheinfo() warn: {7096684248286720379}
 	'check_host_input' an expression containing a propagated value from the host 'c->cpuid_level > 3' used in if/switch statement;
 unclassified	arch/x86/kernel/cpu/cacheinfo.c:770 init_intel_cacheinfo() warn: {920734845439691605}
 	'check_host_input' propagating read value from the host 'c->apicid & ~((1 << index_msb) - 1)' into a different variable 'l2_id';
 unclassified	arch/x86/kernel/cpu/cacheinfo.c:776 init_intel_cacheinfo() warn: {5460652062391616668}
 	'check_host_input' propagating read value from the host 'c->apicid & ~((1 << index_msb) - 1)' into a different variable 'l3_id';
-unclassified	arch/x86/kernel/cpu/cacheinfo.c:787 init_intel_cacheinfo() warn: {76339335939264191}
+trusted	arch/x86/kernel/cpu/cacheinfo.c:787 init_intel_cacheinfo() warn: {76339335939264191}
 	'check_host_input' an expression containing a propagated value from the host '(num_cache_leaves == 0 || c->x86 == 15) && c->cpuid_level > 1' used in if/switch statement;
 unclassified	arch/x86/kernel/cpu/cacheinfo.c:798 init_intel_cacheinfo() warn: {1155550060698096110}
 	'check_host_input' propagating read value from the host 'cpuid_eax(2) & 255' into a different variable 'n';
@@ -8448,16 +8480,21 @@ unclassified	arch/x86/kernel/cpu/common.c:160 ppin_init() warn: {757304328939315
 	'check_host_input' an expression containing a propagated value from the host 'val & 2' used in if/switch statement;
 unclassified	arch/x86/kernel/cpu/common.c:161 ppin_init() warn: {14261397112873546045}
 	'check_host_input' read from the host using function '__rdmsr' into a variable 'c->ppin';
-unclassified	arch/x86/kernel/cpu/common.c:578 ibt_save() warn: {15838963877797536023}
-	'check_host_input' read from the host using function 'paravirt_read_msr' into a variable 'msr';
-unclassified	arch/x86/kernel/cpu/common.c:579 ibt_save() warn: {6052276987776009389}
-	'check_host_input' an expression containing a tainted value from the host 'msr & ~((((1))) << (2))' used in function 'wrmsrl';
-unclassified	arch/x86/kernel/cpu/common.c:582 ibt_save() warn: {6385487040}
-	'check_host_input' return an expression containing a propagated value from the host 'msr';
-unclassified	arch/x86/kernel/cpu/common.c:590 ibt_restore() warn: {15838963877797536023}
-	'check_host_input' read from the host using function 'paravirt_read_msr' into a variable 'msr';
-unclassified	arch/x86/kernel/cpu/common.c:593 ibt_restore() warn: {9895795033219104443}
-	'check_host_input' a tainted value from the host 'msr' used in function 'wrmsrl';
+trusted	arch/x86/kernel/cpu/common.c:578 ibt_save() warn: {15838963877797536023}
+	'check_host_input' read from the host using function 'paravirt_read_msr' into a variable 'msr'
+	[MSR_IA32_S_CET is either #GP or native];
+trusted	arch/x86/kernel/cpu/common.c:579 ibt_save() warn: {6052276987776009389}
+	'check_host_input' an expression containing a tainted value from the host 'msr & ~((((1))) << (2))' used in function 'wrmsrl'
+	[MSR_IA32_S_CET is either #GP or native];
+trusted	arch/x86/kernel/cpu/common.c:582 ibt_save() warn: {6385487040}
+	'check_host_input' return an expression containing a propagated value from the host 'msr'
+	[MSR_IA32_S_CET is either #GP or native];
+trusted	arch/x86/kernel/cpu/common.c:590 ibt_restore() warn: {15838963877797536023}
+	'check_host_input' read from the host using function 'paravirt_read_msr' into a variable 'msr'
+	[MSR_IA32_S_CET is either #GP or native];
+trusted	arch/x86/kernel/cpu/common.c:593 ibt_restore() warn: {9895795033219104443}
+	'check_host_input' a tainted value from the host 'msr' used in function 'wrmsrl'
+	[MSR_IA32_S_CET is either #GP or native];
 unclassified	arch/x86/kernel/cpu/common.c:656 filter_cpuid_features() warn: {192124101783717603}
 	'check_host_input' an expression containing a propagated value from the host '!((df->level < 0) ?df->level > c->extended_cpuid_level:df->level > c->cpuid_level)' used in if/switch statement;
 unclassified	arch/x86/kernel/cpu/common.c:760 get_model_name() warn: {3178578917913307386}
@@ -8476,7 +8513,7 @@ unclassified	arch/x86/kernel/cpu/common.c:775 get_model_name() error: {193426451
 	'check_host_input' an expression containing a propagated value from the host '*p' used in iterator;
 unclassified	arch/x86/kernel/cpu/common.c:778 get_model_name() warn: {7569824594049521}
 	'check_host_input' propagating read value from the host '*q' into a different variable 's';
-unclassified	arch/x86/kernel/cpu/common.c:791 detect_num_cpu_cores() warn: {6634448313153439102}
+trusted	arch/x86/kernel/cpu/common.c:791 detect_num_cpu_cores() warn: {6634448313153439102}
 	'check_host_input' an expression containing a propagated value from the host '!1 || c->cpuid_level < 4' used in if/switch statement;
 unclassified	arch/x86/kernel/cpu/common.c:795 detect_num_cpu_cores() warn: {249886535101081206}
 	'check_host_input' an expression containing a propagated value from the host 'eax & 31' used in if/switch statement;
@@ -8708,7 +8745,7 @@ trusted	arch/x86/kernel/cpu/common.c:1643 detect_null_seg_behavior() warn: {2499
 	'check_host_input' return an expression containing a propagated value from the host 'tmp == 0';
 unclassified	arch/x86/kernel/cpu/common.c:1653 check_null_seg_clears_base() warn: {13049394234706670290}
 	'check_host_input' an expression containing a propagated value from the host 'c->extended_cpuid_level >= 2147483681 && cpuid_eax(2147483681) & ((((1))) << (6))' used in if/switch statement;
-unclassified	arch/x86/kernel/cpu/common.c:1700 generic_identify() warn: {12829651308948175870}
+trusted	arch/x86/kernel/cpu/common.c:1700 generic_identify() warn: {12829651308948175870}
 	'check_host_input' an expression containing a propagated value from the host 'c->cpuid_level >= 1' used in if/switch statement;
 unclassified	arch/x86/kernel/cpu/common.c:1701 generic_identify() warn: {14136351294566889537}
 	'check_host_input' propagating read value from the host '(cpuid_ebx(1) >> 24) & 255' into a different variable 'c->initial_apicid';
@@ -8720,7 +8757,7 @@ unclassified	arch/x86/kernel/cpu/common.c:1834 identify_cpu() warn: {17997666311
 	'check_host_input' an expression containing a propagated value from the host '!c->x86_model_id[0]' used in if/switch statement;
 unclassified	arch/x86/kernel/cpu/common.c:1842 identify_cpu() warn: {17717870591644007662}
 	'check_host_input' a tainted value from the host 'c->x86_model_id' used in function 'sprintf';
-unclassified	arch/x86/kernel/cpu/common.c:2309 microcode_check() warn: {647550284655498562}
+trusted	arch/x86/kernel/cpu/common.c:2309 microcode_check() warn: {647550284655498562}
 	'check_host_input' read from the host using function 'cpuid_eax' into a variable 'info.cpuid_level';
 unclassified	arch/x86/kernel/smpboot.c:313 topology_phys_to_logical_die() warn: {12697088690863304319}
 	'check_host_input' an expression containing a propagated value from the host 'c->initialized && c->cpu_die_id == die_id && c->phys_proc_id == proc_id' used in if/switch statement;
@@ -9176,10 +9213,12 @@ trusted	arch/x86/kernel/fpu/xstate.c:884 fpu__init_system_xstate() warn: {115199
 	'check_host_input' an expression containing a propagated value from the host 'xfeatures != fpu_kernel_cfg.max_features' used in if/switch statement;
 trusted	arch/x86/kernel/fpu/xstate.c:891 fpu__init_system_xstate() warn: {14724123068336214844}
 	'check_host_input' a tainted value from the host 'fpu_kernel_cfg.max_features' used in function '_printk';
-unclassified	arch/x86/kernel/fpu/core.c:323 fpu_sync_guest_vmexit_xfd_state() warn: {4684692803267717599}
-	'check_host_input' read from the host using function 'paravirt_read_msr' into a variable 'fps->xfd';
-unclassified	arch/x86/kernel/fpu/core.c:324 fpu_sync_guest_vmexit_xfd_state() warn: {4042392985723387860}
-	'check_host_input' propagating read value from the host 'fps->xfd' into a different variable 'pto_val__';
+trusted	arch/x86/kernel/fpu/core.c:323 fpu_sync_guest_vmexit_xfd_state() warn: {4684692803267717599}
+	'check_host_input' read from the host using function 'paravirt_read_msr' into a variable 'fps->xfd'
+	[MSR_IA32_XFD is either #GP or native];
+trusted	arch/x86/kernel/fpu/core.c:324 fpu_sync_guest_vmexit_xfd_state() warn: {4042392985723387860}
+	'check_host_input' propagating read value from the host 'fps->xfd' into a different variable 'pto_val__'
+	[MSR_IA32_XFD is either #GP or native];
 excluded	arch/x86/kernel/kvm.c:728 kvm_suspend() warn: {16558888492242322455}
 	'check_host_input' read from the host using function 'paravirt_read_msr' into a variable 'val'
 	[kvm host side code];
@@ -12220,9 +12259,9 @@ unclassified	net/9p/trans_virtio.c:640 p9_virtio_probe() warn: {3419096429182805
 	[Value read is used as a text string.];
 unclassified	net/9p/trans_virtio.c:669 p9_virtio_probe() warn: {13881435808452641964}
 	'check_host_input' a tainted value from the host 'tag' used in function 'kfree';
-unclassified	./include/linux/virtio_config.h:507 __virtio_cread_many() error: {13875254427623058277}
+wrapper	./include/linux/virtio_config.h:507 __virtio_cread_many() error: {13875254427623058277}
 	'check_host_input' an expression containing a propagated value from the host 'gen != old' used in iterator;
-unclassified	./include/linux/virtio_config.h:508 __virtio_cread_many() warn: {8246734392207683173}
+wrapper	./include/linux/virtio_config.h:508 __virtio_cread_many() warn: {8246734392207683173}
 	'check_host_input' propagating read value from the host 'gen' into a different variable 'old';
 wrapper	./include/linux/virtio_config.h:342 virtio16_to_cpu() warn: {15189798841701403755}
 	'check_host_input' return an expression containing a propagated value from the host '__virtio16_to_cpu(virtio_is_little_endian(vdev), val)';
@@ -14687,113 +14726,113 @@ unclassified	kernel/sched/core.c:10424 capacity_from_percent() warn: {1810170420
 	'check_host_input' a tainted value from the host 'buf' used in function 'cgroup_parse_float';
 unclassified	kernel/futex/core.c:97 fail_futex_debugfs() warn: {10315767954385190383}
 	'check_host_input' a tainted value from the host '&fail_futex.ignore_private' used in function 'debugfs_create_bool';
-unclassified	kernel/debug/gdbstub.c:73 gdbstub_read_wait() warn: {7572878295438670}
+excluded	kernel/debug/gdbstub.c:73 gdbstub_read_wait() warn: {7572878295438670}
 	'check_host_input' an expression containing a propagated value from the host 'ret > 0' used in if/switch statement;
-unclassified	kernel/debug/gdbstub.c:76 gdbstub_read_wait() warn: {6385651555}
+excluded	kernel/debug/gdbstub.c:76 gdbstub_read_wait() warn: {6385651555}
 	'check_host_input' return an expression containing a propagated value from the host 'ret';
-unclassified	kernel/debug/gdbstub.c:114 get_packet() warn: {249883908125967020}
+excluded	kernel/debug/gdbstub.c:114 get_packet() warn: {249883908125967020}
 	'check_host_input' an expression containing a propagated value from the host 'ch == 35' used in if/switch statement;
-unclassified	kernel/debug/gdbstub.c:116 get_packet() warn: {17544767184356900570}
+excluded	kernel/debug/gdbstub.c:116 get_packet() warn: {17544767184356900570}
 	'check_host_input' propagating read value from the host 'checksum + ch' into a different variable 'checksum';
-unclassified	kernel/debug/gdbstub.c:117 get_packet() warn: {14307256492589932165}
+excluded	kernel/debug/gdbstub.c:117 get_packet() warn: {14307256492589932165}
 	'check_host_input' propagating read value from the host 'ch' into a different variable 'buffer[count]';
-unclassified	kernel/debug/gdbstub.c:121 get_packet() warn: {249883908125967027}
+excluded	kernel/debug/gdbstub.c:121 get_packet() warn: {249883908125967027}
 	'check_host_input' an expression containing a propagated value from the host 'ch == 35' used in if/switch statement;
-unclassified	kernel/debug/gdbstub.c:122 get_packet() warn: {17083882595182665026}
+excluded	kernel/debug/gdbstub.c:122 get_packet() warn: {17083882595182665026}
 	'check_host_input' a tainted value from the host 'gdbstub_read_wait()' used in function 'hex_to_bin';
-unclassified	kernel/debug/gdbstub.c:123 get_packet() warn: {17083882595182665027}
+excluded	kernel/debug/gdbstub.c:123 get_packet() warn: {17083882595182665027}
 	'check_host_input' a tainted value from the host 'gdbstub_read_wait()' used in function 'hex_to_bin';
-unclassified	kernel/debug/gdbstub.c:125 get_packet() warn: {6493945340940853525}
+excluded	kernel/debug/gdbstub.c:125 get_packet() warn: {6493945340940853525}
 	'check_host_input' an expression containing a propagated value from the host 'checksum != xmitcsum' used in if/switch statement;
-unclassified	kernel/debug/gdbstub.c:171 put_packet() warn: {7572239640180794}
+excluded	kernel/debug/gdbstub.c:171 put_packet() warn: {7572239640180794}
 	'check_host_input' an expression containing a propagated value from the host 'ch == 3' used in if/switch statement;
-unclassified	kernel/debug/gdbstub.c:175 put_packet() warn: {249883908125968050}
+excluded	kernel/debug/gdbstub.c:175 put_packet() warn: {249883908125968050}
 	'check_host_input' an expression containing a propagated value from the host 'ch == 43' used in if/switch statement;
-unclassified	kernel/debug/gdbstub.c:184 put_packet() warn: {249883908125967069}
+excluded	kernel/debug/gdbstub.c:184 put_packet() warn: {249883908125967069}
 	'check_host_input' an expression containing a propagated value from the host 'ch == 36' used in if/switch statement;
-unclassified	kernel/debug/debug_core.c:1209 dbg_io_get_char() warn: {17712300544827075243}
+excluded	kernel/debug/debug_core.c:1209 dbg_io_get_char() warn: {17712300544827075243}
 	'check_host_input' an expression containing a propagated value from the host 'ret == 16711680' used in if/switch statement;
-unclassified	kernel/debug/debug_core.c:1212 dbg_io_get_char() warn: {6385651542}
+excluded	kernel/debug/debug_core.c:1212 dbg_io_get_char() warn: {6385651542}
 	'check_host_input' return an expression containing a propagated value from the host 'ret';
-unclassified	kernel/debug/debug_core.c:1213 dbg_io_get_char() warn: {13892110271071487051}
+excluded	kernel/debug/debug_core.c:1213 dbg_io_get_char() warn: {13892110271071487051}
 	'check_host_input' an expression containing a propagated value from the host 'ret == 127' used in if/switch statement;
-unclassified	kernel/debug/debug_core.c:1215 dbg_io_get_char() warn: {6385651545}
+excluded	kernel/debug/debug_core.c:1215 dbg_io_get_char() warn: {6385651545}
 	'check_host_input' return an expression containing a propagated value from the host 'ret';
-unclassified	kernel/debug/kdb/kdb_keyboard.c:42 kdb_get_kbd_char() warn: {12862214832045396095}
+excluded	kernel/debug/kdb/kdb_keyboard.c:42 kdb_get_kbd_char() warn: {12862214832045396095}
 	'check_host_input' an expression containing a propagated value from the host '(kdb_flags & (1 << 7)) || (kdb_flags & (1 << 6)) || (__inb(100) == 255 && __inb(96) == 255)' used in if/switch statement;
-unclassified	kernel/debug/kdb/kdb_keyboard.c:49 kdb_get_kbd_char() warn: {962982244444738687}
+excluded	kernel/debug/kdb/kdb_keyboard.c:49 kdb_get_kbd_char() warn: {962982244444738687}
 	'check_host_input' an expression containing a propagated value from the host '(__inb(100) & 1) == 0' used in if/switch statement;
-unclassified	kernel/debug/kdb/kdb_keyboard.c:55 kdb_get_kbd_char() warn: {2874594729665353198}
+excluded	kernel/debug/kdb/kdb_keyboard.c:55 kdb_get_kbd_char() warn: {2874594729665353198}
 	'check_host_input' read from the host using function '__inb' into a variable 'scancode';
-unclassified	kernel/debug/kdb/kdb_keyboard.c:56 kdb_get_kbd_char() warn: {8656218869963820442}
+excluded	kernel/debug/kdb/kdb_keyboard.c:56 kdb_get_kbd_char() warn: {8656218869963820442}
 	'check_host_input' read from the host using function '__inb' into a variable 'scanstatus';
-unclassified	kernel/debug/kdb/kdb_keyboard.c:61 kdb_get_kbd_char() warn: {15567263117239312020}
+excluded	kernel/debug/kdb/kdb_keyboard.c:61 kdb_get_kbd_char() warn: {15567263117239312020}
 	'check_host_input' an expression containing a propagated value from the host 'scanstatus & 32' used in if/switch statement;
-unclassified	kernel/debug/kdb/kdb_keyboard.c:71 kdb_get_kbd_char() warn: {17237080724023686569}
+excluded	kernel/debug/kdb/kdb_keyboard.c:71 kdb_get_kbd_char() warn: {17237080724023686569}
 	'check_host_input' an expression containing a propagated value from the host '((scancode & 127) == 42) || ((scancode & 127) == 54)' used in if/switch statement;
-unclassified	kernel/debug/kdb/kdb_keyboard.c:75 kdb_get_kbd_char() warn: {2751170875914235338}
+excluded	kernel/debug/kdb/kdb_keyboard.c:75 kdb_get_kbd_char() warn: {2751170875914235338}
 	'check_host_input' an expression containing a propagated value from the host '(scancode & 128) == 0' used in if/switch statement;
-unclassified	kernel/debug/kdb/kdb_keyboard.c:86 kdb_get_kbd_char() warn: {2751170875914235349}
+excluded	kernel/debug/kdb/kdb_keyboard.c:86 kdb_get_kbd_char() warn: {2751170875914235349}
 	'check_host_input' an expression containing a propagated value from the host '(scancode & 128) == 0' used in if/switch statement;
-unclassified	kernel/debug/kdb/kdb_keyboard.c:93 kdb_get_kbd_char() warn: {2751170875881029568}
+excluded	kernel/debug/kdb/kdb_keyboard.c:93 kdb_get_kbd_char() warn: {2751170875881029568}
 	'check_host_input' an expression containing a propagated value from the host '(scancode & 128) != 0' used in if/switch statement;
-unclassified	kernel/debug/kdb/kdb_keyboard.c:94 kdb_get_kbd_char() warn: {14751045965238793719}
+excluded	kernel/debug/kdb/kdb_keyboard.c:94 kdb_get_kbd_char() warn: {14751045965238793719}
 	'check_host_input' an expression containing a propagated value from the host 'scancode == 156' used in if/switch statement;
-unclassified	kernel/debug/kdb/kdb_keyboard.c:105 kdb_get_kbd_char() warn: {10508861796727602131}
+excluded	kernel/debug/kdb/kdb_keyboard.c:105 kdb_get_kbd_char() warn: {10508861796727602131}
 	'check_host_input' an expression containing a propagated value from the host 'scancode == 58' used in if/switch statement;
-unclassified	kernel/debug/kdb/kdb_keyboard.c:117 kdb_get_kbd_char() warn: {10508861796727597655}
+excluded	kernel/debug/kdb/kdb_keyboard.c:117 kdb_get_kbd_char() warn: {10508861796727597655}
 	'check_host_input' an expression containing a propagated value from the host 'scancode == 14' used in if/switch statement;
-unclassified	kernel/debug/kdb/kdb_keyboard.c:125 kdb_get_kbd_char() warn: {249906283482655264}
+excluded	kernel/debug/kdb/kdb_keyboard.c:125 kdb_get_kbd_char() warn: {249906283482655264}
 	'check_host_input' an expression containing a propagated value from the host 'scancode' used in if/switch statement;
-unclassified	kernel/debug/kdb/kdb_keyboard.c:144 kdb_get_kbd_char() warn: {14751045965238826373}
+excluded	kernel/debug/kdb/kdb_keyboard.c:144 kdb_get_kbd_char() warn: {14751045965238826373}
 	'check_host_input' an expression containing a propagated value from the host 'scancode == 224' used in if/switch statement;
-unclassified	kernel/debug/kdb/kdb_keyboard.c:152 kdb_get_kbd_char() warn: {14751045965238789388}
+excluded	kernel/debug/kdb/kdb_keyboard.c:152 kdb_get_kbd_char() warn: {14751045965238789388}
 	'check_host_input' an expression containing a propagated value from the host 'scancode == 115' used in if/switch statement;
-unclassified	kernel/debug/kdb/kdb_keyboard.c:154 kdb_get_kbd_char() warn: {14751045965238790479}
+excluded	kernel/debug/kdb/kdb_keyboard.c:154 kdb_get_kbd_char() warn: {14751045965238790479}
 	'check_host_input' an expression containing a propagated value from the host 'scancode == 125' used in if/switch statement;
-unclassified	kernel/debug/kdb/kdb_keyboard.c:184 kdb_get_kbd_char() warn: {10508861796727598943}
+excluded	kernel/debug/kdb/kdb_keyboard.c:184 kdb_get_kbd_char() warn: {10508861796727598943}
 	'check_host_input' an expression containing a propagated value from the host 'scancode == 28' used in if/switch statement;
-unclassified	kernel/debug/kdb/kdb_keyboard.c:226 kdb_kbd_cleanup_state() error: {962982244444738700}
+excluded	kernel/debug/kdb/kdb_keyboard.c:226 kdb_kbd_cleanup_state() error: {962982244444738700}
 	'check_host_input' an expression containing a propagated value from the host '(__inb(100) & 1) == 0' used in iterator;
-unclassified	kernel/debug/kdb/kdb_keyboard.c:232 kdb_kbd_cleanup_state() warn: {2874594729665353211}
+excluded	kernel/debug/kdb/kdb_keyboard.c:232 kdb_kbd_cleanup_state() warn: {2874594729665353211}
 	'check_host_input' read from the host using function '__inb' into a variable 'scancode';
-unclassified	kernel/debug/kdb/kdb_keyboard.c:233 kdb_kbd_cleanup_state() warn: {8656218869963820455}
+excluded	kernel/debug/kdb/kdb_keyboard.c:233 kdb_kbd_cleanup_state() warn: {8656218869963820455}
 	'check_host_input' read from the host using function '__inb' into a variable 'scanstatus';
-unclassified	kernel/debug/kdb/kdb_keyboard.c:238 kdb_kbd_cleanup_state() warn: {15567263117239312033}
+excluded	kernel/debug/kdb/kdb_keyboard.c:238 kdb_kbd_cleanup_state() warn: {15567263117239312033}
 	'check_host_input' an expression containing a propagated value from the host 'scanstatus & 32' used in if/switch statement;
-unclassified	kernel/debug/kdb/kdb_keyboard.c:257 kdb_kbd_cleanup_state() warn: {14751045929077690586}
+excluded	kernel/debug/kdb/kdb_keyboard.c:257 kdb_kbd_cleanup_state() warn: {14751045929077690586}
 	'check_host_input' an expression containing a propagated value from the host 'scancode != 156' used in if/switch statement;
-unclassified	kernel/debug/kdb/kdb_io.c:322 kdb_read() warn: {10644910206703819513}
+excluded	kernel/debug/kdb/kdb_io.c:322 kdb_read() warn: {10644910206703819513}
 	'check_host_input' a tainted value from the host 'tmpbuffer' used in function 'strrchr';
-unclassified	kernel/debug/kdb/kdb_io.c:327 kdb_read() warn: {4374162631028553202}
+excluded	kernel/debug/kdb/kdb_io.c:327 kdb_read() warn: {4374162631028553202}
 	'check_host_input' a tainted value from the host 'p_tmp' used in function 'strlen';
-unclassified	kernel/debug/kdb/kdb_io.c:329 kdb_read() warn: {14754134951190598620}
+excluded	kernel/debug/kdb/kdb_io.c:329 kdb_read() warn: {14754134951190598620}
 	'check_host_input' a tainted value from the host 'p_tmp' used in function 'kallsyms_symbol_complete';
-unclassified	kernel/debug/kdb/kdb_io.c:341 kdb_read() warn: {11698824779893997507}
+excluded	kernel/debug/kdb/kdb_io.c:341 kdb_read() warn: {11698824779893997507}
 	'check_host_input' a tainted value from the host 'p_tmp' used in function 'kallsyms_symbol_next';
-unclassified	kernel/debug/kdb/kdb_io.c:345 kdb_read() warn: {5925877607277177079}
+excluded	kernel/debug/kdb/kdb_io.c:345 kdb_read() warn: {5925877607277177079}
 	'check_host_input' a tainted value from the host 'p_tmp' used in function 'kdb_printf';
-unclassified	kernel/debug/kdb/kdb_io.c:347 kdb_read() warn: {6517009548805042243}
+excluded	kernel/debug/kdb/kdb_io.c:347 kdb_read() warn: {6517009548805042243}
 	'check_host_input' a tainted value from the host 'p_tmp' used in function 'kdb_printf';
-unclassified	kernel/debug/kdb/kdb_io.c:356 kdb_read() warn: {4374162631028553231}
+excluded	kernel/debug/kdb/kdb_io.c:356 kdb_read() warn: {4374162631028553231}
 	'check_host_input' a tainted value from the host 'p_tmp' used in function 'strlen';
-unclassified	kernel/debug/kdb/kdb_io.c:357 kdb_read() warn: {6139735670057743774}
+excluded	kernel/debug/kdb/kdb_io.c:357 kdb_read() warn: {6139735670057743774}
 	'check_host_input' an expression containing a tainted value from the host 'p_tmp + len_tmp' used in function 'strncpy';
-unclassified	kernel/debug/kdb/kdb_io.c:358 kdb_read() warn: {4374162631028553233}
+excluded	kernel/debug/kdb/kdb_io.c:358 kdb_read() warn: {4374162631028553233}
 	'check_host_input' a tainted value from the host 'p_tmp' used in function 'strlen';
-unclassified	kernel/debug/kdb/kdb_io.c:359 kdb_read() warn: {5837649294956051129}
+excluded	kernel/debug/kdb/kdb_io.c:359 kdb_read() warn: {5837649294956051129}
 	'check_host_input' an expression containing a tainted value from the host 'p_tmp + len' used in function 'strncpy';
-unclassified	kernel/debug/kdb/kdb_main.c:585 kdbgetaddrarg() warn: {2667629005820670858}
+excluded	kernel/debug/kdb/kdb_main.c:585 kdbgetaddrarg() warn: {2667629005820670858}
 	'check_host_input' a tainted value from the host 'symname' used in function 'strpbrk';
-unclassified	kernel/debug/kdb/kdb_main.c:591 kdbgetaddrarg() warn: {5409695254245265594}
+excluded	kernel/debug/kdb/kdb_main.c:591 kdbgetaddrarg() warn: {5409695254245265594}
 	'check_host_input' an expression containing a propagated value from the host 'symname[0] == 36' used in if/switch statement;
-unclassified	kernel/debug/kdb/kdb_main.c:592 kdbgetaddrarg() warn: {10749724719936371128}
+excluded	kernel/debug/kdb/kdb_main.c:592 kdbgetaddrarg() warn: {10749724719936371128}
 	'check_host_input' a tainted value from the host '&symname[1]' used in function 'kdbgetulenv';
-unclassified	kernel/debug/kdb/kdb_main.c:595 kdbgetaddrarg() warn: {5409695254245265631}
+excluded	kernel/debug/kdb/kdb_main.c:595 kdbgetaddrarg() warn: {5409695254245265631}
 	'check_host_input' an expression containing a propagated value from the host 'symname[0] == 37' used in if/switch statement;
-unclassified	kernel/debug/kdb/kdb_main.c:604 kdbgetaddrarg() warn: {13613213966905179196}
+excluded	kernel/debug/kdb/kdb_main.c:604 kdbgetaddrarg() warn: {13613213966905179196}
 	'check_host_input' a tainted value from the host 'symname' used in function 'kdbgetsymval';
-unclassified	kernel/debug/kdb/kdb_main.c:620 kdbgetaddrarg() warn: {14363573934033399048}
+excluded	kernel/debug/kdb/kdb_main.c:620 kdbgetaddrarg() warn: {14363573934033399048}
 	'check_host_input' propagating read value from the host '*symname' into a different variable 'name';
 unclassified	kernel/audit.c:2107 audit_log_n_untrustedstring() warn: {11233109564766883526}
 	'check_host_input' a tainted value from the host 'string' used in function 'audit_string_contains_control';
@@ -15785,18 +15824,24 @@ unclassified	./include/asm-generic/bitops/instrumented-atomic.h:57 change_bit() 
 	'check_host_input' an expression containing a tainted value from the host 'addr + (nr / 64)' used in function 'instrument_atomic_write';
 unclassified	./include/asm-generic/bitops/instrumented-atomic.h:58 change_bit() warn: {10288275916849655777}
 	'check_host_input' a tainted value from the host 'addr' used in function 'arch_change_bit';
-unclassified	./include/linux/mtd/map.h:394 inline_map_read() warn: {3307355479114588437}
-	'check_host_input' read from the host using function '__readb' into a variable 'r.x[0]';
-unclassified	./include/linux/mtd/map.h:396 inline_map_read() warn: {14763418652967142508}
-	'check_host_input' read from the host using function '__readw' into a variable 'r.x[0]';
-unclassified	./include/linux/mtd/map.h:398 inline_map_read() warn: {16668371117300850595}
-	'check_host_input' read from the host using function '__readl' into a variable 'r.x[0]';
-unclassified	./include/linux/mtd/map.h:401 inline_map_read() warn: {14125506899539205867}
-	'check_host_input' read from the host using function '__readq' into a variable 'r.x[0]';
+excluded	./include/linux/mtd/map.h:394 inline_map_read() warn: {3307355479114588437}
+	'check_host_input' read from the host using function '__readb' into a variable 'r.x[0]'
+	[used only in drivers/mtd/*];
+excluded	./include/linux/mtd/map.h:396 inline_map_read() warn: {14763418652967142508}
+	'check_host_input' read from the host using function '__readw' into a variable 'r.x[0]'
+	[used only in drivers/mtd/*];
+excluded	./include/linux/mtd/map.h:398 inline_map_read() warn: {16668371117300850595}
+	'check_host_input' read from the host using function '__readl' into a variable 'r.x[0]'
+	[used only in drivers/mtd/*];
+excluded	./include/linux/mtd/map.h:401 inline_map_read() warn: {14125506899539205867}
+	'check_host_input' read from the host using function '__readq' into a variable 'r.x[0]'
+	[used only in drivers/mtd/*];
 excluded	./include/linux/mtd/map.h:404 inline_map_read() warn: {17197840676247827089}
-	'check_host_input' a tainted value from the host 'r.x' used in function 'memcpy_fromio';
+	'check_host_input' a tainted value from the host 'r.x' used in function 'memcpy_fromio'
+	[used only in drivers/mtd/*];
 excluded	./include/linux/mtd/map.h:435 inline_map_copy_from() warn: {11685176256792284376}
-	'check_host_input' a tainted value from the host 'to' used in function 'memcpy_fromio';
+	'check_host_input' a tainted value from the host 'to' used in function 'memcpy_fromio'
+	[used only in drivers/mtd/*];
 wrapper	./include/linux/vringh.h:258 vringh32_to_cpu() warn: {14198874903248228597}
 	'check_host_input' return an expression containing a propagated value from the host '__virtio32_to_cpu(vringh_is_little_endian(vrh), val)';
 wrapper	./include/linux/vringh.h:248 vringh16_to_cpu() warn: {4240518095514024823}
@@ -15814,9 +15859,9 @@ excluded	./arch/x86/include/asm/mshyperv.h:209 hv_get_register() warn: {69541261
 excluded	./arch/x86/include/asm/numachip/numachip_csr.h:80 numachip2_read64_lcsr() warn: {10858371410065667484}
 	'check_host_input' return an expression containing a propagated value from the host 'readq(numachip2_lcsr_address(offset))'
 	[only used in drivers/clocksource/numachip.c];
-unclassified	./include/linux/io-64-nonatomic-lo-hi.h:13 lo_hi_readq() warn: {16637911577568559842}
+wrapper	./include/linux/io-64-nonatomic-lo-hi.h:13 lo_hi_readq() warn: {16637911577568559842}
 	'check_host_input' read from the host using function 'readl' into a variable 'low';
-unclassified	./include/linux/io-64-nonatomic-lo-hi.h:14 lo_hi_readq() warn: {12028046911136427373}
+wrapper	./include/linux/io-64-nonatomic-lo-hi.h:14 lo_hi_readq() warn: {12028046911136427373}
 	'check_host_input' read from the host using function 'readl' into a variable 'high';
 wrapper	./include/linux/io-64-nonatomic-lo-hi.h:16 lo_hi_readq() warn: {2059810582508571448}
 	'check_host_input' return an expression containing a propagated value from the host 'low + (high << 32)';
@@ -15886,10 +15931,12 @@ excluded	./include/media/v4l2-ctrls.h:1054 v4l2_ctrl_s_ctrl() warn: {10940029183
 	'check_host_input' a tainted value from the host 'val' used in function '__v4l2_ctrl_s_ctrl';
 excluded	./include/media/v4l2-dev.h:495 video_set_drvdata() warn: {3388075819868345618}
 	'check_host_input' a tainted value from the host 'data' used in function 'dev_set_drvdata';
-unclassified	./include/linux/via-core.h:205 via_write_reg_mask() warn: {15408369146084604175}
-	'check_host_input' read from the host using function '__inb' into a variable 'old';
-unclassified	./include/linux/via-core.h:206 via_write_reg_mask() warn: {3115493582781139226}
-	'check_host_input' an expression containing a tainted value from the host '(data & mask) | (old & ~mask)' used in function '__outb';
+excluded	./include/linux/via-core.h:205 via_write_reg_mask() warn: {15408369146084604175}
+	'check_host_input' read from the host using function '__inb' into a variable 'old'
+	[used in video and media drivers];
+excluded	./include/linux/via-core.h:206 via_write_reg_mask() warn: {3115493582781139226}
+	'check_host_input' an expression containing a tainted value from the host '(data & mask) | (old & ~mask)' used in function '__outb'
+	[used in video and media drivers];
 unclassified	./include/linux/ktime.h:224 ns_to_ktime() warn: {193500584}
 	'check_host_input' return an expression containing a propagated value from the host 'ns';
 unclassified	./include/linux/etherdevice.h:458 u64_to_ether_addr() warn: {1910695151596679354}
@@ -16152,7 +16199,7 @@ unclassified	./include/linux/can/length.h:152 can_frame_set_cc_len() warn: {9859
 	'check_host_input' an expression containing a propagated value from the host 'ctrlmode & 256 && dlc > 8' used in if/switch statement;
 unclassified	./include/linux/can/length.h:153 can_frame_set_cc_len() warn: {11106244949041704087}
 	'check_host_input' propagating read value from the host 'dlc' into a different variable 'cf->len8_dlc';
-unclassified	drivers/net/tap.c:88 tap16_to_cpu() warn: {13868535124491044047}
+wrapper	drivers/net/tap.c:88 tap16_to_cpu() warn: {13868535124491044047}
 	'check_host_input' return an expression containing a propagated value from the host '__virtio16_to_cpu(tap_is_little_endian(q), val)';
 excluded	./include/linux/rio_drv.h:57 rio_local_read_config_32() warn: {18185895346486785309}
 	'check_host_input' a tainted value from the host 'data' used in function '__rio_local_read_config_32';
@@ -17124,7 +17171,7 @@ unclassified	drivers/virtio/virtio_pci_modern.c:52 vp_finalize_features() warn: 
 	'check_host_input' a tainted value from the host 'features' used in function 'vp_transport_features';
 unclassified	drivers/virtio/virtio_pci_modern.c:60 vp_finalize_features() warn: {14375692954775295398}
 	'check_host_input' a tainted value from the host 'vdev->features' used in function 'vp_modern_set_features';
-unclassified	drivers/virtio/virtio_pci_modern.c:80 vp_get() warn: {3977928504790983313}
+wrapper	drivers/virtio/virtio_pci_modern.c:80 vp_get() warn: {3977928504790983313}
 	'check_host_input' read from the host using function 'ioread8' into a variable 'b';
 wrapper	drivers/virtio/virtio_pci_modern.c:81 vp_get() warn: {249803598470029146}
 	'check_host_input' propagating read value from the host 'b' into a different variable 'buf';
@@ -17565,23 +17612,24 @@ unclassified	drivers/virtio/virtio_ring.c:2543 vring_create_virtqueue() warn: {3
 	'check_host_input' a tainted value from the host 'num' used in function 'vring_create_virtqueue_packed';
 unclassified	drivers/virtio/virtio_ring.c:2547 vring_create_virtqueue() warn: {4754408012428965928}
 	'check_host_input' a tainted value from the host 'num' used in function 'vring_create_virtqueue_split';
-unclassified	drivers/virtio/virtio_vdpa.c:78 virtio_vdpa_generation() warn: {7082400822739048175}
-	'check_host_input' return an expression containing a propagated value from the host 'ops->get_generation(vdpa)';
-unclassified	drivers/virtio/virtio_vdpa.c:88 virtio_vdpa_get_status() warn: {2816401798454187910}
+excluded	drivers/virtio/virtio_vdpa.c:78 virtio_vdpa_generation() warn: {7082400822739048175}
+	'check_host_input' return an expression containing a propagated value from the host 'ops->get_generation(vdpa)'
+	[virtio-vdpa driver is not enabled for TDX guest];
+excluded	drivers/virtio/virtio_vdpa.c:88 virtio_vdpa_get_status() warn: {2816401798454187910}
 	'check_host_input' return an expression containing a propagated value from the host 'ops->get_status(vdpa)';
-unclassified	drivers/virtio/virtio_vdpa.c:95 virtio_vdpa_set_status() warn: {271309919454480526}
+excluded	drivers/virtio/virtio_vdpa.c:95 virtio_vdpa_set_status() warn: {271309919454480526}
 	'check_host_input' a tainted value from the host 'status' used in function 'vdpa_set_status';
-unclassified	drivers/virtio/virtio_vdpa.c:221 virtio_vdpa_setup_vq() warn: {13882295791562152601}
+excluded	drivers/virtio/virtio_vdpa.c:221 virtio_vdpa_setup_vq() warn: {13882295791562152601}
 	'check_host_input' propagating read value from the host 'vq->num_free' into a different variable 'info->vq->num_free';
-unclassified	drivers/virtio/virtio_vdpa.c:234 virtio_vdpa_setup_vq() warn: {2552000704703394799}
+excluded	drivers/virtio/virtio_vdpa.c:234 virtio_vdpa_setup_vq() warn: {2552000704703394799}
 	'check_host_input' propagating read value from the host '!!(ops->get_vq_ready(vdpa, index))' into a different variable '__ret_warn_on';
-unclassified	drivers/virtio/virtio_vdpa.c:234 virtio_vdpa_setup_vq() warn: {1893244882247518548}
+excluded	drivers/virtio/virtio_vdpa.c:234 virtio_vdpa_setup_vq() warn: {1893244882247518548}
 	'check_host_input' an expression containing a propagated value from the host '__builtin_expect(!!__ret_warn_on, 0)' used in if/switch statement;
-unclassified	drivers/virtio/virtio_vdpa.c:281 virtio_vdpa_find_vqs() error: {249889313137229119}
+excluded	drivers/virtio/virtio_vdpa.c:281 virtio_vdpa_find_vqs() error: {249889313137229119}
 	'check_host_input' an expression containing a propagated value from the host 'i < nvqs' used in iterator;
-unclassified	drivers/virtio/virtio_vdpa.c:322 virtio_vdpa_finalize_features() warn: {18177403807574976071}
+excluded	drivers/virtio/virtio_vdpa.c:322 virtio_vdpa_finalize_features() warn: {18177403807574976071}
 	'check_host_input' a tainted value from the host 'vdev->features' used in function 'vdpa_set_features';
-unclassified	./include/linux/vdpa.h:457 vdpa_set_features() warn: {14459691226629511363}
+excluded	./include/linux/vdpa.h:457 vdpa_set_features() warn: {14459691226629511363}
 	'check_host_input' a tainted value from the host 'features' used in function 'vdpa_set_features_unlocked';
 unclassified	./include/uapi/linux/swab.h:84 __fswahw32() warn: {1291513062544609362}
 	'check_host_input' return an expression containing a propagated value from the host '((((val & 65535) << 16) | ((val & 4294901760) >> 16)))';
@@ -17765,10 +17813,12 @@ unclassified	./include/linux/via-core.h:191 via_read_reg() warn: {16084145182720
 	'check_host_input' return an expression containing a propagated value from the host '__inb(port + 1)';
 unclassified	./include/linux/via-core.h:197 via_write_reg() warn: {13830936832408165400}
 	'check_host_input' a tainted value from the host 'data' used in function '__outb';
-unclassified	./include/linux/via-core.h:214 via_write_misc_reg_mask() warn: {16505359515106303853}
-	'check_host_input' read from the host using function '__inb' into a variable 'old';
-unclassified	./include/linux/via-core.h:215 via_write_misc_reg_mask() warn: {16383532724726969559}
-	'check_host_input' an expression containing a tainted value from the host '(data & mask) | (old & ~mask)' used in function '__outb';
+excluded	./include/linux/via-core.h:214 via_write_misc_reg_mask() warn: {16505359515106303853}
+	'check_host_input' read from the host using function '__inb' into a variable 'old'
+	[only used in drivers/video/fbdev/via/hw.c];
+excluded	./include/linux/via-core.h:215 via_write_misc_reg_mask() warn: {16383532724726969559}
+	'check_host_input' an expression containing a tainted value from the host '(data & mask) | (old & ~mask)' used in function '__outb'
+	[only used in drivers/video/fbdev/via/hw.c];
 excluded	./include/video/vga.h:290 vga_io_wcrt() warn: {5580958643096966539}
 	'check_host_input' a tainted value from the host 'val' used in function 'vga_io_w_fast';
 excluded	./include/video/vga.h:343 vga_io_wseq() warn: {12852273158269208653}
@@ -19208,8 +19258,9 @@ unclassified	drivers/pci/pci-acpi.c:554 program_hpx_type3_register() warn: {7572
 	'check_host_input' a tainted value from the host 'orig_value' used in function '__dynamic_dev_dbg';
 unclassified	drivers/pci/pci-acpi.c:554 program_hpx_type3_register() warn: {7572251756130292}
 	'check_host_input' a tainted value from the host 'write_reg' used in function '__dynamic_dev_dbg';
-unclassified	drivers/pci/pci-acpi.c:802 pciehp_is_native() warn: {6632470565469290309}
-	'check_host_input' an expression containing a propagated value from the host '!(slot_cap & 64)' used in if/switch statement;
+excluded	drivers/pci/pci-acpi.c:802 pciehp_is_native() warn: {6632470565469290309}
+	'check_host_input' an expression containing a propagated value from the host '!(slot_cap & 64)' used in if/switch statement
+	[hotplug is disabled for TDX guest];
 unclassified	drivers/pci/setup-res.c:98 pci_std_update_resource() warn: {4560426736373704683}
 	'check_host_input' a tainted value from the host '&cmd' used in function 'pci_read_config_word';
 unclassified	drivers/pci/setup-res.c:99 pci_std_update_resource() warn: {15618541862816412203}
@@ -20516,21 +20567,22 @@ unclassified	drivers/pci/endpoint/functions/pci-epf-test.c:489 pci_epf_test_read
 	'check_host_input' a tainted value from the host 'buf' used in function 'kfree';
 unclassified	drivers/pci/endpoint/functions/pci-epf-test.c:704 pci_epf_test_cmd_handler() warn: {15675403137952364352}
 	'check_host_input' an expression containing a propagated value from the host 'reg->irq_number > count || count <= 0' used in if/switch statement;
-unclassified	drivers/pci/msi/msi.c:130 __pci_read_msi_msg() warn: {3351099793152891663}
-	'check_host_input' read from the host using function 'readl' into a variable 'msg->address_lo';
-unclassified	drivers/pci/msi/msi.c:131 __pci_read_msi_msg() warn: {17238168931506875338}
+excluded	drivers/pci/msi/msi.c:130 __pci_read_msi_msg() warn: {3351099793152891663}
+	'check_host_input' read from the host using function 'readl' into a variable 'msg->address_lo'
+	[only used for powerpc at the moment];
+excluded	drivers/pci/msi/msi.c:131 __pci_read_msi_msg() warn: {17238168931506875338}
 	'check_host_input' read from the host using function 'readl' into a variable 'msg->address_hi';
-unclassified	drivers/pci/msi/msi.c:132 __pci_read_msi_msg() warn: {9081416523170477107}
+excluded	drivers/pci/msi/msi.c:132 __pci_read_msi_msg() warn: {9081416523170477107}
 	'check_host_input' read from the host using function 'readl' into a variable 'msg->data';
-unclassified	drivers/pci/msi/msi.c:137 __pci_read_msi_msg() warn: {8612469505484185492}
+excluded	drivers/pci/msi/msi.c:137 __pci_read_msi_msg() warn: {8612469505484185492}
 	'check_host_input' a tainted value from the host '&msg->address_lo' used in function 'pci_read_config_dword';
-unclassified	drivers/pci/msi/msi.c:140 __pci_read_msi_msg() warn: {10567800651427249809}
+excluded	drivers/pci/msi/msi.c:140 __pci_read_msi_msg() warn: {10567800651427249809}
 	'check_host_input' a tainted value from the host '&msg->address_hi' used in function 'pci_read_config_dword';
-unclassified	drivers/pci/msi/msi.c:142 __pci_read_msi_msg() warn: {9011036727000993292}
+excluded	drivers/pci/msi/msi.c:142 __pci_read_msi_msg() warn: {9011036727000993292}
 	'check_host_input' a tainted value from the host '&data' used in function 'pci_read_config_word';
-unclassified	drivers/pci/msi/msi.c:145 __pci_read_msi_msg() warn: {1391362149005853668}
+excluded	drivers/pci/msi/msi.c:145 __pci_read_msi_msg() warn: {1391362149005853668}
 	'check_host_input' a tainted value from the host '&data' used in function 'pci_read_config_word';
-unclassified	drivers/pci/msi/msi.c:147 __pci_read_msi_msg() warn: {15549711746734676133}
+excluded	drivers/pci/msi/msi.c:147 __pci_read_msi_msg() warn: {15549711746734676133}
 	'check_host_input' propagating read value from the host 'data' into a different variable 'msg->data';
 unclassified	drivers/pci/msi/msi.c:189 __pci_write_msi_msg() warn: {2257113990417857881}
 	'check_host_input' a tainted value from the host '&msgctl' used in function 'pci_read_config_word';
@@ -20628,21 +20680,21 @@ unclassified	drivers/pci/msi/pcidev_msi.c:39 pci_msix_init() warn: {148116441246
 	'check_host_input' an expression containing a propagated value from the host 'ctrl & 32768' used in if/switch statement;
 unclassified	drivers/pci/msi/pcidev_msi.c:40 pci_msix_init() warn: {8197904909415394539}
 	'check_host_input' an expression containing a tainted value from the host 'ctrl & ~32768' used in function 'pci_write_config_word';
-unclassified	drivers/pci/access.c:66 pci_bus_read_config_byte() warn: {5015179943511181524}
+wrapper	drivers/pci/access.c:66 pci_bus_read_config_byte() warn: {5015179943511181524}
 	'check_host_input' a tainted value from the host '&data' used in function 'read';
-unclassified	drivers/pci/access.c:66 pci_bus_read_config_byte() warn: {10295821913918175651}
+wrapper	drivers/pci/access.c:66 pci_bus_read_config_byte() warn: {10295821913918175651}
 	'check_host_input' propagating read value from the host 'data' into a different variable 'value';
-unclassified	drivers/pci/access.c:67 pci_bus_read_config_word() warn: {8243445377313910335}
+wrapper	drivers/pci/access.c:67 pci_bus_read_config_word() warn: {8243445377313910335}
 	'check_host_input' an expression containing a propagated value from the host '(pos & 1)' used in if/switch statement;
-unclassified	drivers/pci/access.c:67 pci_bus_read_config_word() warn: {5015226354995583477}
+wrapper	drivers/pci/access.c:67 pci_bus_read_config_word() warn: {5015226354995583477}
 	'check_host_input' a tainted value from the host 'pos' used in function 'read';
-unclassified	drivers/pci/access.c:67 pci_bus_read_config_word() warn: {5015226354995583477}
+wrapper	drivers/pci/access.c:67 pci_bus_read_config_word() warn: {5015226354995583477}
 	'check_host_input' a tainted value from the host '&data' used in function 'read';
-unclassified	drivers/pci/access.c:67 pci_bus_read_config_word() warn: {10295821913918175651}
+wrapper	drivers/pci/access.c:67 pci_bus_read_config_word() warn: {10295821913918175651}
 	'check_host_input' propagating read value from the host 'data' into a different variable 'value';
-unclassified	drivers/pci/access.c:68 pci_bus_read_config_dword() warn: {5015319177964387383}
+wrapper	drivers/pci/access.c:68 pci_bus_read_config_dword() warn: {5015319177964387383}
 	'check_host_input' a tainted value from the host '&data' used in function 'read';
-unclassified	drivers/pci/access.c:68 pci_bus_read_config_dword() warn: {10295821913918175651}
+wrapper	drivers/pci/access.c:68 pci_bus_read_config_dword() warn: {10295821913918175651}
 	'check_host_input' propagating read value from the host 'data' into a different variable 'value';
 unclassified	drivers/pci/access.c:69 pci_bus_write_config_byte() warn: {3289829006109042944}
 	'check_host_input' a tainted value from the host 'value' used in function 'write';
@@ -20650,13 +20702,13 @@ unclassified	drivers/pci/access.c:70 pci_bus_write_config_word() warn: {32898754
 	'check_host_input' a tainted value from the host 'value' used in function 'write';
 unclassified	drivers/pci/access.c:71 pci_bus_write_config_dword() warn: {3289968240562248803}
 	'check_host_input' a tainted value from the host 'value' used in function 'write';
-unclassified	drivers/pci/access.c:85 pci_generic_config_read() warn: {13291693607901478532}
+wrapper	drivers/pci/access.c:85 pci_generic_config_read() warn: {13291693607901478532}
 	'check_host_input' a tainted value from the host 'where' used in function 'map_bus';
-unclassified	drivers/pci/access.c:90 pci_generic_config_read() warn: {12483132131664301379}
+wrapper	drivers/pci/access.c:90 pci_generic_config_read() warn: {12483132131664301379}
 	'check_host_input' read from the host using function 'readb' into a variable 'val';
-unclassified	drivers/pci/access.c:92 pci_generic_config_read() warn: {12483133026651603898}
+wrapper	drivers/pci/access.c:92 pci_generic_config_read() warn: {12483133026651603898}
 	'check_host_input' read from the host using function 'readw' into a variable 'val';
-unclassified	drivers/pci/access.c:94 pci_generic_config_read() warn: {12483132557848731153}
+wrapper	drivers/pci/access.c:94 pci_generic_config_read() warn: {12483132557848731153}
 	'check_host_input' read from the host using function 'readl' into a variable 'val';
 unclassified	drivers/pci/access.c:110 pci_generic_config_write() warn: {2324555791421681175}
 	'check_host_input' a tainted value from the host 'val' used in function 'writeb';
@@ -20664,11 +20716,11 @@ unclassified	drivers/pci/access.c:112 pci_generic_config_write() warn: {45674745
 	'check_host_input' a tainted value from the host 'val' used in function 'writew';
 unclassified	drivers/pci/access.c:114 pci_generic_config_write() warn: {556706867241979173}
 	'check_host_input' a tainted value from the host 'val' used in function 'writel';
-unclassified	drivers/pci/access.c:125 pci_generic_config_read32() warn: {12023460974842548507}
+wrapper	drivers/pci/access.c:125 pci_generic_config_read32() warn: {12023460974842548507}
 	'check_host_input' an expression containing a tainted value from the host 'where & ~3' used in function 'map_bus';
-unclassified	drivers/pci/access.c:129 pci_generic_config_read32() warn: {12483132557848731148}
+wrapper	drivers/pci/access.c:129 pci_generic_config_read32() warn: {12483132557848731148}
 	'check_host_input' read from the host using function 'readl' into a variable 'val';
-unclassified	drivers/pci/access.c:132 pci_generic_config_read32() warn: {3398486334235786410}
+wrapper	drivers/pci/access.c:132 pci_generic_config_read32() warn: {3398486334235786410}
 	'check_host_input' propagating read value from the host '(*val >> (8 * (where & 3))) & ((1 << (size * 8)) - 1)' into a different variable 'val';
 unclassified	drivers/pci/access.c:149 pci_generic_config_write32() warn: {556706867241979170}
 	'check_host_input' a tainted value from the host 'val' used in function 'writel';
@@ -20676,17 +20728,17 @@ unclassified	drivers/pci/access.c:170 pci_generic_config_write32() warn: {127738
 	'check_host_input' propagating read value from the host 'readl(addr) & mask' into a different variable 'tmp';
 unclassified	drivers/pci/access.c:172 pci_generic_config_write32() warn: {554206272718746695}
 	'check_host_input' a tainted value from the host 'tmp' used in function 'writel';
-unclassified	drivers/pci/access.c:259 pci_user_read_config_byte() warn: {2486233358283827698}
+wrapper	drivers/pci/access.c:259 pci_user_read_config_byte() warn: {2486233358283827698}
 	'check_host_input' a tainted value from the host '&data' used in function 'read';
-unclassified	drivers/pci/access.c:259 pci_user_read_config_byte() warn: {12104010183069741993}
+wrapper	drivers/pci/access.c:259 pci_user_read_config_byte() warn: {12104010183069741993}
 	'check_host_input' propagating read value from the host 'data' into a different variable 'val';
-unclassified	drivers/pci/access.c:260 pci_user_read_config_word() warn: {2486279769768229651}
+wrapper	drivers/pci/access.c:260 pci_user_read_config_word() warn: {2486279769768229651}
 	'check_host_input' a tainted value from the host '&data' used in function 'read';
-unclassified	drivers/pci/access.c:260 pci_user_read_config_word() warn: {12104010183069741993}
+wrapper	drivers/pci/access.c:260 pci_user_read_config_word() warn: {12104010183069741993}
 	'check_host_input' propagating read value from the host 'data' into a different variable 'val';
-unclassified	drivers/pci/access.c:261 pci_user_read_config_dword() warn: {2486372592737033557}
+wrapper	drivers/pci/access.c:261 pci_user_read_config_dword() warn: {2486372592737033557}
 	'check_host_input' a tainted value from the host '&data' used in function 'read';
-unclassified	drivers/pci/access.c:261 pci_user_read_config_dword() warn: {12104010183069741993}
+wrapper	drivers/pci/access.c:261 pci_user_read_config_dword() warn: {12104010183069741993}
 	'check_host_input' propagating read value from the host 'data' into a different variable 'val';
 unclassified	drivers/pci/access.c:262 pci_user_write_config_byte() warn: {6752450161212221796}
 	'check_host_input' a tainted value from the host 'val' used in function 'write';
@@ -22603,10 +22655,12 @@ wrapper	drivers/acpi/acpica/exregion.c:324 acpi_ex_system_io_space_handler() war
 	'check_host_input' propagating read value from the host 'value32' into a different variable 'value';
 wrapper	drivers/acpi/acpica/hwxface.c:98 acpi_read() warn: {17150956443647273592}
 	'check_host_input' a tainted value from the host 'return_value' used in function 'acpi_hw_read';
-unclassified	drivers/acpi/acpi_tad.c:145 acpi_tad_rt_next_field() warn: {4360523282025659900}
-	'check_host_input' a tainted value from the host 's' used in function 'strchr';
-unclassified	drivers/acpi/acpi_tad.c:150 acpi_tad_rt_next_field() warn: {12043626888809255200}
-	'check_host_input' a tainted value from the host 's' used in function 'kstrtoint';
+excluded	drivers/acpi/acpi_tad.c:145 acpi_tad_rt_next_field() warn: {4360523282025659900}
+	'check_host_input' a tainted value from the host 's' used in function 'strchr'
+	[acpi tad is not allowed in tdx guest];
+excluded	drivers/acpi/acpi_tad.c:150 acpi_tad_rt_next_field() warn: {12043626888809255200}
+	'check_host_input' a tainted value from the host 's' used in function 'kstrtoint'
+	[acpi tad is not allowed in tdx guest];
 excluded	drivers/acpi/acpi_processor.c:114 acpi_processor_errata_piix4() warn: {3158458195294536012}
 	'check_host_input' a tainted value from the host '&value1' used in function 'pci_read_config_byte'
 	[PCI IDE ISA Xcelerator specific code.];
@@ -22835,9 +22889,10 @@ unclassified	drivers/char/virtio_console.c:2052 virtcons_probe() warn: {18345916
 	'check_host_input' an expression containing a propagated value from the host 'portdev->max_nr_ports == 0 || portdev->max_nr_ports > 32768' used in if/switch statement;
 unclassified	drivers/char/virtio_console.c:2054 virtcons_probe() warn: {3166024899944527551}
 	'check_host_input' a tainted value from the host 'portdev->max_nr_ports' used in function '_dev_err';
-unclassified	./include/linux/tpm.h:399 tpm_buf_append_u32() warn: {1042430730877183915}
-	'check_host_input' a tainted value from the host 'value' used in function '__builtin_bswap32';
-unclassified	./include/linux/tpm.h:399 tpm_buf_append_u32() warn: {121387841006327504}
+excluded	./include/linux/tpm.h:399 tpm_buf_append_u32() warn: {1042430730877183915}
+	'check_host_input' a tainted value from the host 'value' used in function '__builtin_bswap32'
+	[tpm is not enabled in TDX guest];
+excluded	./include/linux/tpm.h:399 tpm_buf_append_u32() warn: {121387841006327504}
 	'check_host_input' propagating read value from the host 'value' into a different variable 'value2';
 unclassified	./include/linux/input.h:445 input_report_switch() warn: {802163618260113083}
 	'check_host_input' a tainted value from the host '!!value' used in function 'input_event';
