@@ -90,6 +90,8 @@ KAFL_CONFIG_HARNESSES = {
     "BOOT_VIRTIO_BLK_PROBE":    ["abort_time: 2",
                                  "qemu_extra: -drive file=$BKC_ROOT/disk.img,if=none,id=fuzzdev -device virtio-blk-pci,drive=fuzzdev -device virtio-rng"],
     "US_RESUME_SUSPEND":        ["timeout: 10", "timeout_soft: 6"],
+    "BPH_P9_VIRTIO_PROBE":      ["qemu_extra:"
+                                 " -virtfs local,path=/tmp/kafl,mount_tag=tmp,security_model=mapped-file"],
     "BPH_VIRTIO_CONSOLE_INIT":  ["qemu_extra:"
                                  " -device virtio-serial,max_ports=1 -device virtconsole,chardev=kafl_serial"
                                  " -device virtio-serial-pci -device virtconsole,chardev=kafl_serial"]
