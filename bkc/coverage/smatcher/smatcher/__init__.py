@@ -17,12 +17,14 @@ from itertools import groupby
 
 SMATCH_PATH = os.environ.get("SMATCH_PATH", os.path.expanduser("~/tdx/smatch"))
 smdb_available = False
-try:
-    sys.path.insert(0, os.path.join(SMATCH_PATH, "smatch_data/db"))
-    import smdb
-    smdb_available = True
-except Exception:
-    smdb_available = False
+
+# smatch smdb.py - broken
+#try:
+#    sys.path.insert(0, os.path.join(SMATCH_PATH, "smatch_data/db"))
+#    import smdb
+#    smdb_available = True
+#except Exception:
+#    smdb_available = False
 
 __author__ = "Sebastian Österlund <sebastian.osterlund@intel.com>"
 __email__ = "sebastian.osterlund@intel.com"
