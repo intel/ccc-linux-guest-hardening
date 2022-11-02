@@ -38,7 +38,7 @@ endif
 # if pip install fails for any reason
 venv: venv/bin/ansible-galaxy
 
-venv/bin/ansible-galaxy:
+venv/bin/ansible-galaxy: clean
 	python3 -m venv venv
 	venv/bin/pip install wheel
 	venv/bin/pip install -r requirements.txt
