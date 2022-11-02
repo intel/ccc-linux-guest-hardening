@@ -57,7 +57,7 @@ HARNESSES = boot_harnesses + initcall_harnesses + bph_harnesses + user_harnesses
 BOOT_PARAM_HARNESSES = {
     "BPH_ACPI_INIT": "fuzzing_func_harness=acpi_init",
     "BPH_VP_MODERN_PROBE": "fuzzing_func_harness=vp_modern_probe fuzzing_disallow=virtio_pci_find_capability",
-    "BPH_VIRTIO_CONSOLE_INIT": "fuzzing_func_harness=init",
+    "BPH_VIRTIO_CONSOLE_INIT": "fuzzing_func_harness=init console=hvc0 console=hvc1 earlyprintk=hvc0",
     "BPH_VIRTIO_PCI_PROBE": "fuzzing_func_harness=virtio_pci_probe",
     "BPH_P9_VIRTIO_PROBE": "fuzzing_func_harness=p9_virtio_probe",
     "BPH_PCI_SUBSYS_INIT": "fuzzing_func_harness=pci_subsys_init",
@@ -90,6 +90,9 @@ KAFL_CONFIG_HARNESSES = {
     "BOOT_VIRTIO_BLK_PROBE":    ["abort_time: 2",
                                  "qemu_extra: -drive file=$BKC_ROOT/disk.img,if=none,id=fuzzdev -device virtio-blk-pci,drive=fuzzdev -device virtio-rng"],
     "US_RESUME_SUSPEND":        ["timeout: 10", "timeout_soft: 6"],
+    "BPH_VIRTIO_CONSOLE_INIT":  ["qemu_extra:"
+                                 " -device virtio-serial,max_ports=1 -device virtconsole,chardev=kafl_serial"
+                                 " -device virtio-serial-pci -device virtconsole,chardev=kafl_serial"]
 }
 
 default_kafl_options = {
@@ -121,12 +124,8 @@ harness_options = {
     "BOOT_FULL_BOOT": {"CONFIG_TDX_FUZZ_KAFL_SKIP_PARAVIRT_REWRITE": "y"},
     "BOOT_POST_TRAP": {"CONFIG_TDX_FUZZ_KAFL_SKIP_ACPI_PIO": "y",
                        "CONFIG_TDX_FUZZ_KAFL_SKIP_PARAVIRT_REWRITE": "y"},
-    "BOOT_DOINITCALLS_VIRTIO": {"CONFIG_TDX_FUZZ_KAFL_VIRTIO": "y"},
     "BOOT_DOINITCALLS_PCI": {"CONFIG_TDX_FUZZ_KAFL_SKIP_ACPI_PIO": "y"},
     "BOOT_START_KERNEL": {"CONFIG_TDX_FUZZ_KAFL_SKIP_ACPI_PIO": "y"},
-    "DOINITCALLS_LEVEL_7": {"CONFIG_TDX_FUZZ_KAFL_VIRTIO": "y"},
-    "DOINITCALLS_LEVEL_6": {"CONFIG_TDX_FUZZ_KAFL_VIRTIO": "y"},
-    "BPH_VIRTIO_CONSOLE_INIT": {"CONFIG_TDX_FUZZ_KAFL_VIRTIO": "y"},
     "US_RESUME_SUSPEND": {"CONFIG_PM": "y", "CONFIG_PM_DEBUG": "y",
                           "CONFIG_PM_ADVANCED_DEBUG": "y",
                           "CONFIG_SUSPEND": "y", "CONFIG_HIBERNATION": "y",
