@@ -32,8 +32,8 @@ boot_harnesses = [
 initcall_harnesses = [
     "DOINITCALLS_LEVEL_3",
     "DOINITCALLS_LEVEL_4",
-    "DOINITCALLS_LEVEL_5",
-    "DOINITCALLS_LEVEL_6",
+    "DOINITCALLS_LEVEL_5", # requires input seeds!
+    "DOINITCALLS_LEVEL_6", # requires input seeds!
     "DOINITCALLS_LEVEL_7"]
 
 bph_harnesses = [
@@ -48,7 +48,7 @@ bph_harnesses = [
 
 user_harnesses = [
     "US_DHCP",
-    "US_RESUME_SUSPEND",  # Requires input seeds. e.g., from FULL_BOOT
+    "US_RESUME_SUSPEND",  # may require seeds, may be unable to close execution loop, check suspend test options
 ]
 
 HARNESSES = boot_harnesses + initcall_harnesses + bph_harnesses + user_harnesses
