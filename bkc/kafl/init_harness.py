@@ -89,6 +89,7 @@ KAFL_CONFIG_HARNESSES = {
                                  "qemu_extra: -drive file=$BKC_ROOT/disk.img,if=none,id=fuzzdev -device virtio-blk-pci,drive=fuzzdev -device virtio-rng"],
     "BOOT_VIRTIO_BLK_PROBE":    ["abort_time: 2",
                                  "qemu_extra: -drive file=$BKC_ROOT/disk.img,if=none,id=fuzzdev -device virtio-blk-pci,drive=fuzzdev -device virtio-rng"],
+    "US_RESUME_SUSPEND":        ["timeout: 10", "timeout_soft: 6"],
 }
 
 default_kafl_options = {
