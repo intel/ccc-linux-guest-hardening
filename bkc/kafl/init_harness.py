@@ -42,7 +42,7 @@ bph_harnesses = [
     "BPH_VIRTIO_CONSOLE_INIT",
     "BPH_P9_VIRTIO_PROBE",
     "BPH_PCI_SUBSYS_INIT",
-    "BPH_HANDLE_CONTROL_MESSAGE",
+    "BPH_HANDLE_CONTROL_MESSAGE", # TODO: may reach userspace
     "BPH_VIRTIO_PCI_PROBE",
     "BPH_PCIBIOS_FIXUP_IRQS"]
 
@@ -64,7 +64,7 @@ BOOT_PARAM_HARNESSES = {
     # TODO: kprobes not avail, do manual harness
     # "BPH_EARLY_PCI_SERIAL": "fuzzing_func_harness=setup_early_printk earlyprintk=pciserial,force,00:18.1,115200",
     "BPH_PCIBIOS_FIXUP_IRQS": "fuzzing_func_harness=pcibios_fixup_irqs acpi=noirq",
-    "BPH_HANDLE_CONTROL_MESSAGE": "fuzzing_func_harness=handle_control_message fuzzing_disallow=virtio_pci_find_capability,pci_read_config_dword",
+    "BPH_HANDLE_CONTROL_MESSAGE": "fuzzing_func_harness=handle_control_message fuzzing_disallow=virtio_pci_find_capability,pci_read_config_dword console=hvc0",
     # "FULL_BOOT": "tsc_early_khz=2600",
 }
 
@@ -94,7 +94,9 @@ KAFL_CONFIG_HARNESSES = {
                                  " -virtfs local,path=/tmp/kafl,mount_tag=tmp,security_model=mapped-file"],
     "BPH_VIRTIO_CONSOLE_INIT":  ["qemu_extra:"
                                  " -device virtio-serial,max_ports=1 -device virtconsole,chardev=kafl_serial"
-                                 " -device virtio-serial-pci -device virtconsole,chardev=kafl_serial"]
+                                 " -device virtio-serial-pci -device virtconsole,chardev=kafl_serial"],
+    "BPH_HANDLE_CONTROL_MESSAGE": ["qemu_extra:"
+                                 " -device virtio-serial-pci -device virtconsole,chardev=kafl_serial"],
 }
 
 default_kafl_options = {
