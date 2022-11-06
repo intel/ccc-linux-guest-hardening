@@ -47,7 +47,7 @@ bph_harnesses = [
     "BPH_PCIBIOS_FIXUP_IRQS"]
 
 user_harnesses = [
-    "US_DHCP",
+    "US_DHCP",            # may require good seeds to find crashes
     "US_RESUME_SUSPEND",  # may require seeds, may be unable to close execution loop, check suspend test options
 ]
 
@@ -89,7 +89,8 @@ KAFL_CONFIG_HARNESSES = {
                                  "qemu_extra: -drive file=$BKC_ROOT/disk.img,if=none,id=fuzzdev -device virtio-blk-pci,drive=fuzzdev -device virtio-rng"],
     "BOOT_VIRTIO_BLK_PROBE":    ["abort_time: 2",
                                  "qemu_extra: -drive file=$BKC_ROOT/disk.img,if=none,id=fuzzdev -device virtio-blk-pci,drive=fuzzdev -device virtio-rng"],
-    "US_RESUME_SUSPEND":        ["timeout: 10", "timeout_soft: 6"],
+    "US_RESUME_SUSPEND":        ["timeout: 10", "timeout_soft: 2", "timeout_check: True"],
+    "US_DHCP":                  ["timeout: 6", "timeout_soft: 2", "timeout_check: True"],
     "BPH_P9_VIRTIO_PROBE":      ["qemu_extra:"
                                  " -virtfs local,path=/tmp/kafl,mount_tag=tmp,security_model=mapped-file"],
     "BPH_VIRTIO_CONSOLE_INIT":  ["qemu_extra:"
