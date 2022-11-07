@@ -49,7 +49,7 @@ register_issue() {
 		msg=$(echo "$msg"|sed -e 's/general protection fault/#GP/' -e 's/+0x[0-9,a-f,x,/]*//g' -e 's/RIP: 0010:/RIP: /')
 		msg=$(echo "$msg"|sed -e 's/stuck for [0-9]*s.*/stuck for [s] secs/' -e 's/for address 0x[0-9,a-f]*:/for address [n]:/')
 		msg=$(echo "$msg"|sed -e 's/in range \[0x[0-9,a-f]*-0x[0-9,a-f]*\]/in range [x-y]/')
-		msg=$(echo "$msg"|sed -e 's/of size [0-9]* at addr/of size N at addr/')
+		msg=$(echo "$msg"|sed -e 's/of size [0-9]* at addr [0-9,a-f]*/of size N at addr M/')
 		msg=$(echo "$msg"|tr '\n' ' ')
 		tag=$(echo "$msg,$class"|cksum -|cut -b -$TAGLEN)
 
