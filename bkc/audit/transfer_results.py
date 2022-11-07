@@ -96,9 +96,24 @@ def main(args):
                             comment_analyzed = re.findall(r'\[.*?\]', result_analyzed.split('\n\t')[2])
                         # if comment_analyzed:
                             #print ("comment_analyzed is  " + comment_analyzed[0] + "\n")
-                        if ((path_analyzed == path_new) and
-                                (result_id_analyzed.group(1) == result_id_new.group(1)) and
-                                (func_name_analyzed == func_name_new)):
+                        if ((path_analyzed == path_new) and (func_name_analyzed == func_name_new)):
+                            if (result_id_analyzed.group(1) != result_id_new.group(1)):
+                                line_num_analyzed = result_analyzed.split(':')[1].split(' ')[0]
+                                line_num_new = result_new.split(':')[1].split(' ')[0]
+                                if (("read from the host using function 'native_read_msr'" in result_new) and
+                                    ("read from the host using function 'paravirt_read_msr'" in result_analyzed)):
+                                    # ids will be different in this case since reference results using paravirt_read_msr
+                                    # so cannot tranfer based on ids, transfer based on var name and line number
+                                    var_analyzed = result_analyzed.split('paravirt_read_msr\'')[1].split('\'')[1]
+                                    var_new = result_new.split('native_read_msr\'')[1].split('\'')[1]
+                                    if ((line_num_analyzed != line_num_new) or
+                            	       (var_analyzed != var_new)):
+                            	        continue
+                                else:
+                            	    # if paths and func name match, but ids dont, but we are dealing with excluded
+                            	    # code, we dont care, just mark the new code with same status also
+                                    if (status_analyzed != "excluded"):
+                                        continue
                             found = 1
                             if status_analyzed:
                                 #print ("result_new is  " + result_new + "\n")
