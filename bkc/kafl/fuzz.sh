@@ -164,6 +164,7 @@ function run()
 	pushd $TARGET_ROOT > /dev/null
 		cp .config $WORK_DIR/target/config
 		test -f smatch_warns.txt && cp smatch_warns.txt $WORK_DIR/target/smatch_warns.txt
+		test -f smatch_warns_annotated.txt && cp smatch_warns_annotated.txt $WORK_DIR/target/smatch_warns_annotated.txt
 		if git status > /dev/null; then
 			git log --pretty=oneline -4 > $WORK_DIR/target/repo_log
 			git diff > $WORK_DIR/target/repo_diff
