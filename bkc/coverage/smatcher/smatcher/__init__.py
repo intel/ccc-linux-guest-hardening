@@ -101,7 +101,7 @@ def try_find_smatch_file(args, input_item):
     # Treat as kAFL workdir
     work_dir = input_item
     smatch_file = os.path.join(work_dir,
-                               "target/smatch_warns.txt_results_analyzed")
+                               "target/smatch_warns_annotated.txt")
     if os.path.isfile(smatch_file):
         return smatch_file
 
