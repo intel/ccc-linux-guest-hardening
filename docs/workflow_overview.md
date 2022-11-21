@@ -29,7 +29,10 @@ The most important components are:
 We use smatch to statically obtain points that potentially consume host input,
 which we then want to reach through fuzzing. The smatch audit scripts define
 the rules to find these inputs, filter and annotate them based on previous
-reviews [see ccc handbook for more].
+reviews. For more detail please refer to the
+[Static Analyzer and Code Audit](https://intel.github.io/ccc-linux-guest-hardening-docs/tdx-guest-hardening.html#static-analyzer-and-code-audit)
+section in the handbook.
+
 
 The smatch audit lists should be generated for the desired target kernel and
 configuration that will be subjected to fuzzing, so that the reported file names
@@ -47,7 +50,9 @@ the `make prepare` step to initialize basic campaign/fuzzing assets:
     <config>  - kernel config to be used in build/audit
   ```
 
-For more info on smatch audit lists, rules and annotation, see [...]
+For more info on smatch audit lists, rules and annotation, see
+[the related section](https://intel.github.io/ccc-linux-guest-hardening-docs/tdx-guest-hardening.html#applying-code-audit-results-to-different-kernel-trees)
+in the handbook.
 
 ### 1.2 kAFL Launcher (`bkc/kafl/fuzz.sh`)
 
@@ -138,7 +143,7 @@ a kAFL/Qemu instance with the given crashing input (payload).
   fuzzer results in `<workdir>/target`. By default, it also supplies the
    `--resume` flag to directly restore the Qemu snapshot stored in the workdir.
   This generally increases the chance of reproducing the crash, but is
-  incompatible with suppling alternative kernel/initrd inputs.
+  incompatible with supplying alternative kernel/initrd inputs.
 
 - `fuzz.sh debug` works like `single` but also enables the Qemu gdbserver. The
   VM stops immediately after launch and waits for gdb attach. The kAFL/Qemu
@@ -157,7 +162,7 @@ the reported binary coverage for the diverging executions (see `fuzz.sh noise` t
 
 Following above individual steps, a number of harnesses and associated
 configuration/assets have been defined that should be executed for any desired
-candidate kernel. The automation is currenrtly split three parts:
+candidate kernel. The automation is currently split three parts:
 
 - `make prepare`, executed from the top-level directory, generates basic
   resources needed as input to campaign/harness setups. This includes a

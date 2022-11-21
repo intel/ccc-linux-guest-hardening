@@ -11,7 +11,7 @@ Quick guide for getting started with kAFL for Confidential Compute hardening.
 - **Intel Skylake or later:** The setup requires a Gen-6 or newer Intel CPU (for
   Intel PT) and adequate memory (~2GB RAM per CPU, 5-20GB storage per campaign)
 
-- **Patched Host Kernel:** A modifed Linux host kernel is used for TDX emulation
+- **Patched Host Kernel:** A modified Linux host kernel is used for TDX emulation
   and VM-based snapshot fuzzing. This setup does not run inside a VM or container!
 
 - **Recent Debian/Ubuntu:** The userspace installation and fuzzing workflow has
@@ -113,7 +113,7 @@ kafl_gui $KAFL_WORKDIR
 Review the `fuzz.sh` helper to get an idea for how this works. Generally, the
 script abstracts the most common usages of the kAFL fuzzer and ensures
 that each usage (`kafl_fuzz.py`, `kafl_cov.py`, `kafl_debug.py`) is called with
-the same consistent VM setup. Moreoever, it prefers local files and arguments over
+the same consistent VM setup. Moreover, it prefers local files and arguments over
 global defaults to allow easy customization.
 
 More more information about using kAFL, [see here (TBD)](https://wenzel.github.io/kAFL/).
@@ -135,7 +135,7 @@ The following guides describe the different approaches in more detail:
 - [Enumerating code paths with untrusted host input](https://intel.github.io/ccc-linux-guest-hardening-docs/tdx-guest-hardening.html#static-analyzer-and-code-audit)
 - [Enabling and fuzzing a new guest driver](https://intel.github.io/ccc-linux-guest-hardening-docs/tdx-guest-hardening.html#enabling-additional-kernel-drivers)
 - [Selective function fuzzing with KPROBE](example_targeted_fuzzing.md)
-- [Fuzzing with userspace stimulus](userspace_stimulus.md)
+- [Fuzzing with userspace stimulus](usermode_stimulus.md)
 
 Once you have defined a harness, step back to review the overall [recommended
 workflow](workflow_overview.md) for obtaining coverage and reviewing fuzzer findings.
