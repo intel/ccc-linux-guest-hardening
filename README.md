@@ -100,12 +100,6 @@ Now that the necessary components are installed, you can pursue by one the follo
 
 1. [Review the campaign workflow and the automation tools](docs/workflow_overview.md)
 2. [Generate smatch audit list](docs/generate_smatch_audit_list.md)
-3. [Run kAFL boot and usermode harnesses](bkc/kafl)
-4. [Launch a Pre-Defined Harness](docs/getting_started.md#3-launch-a-pre-defined-harness)
-5. [Explore how to define new harnesses](docs/getting_started.md#4-define-a-new-harness)
-
-# Targeting your own guest kernel [TBD]
-
-1. Port the provided guest kernel harnesses to your target kernel
-2. Set `$LINUX_GUEST` to your target kernel source tree
-3. Perform the above workflow steps based on your new target kernel
+3. [Launch a Pre-Defined Harness](docs/getting_started.md#3-launch-a-pre-defined-harness)
+4. [Explore how to define new harnesses](docs/getting_started.md#4-define-a-new-harness)
+5. Targeting your own guest kernel [TBD]
