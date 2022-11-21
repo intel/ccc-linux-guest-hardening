@@ -18,7 +18,7 @@ All components and scripts are provided for research and validation purposes onl
 
 In the [`bkc`](https://github.com/intel/ccc-linux-guest-hardening/tree/master/bkc) directory, you will find:
 
-- [`audit`](https://github.com/intel/ccc-linux-guest-hardening/tree/master/bkc/audit): threat surface enumaration using static analysis
+- [`audit`](https://github.com/intel/ccc-linux-guest-hardening/tree/master/bkc/audit): threat surface enumeration using static analysis
 - [`kafl`](https://github.com/intel/ccc-linux-guest-hardening/tree/master/bkc/kafl): configs and tools for Linux fuzzing with kAFL
 - [`syzkaller`](https://github.com/intel/ccc-linux-guest-hardening/tree/master/bkc/syzkaller): configs and tools for generating guest activity with Syzkaller
 - [`coverage`](https://github.com/intel/ccc-linux-guest-hardening/tree/master/bkc/coverage): tools for matching coverage and trace data against audit list
@@ -29,7 +29,7 @@ In the [`bkc`](https://github.com/intel/ccc-linux-guest-hardening/tree/master/bk
 
 - The setup requires a Gen-6 or newer Intel CPU (for Intel PT) and sufficient
   RAM to run several VMs at once.
-- A modifed Linux host kernel is used for TDX emulation and VM-based snapshot
+- A modified Linux host kernel is used for TDX emulation and VM-based snapshot
   fuzzing. This setup does not run inside a VM or container!
 
 ## Installation Requirements
@@ -103,9 +103,9 @@ make env
 
 Now that the necessary components are installed, you can pursue by one the following:
 
-1. [Generate smatch audit list](./docs/generate_smatch_audit_list.md)
-2. [Run kAFL boot and usermode harnesses](./bkc/kafl)
-3. [Batch-Running Campaigns and Smatch Coverage](./docs/batch_run_campaign.md)
+1. [Review the campaign workflow and the automation tools](./docs/workflow_overview.md)
+2. [Generate smatch audit list](./docs/generate_smatch_audit_list.md)
+3. [Run kAFL boot and usermode harnesses](./bkc/kafl)
 
 # Targeting your own guest kernel [TBD]
 
