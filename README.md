@@ -10,7 +10,8 @@
 
 This project contains tools, scripts, and _best-known-configuration_ (BKC) for
 Linux guest kernel hardening in the context of Confidential Cloud Computing threat
-model. For motivation and solution overview, refer to [Guest Hardening Strategy](https://intel.github.io/ccc-linux-guest-hardening-docs/tdx-guest-hardening.html#).
+model. For motivation and solution overview, refer to
+[Guest Hardening Strategy](https://intel.github.io/ccc-linux-guest-hardening-docs/tdx-guest-hardening.html#).
 
 All components and scripts are provided for research and validation purposes only.
 
@@ -41,13 +42,13 @@ In the [`bkc`](https://github.com/intel/ccc-linux-guest-hardening/tree/master/bk
 
 ## Installation
 
-### The installation and the fuzzing runtime requires Python3 and the virtual environment package:
+#### The installation and the fuzzing runtime requires Python3 and the virtual environment package:
 
 ~~~
 sudo apt-get install python3 python3-venv
 ~~~
 
-### Clone this repo to a new top-level workspace and install using `make deploy`:
+#### Clone this repo to a new top-level workspace and install using `make deploy`:
 
   ```bash
   git clone https://github.com/intel/ccc-linux-guest-hardening ~/cocofuzz
@@ -62,7 +63,7 @@ user to group `kvm` and pull in a few build dependencies and tools via `apt`.
 The rest of the stack consists of userspace tools and scripts which are only 
 available in a local Python virtual environment.
 
-### If not yet done, reboot to launch the kAFL/SDV emulation kernel:
+#### If not yet done, reboot to launch the kAFL/SDV emulation kernel:
 
 ```bash
 uname -a
@@ -75,24 +76,25 @@ dmesg|grep KVM-PT
 # [KVM-PT] Info:  LVT PMI handler registrated!
 ```
 
+## Activate the environment and check if tools are available:
 
+```bash
+make env
+fuzz.sh
+exit
+cat env.sh
+```
 
-## Activate the environment
+When the installation is complete, you will find several tools and scripts 
+(e.g., [`fuzz.sh`](bkc/kafl/fuzz.sh)) inside the installation directory of the target system.
 
-When the installation is complete, you will find several tools and scripts
-inside the installation directory of the target system.
+All subsequent steps assume that you have activated the installation environment 
+by typing `make env`.
 
 The environment defines various default paths used by multiple layers of
 scripts. Go take a look. The script also sets `MAKEFLAGS="-j$(nproc)"` as a global
 default for parallel builds. Watch out for effects of this.
 
-All subsequent steps assume that you have activated the installation environment.
-This is done either by sourcing the `env.sh` script, or by typing `make env`,
-which launches a sub-shell that makes it easier to exit and switch environments:
-
-```shell
-make env
-```
 
 # Kernel Hardening Workflow
 
