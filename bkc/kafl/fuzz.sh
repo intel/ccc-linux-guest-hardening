@@ -349,7 +349,7 @@ function build_harness()
 function smatch_match()
 {
 	if test "0$USE_FAST_MATCHER" -gt 0; then
-		$BKC_ROOT/bkc/coverage/fast_matcher/target/release/fast_matcher -p $(nproc) -f -a -s $WORK_DIR/target/smatch_warns.txt $WORK_DIR > $WORK_DIR/traces/linecov.lst
+		fast_matcher -p $(nproc) -f -a -s $WORK_DIR/target/smatch_warns.txt $WORK_DIR > $WORK_DIR/traces/linecov.lst
 		# Make paths relative
 		$BKC_ROOT/bkc/coverage/strip_addr2line_absolute_path.sh $WORK_DIR/target/vmlinux $WORK_DIR/traces/linecov.lst
 	else
