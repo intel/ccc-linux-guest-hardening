@@ -26,7 +26,7 @@ In the [`bkc`](https://github.com/intel/ccc-linux-guest-hardening/tree/master/bk
 
 # Getting started
 
-## Platform Requirements
+## Requirements
 
 - **Intel Skylake or later:** The setup requires a Gen-6 or newer Intel CPU (for
   Intel PT) and adequate memory (~2GB RAM per CPU, 5-20GB storage per campaign)
@@ -78,23 +78,28 @@ dmesg|grep KVM-PT
 
 ## Activate the environment and check if tools are available:
 
-```bash
-make env
-fuzz.sh
-exit
-cat env.sh
-```
-
 When the installation is complete, you will find several tools and scripts 
 (e.g., [`fuzz.sh`](bkc/kafl/fuzz.sh)) inside the installation directory of the target system.
 
 All subsequent steps assume that you have activated the installation environment 
-by typing `make env`.
+using `make env`:
+
+```bash
+make env
+fuzz.sh
+exit
+```
 
 The environment defines various default paths used by multiple layers of
-scripts. Go take a look. The script also sets `MAKEFLAGS="-j$(nproc)"` as a global
-default for parallel builds. Watch out for effects of this.
+scripts. Go take a look. Note that the script also sets `MAKEFLAGS="-j$(nproc)"`
+as a global default for parallel builds:
 
+```bash
+make env
+cat env.sh
+echo $MAKEFLAGS
+echo $KAFL_WORKSPACE
+```
 
 # Kernel Hardening Workflow
 
