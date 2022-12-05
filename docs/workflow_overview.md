@@ -46,7 +46,7 @@ the `make prepare` step to initialize basic campaign/fuzzing assets:
   Usage: ./bkc/audit/smatch_audit.sh <dir> <config>
   
   Where:
-    <target>  - output directory for storing smatch results
+    <dir>     - output directory for storing smatch results
     <config>  - kernel config to be used in build/audit
   ```
 
