@@ -17,10 +17,9 @@
     force: true
 
 - name: Build BaseTools
-  ansible.builtin.make:
+  community.general.system.make:
     chdir: "{{ tdvf_root }}/BaseTools"
-    params:
-      --jobs: "{{ ansible_processor_nproc }}"
+    jobs: "{{ ansible_processor_nproc }}"
 
 - name: Build TDVF
   ansible.builtin.shell: >

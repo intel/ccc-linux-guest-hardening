@@ -39,10 +39,9 @@
   changed_when: false
 
 - name: Build smatch
-  ansible.builtin.make:
+  community.general.system.make:
     chdir: "{{ smatch_root }}"
-    params:
-      --jobs: "{{ ansible_processor_nproc }}"
+    jobs: "{{ ansible_processor_nproc }}"
 
 - name: Delete patch file
   ansible.builtin.file:
