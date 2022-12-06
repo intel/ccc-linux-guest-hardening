@@ -14,7 +14,6 @@
   changed_when: false
 
 - name: Build TDX guest kernel
-  ansible.builtin.make:
+  community.general.system.make:
     chdir: "{{ guest_root }}"
-    params:
-      --jobs: "{{ ansible_processor_nproc }}"
+    jobs: "{{ ansible_processor_nproc }}"
