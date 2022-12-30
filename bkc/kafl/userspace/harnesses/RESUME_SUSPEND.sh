@@ -16,20 +16,22 @@ grep . $KAFL_CTL/*
 grep . $KAFL_CTL/status/*
 
 # guest prepare
-echo "ls /sys/power"
-ls /sys/power
+grep . /sys/power
+
 echo 1 > /sys/module/suspend/parameters/pm_test_delay
 echo N > /sys/module/printk/parameters/console_suspend
+#echo freezer > /sys/power/pm_test
 #echo devices > /sys/power/pm_test
+#echo platform > /sys/power/pm_dest
 #echo processors > /sys/power/pm_test
 echo core > /sys/power/pm_test
-echo platform > /sys/power/disk
-#echo test_resume > /sys/power/disk
+echo test_resume > /sys/power/disk
 
 ## BEGIN HARNESS
 echo "start"  > $KAFL_CTL/control
 
-echo disk > /sys/power/state
+#echo disk > /sys/power/state
+echo mem > /sys/power/state
 
 ## END HARNESS
 echo "done"  > $KAFL_CTL/control

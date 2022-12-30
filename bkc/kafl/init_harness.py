@@ -32,8 +32,8 @@ boot_harnesses = [
 initcall_harnesses = [
     "DOINITCALLS_LEVEL_3",
     "DOINITCALLS_LEVEL_4",
-    "DOINITCALLS_LEVEL_5",
-    "DOINITCALLS_LEVEL_6",
+    "DOINITCALLS_LEVEL_5", # requires input seeds!
+    "DOINITCALLS_LEVEL_6", # requires input seeds!
     "DOINITCALLS_LEVEL_7"]
 
 bph_harnesses = [
@@ -42,13 +42,13 @@ bph_harnesses = [
     "BPH_VIRTIO_CONSOLE_INIT",
     "BPH_P9_VIRTIO_PROBE",
     "BPH_PCI_SUBSYS_INIT",
-    "BPH_HANDLE_CONTROL_MESSAGE",
+    "BPH_HANDLE_CONTROL_MESSAGE", # TODO: may reach userspace
     "BPH_VIRTIO_PCI_PROBE",
     "BPH_PCIBIOS_FIXUP_IRQS"]
 
 user_harnesses = [
-    "US_DHCP",
-    "US_RESUME_SUSPEND",  # Requires input seeds. e.g., from FULL_BOOT
+    "US_DHCP",            # may require good seeds to find crashes
+    "US_RESUME_SUSPEND",  # may require seeds, may be unable to close execution loop, check suspend test options
 ]
 
 HARNESSES = boot_harnesses + initcall_harnesses + bph_harnesses + user_harnesses
@@ -57,14 +57,14 @@ HARNESSES = boot_harnesses + initcall_harnesses + bph_harnesses + user_harnesses
 BOOT_PARAM_HARNESSES = {
     "BPH_ACPI_INIT": "fuzzing_func_harness=acpi_init",
     "BPH_VP_MODERN_PROBE": "fuzzing_func_harness=vp_modern_probe fuzzing_disallow=virtio_pci_find_capability",
-    "BPH_VIRTIO_CONSOLE_INIT": "fuzzing_func_harness=init",
+    "BPH_VIRTIO_CONSOLE_INIT": "fuzzing_func_harness=init console=hvc0 console=hvc1 earlyprintk=hvc0",
     "BPH_VIRTIO_PCI_PROBE": "fuzzing_func_harness=virtio_pci_probe",
     "BPH_P9_VIRTIO_PROBE": "fuzzing_func_harness=p9_virtio_probe",
     "BPH_PCI_SUBSYS_INIT": "fuzzing_func_harness=pci_subsys_init",
     # TODO: kprobes not avail, do manual harness
     # "BPH_EARLY_PCI_SERIAL": "fuzzing_func_harness=setup_early_printk earlyprintk=pciserial,force,00:18.1,115200",
     "BPH_PCIBIOS_FIXUP_IRQS": "fuzzing_func_harness=pcibios_fixup_irqs acpi=noirq",
-    "BPH_HANDLE_CONTROL_MESSAGE": "fuzzing_func_harness=handle_control_message fuzzing_disallow=virtio_pci_find_capability,pci_read_config_dword",
+    "BPH_HANDLE_CONTROL_MESSAGE": "fuzzing_func_harness=handle_control_message fuzzing_disallow=virtio_pci_find_capability,pci_read_config_dword console=hvc0",
     # "FULL_BOOT": "tsc_early_khz=2600",
 }
 
@@ -89,6 +89,15 @@ KAFL_CONFIG_HARNESSES = {
                                  "qemu_extra: -drive file=$BKC_ROOT/disk.img,if=none,id=fuzzdev -device virtio-blk-pci,drive=fuzzdev -device virtio-rng"],
     "BOOT_VIRTIO_BLK_PROBE":    ["abort_time: 2",
                                  "qemu_extra: -drive file=$BKC_ROOT/disk.img,if=none,id=fuzzdev -device virtio-blk-pci,drive=fuzzdev -device virtio-rng"],
+    "US_RESUME_SUSPEND":        ["timeout: 10", "timeout_soft: 2", "timeout_check: True"],
+    "US_DHCP":                  ["timeout: 6", "timeout_soft: 2", "timeout_check: True"],
+    "BPH_P9_VIRTIO_PROBE":      ["qemu_extra:"
+                                 " -virtfs local,path=/tmp/kafl,mount_tag=tmp,security_model=mapped-file"],
+    "BPH_VIRTIO_CONSOLE_INIT":  ["qemu_extra:"
+                                 " -device virtio-serial,max_ports=1 -device virtconsole,chardev=kafl_serial"
+                                 " -device virtio-serial-pci -device virtconsole,chardev=kafl_serial"],
+    "BPH_HANDLE_CONTROL_MESSAGE": ["qemu_extra:"
+                                 " -device virtio-serial-pci -device virtconsole,chardev=kafl_serial"],
 }
 
 default_kafl_options = {
@@ -120,13 +129,8 @@ harness_options = {
     "BOOT_FULL_BOOT": {"CONFIG_TDX_FUZZ_KAFL_SKIP_PARAVIRT_REWRITE": "y"},
     "BOOT_POST_TRAP": {"CONFIG_TDX_FUZZ_KAFL_SKIP_ACPI_PIO": "y",
                        "CONFIG_TDX_FUZZ_KAFL_SKIP_PARAVIRT_REWRITE": "y"},
-    "BOOT_DOINITCALLS_VIRTIO": {"CONFIG_TDX_FUZZ_KAFL_VIRTIO": "y"},
     "BOOT_DOINITCALLS_PCI": {"CONFIG_TDX_FUZZ_KAFL_SKIP_ACPI_PIO": "y"},
     "BOOT_START_KERNEL": {"CONFIG_TDX_FUZZ_KAFL_SKIP_ACPI_PIO": "y"},
-    "CONFIG_TDX_FUZZ_HARNESS_DOINITCALLS": {"CONFIG_TDX_FUZZ_KAFL_SKIP_IOAPIC_READS": "y", "CONFIG_TDX_FUZZ_KAFL_SKIP_ACPI_PIO": "y"},
-    "DOINITCALLS_LEVEL_7": {"CONFIG_TDX_FUZZ_KAFL_VIRTIO": "y"},
-    "DOINITCALLS_LEVEL_6": {"CONFIG_TDX_FUZZ_KAFL_VIRTIO": "y"},
-    "BPH_VIRTIO_CONSOLE_INIT": {"CONFIG_TDX_FUZZ_KAFL_VIRTIO": "y"},
     "US_RESUME_SUSPEND": {"CONFIG_PM": "y", "CONFIG_PM_DEBUG": "y",
                           "CONFIG_PM_ADVANCED_DEBUG": "y",
                           "CONFIG_SUSPEND": "y", "CONFIG_HIBERNATION": "y",
