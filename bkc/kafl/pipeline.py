@@ -248,19 +248,21 @@ def run_campaign(args, harness_dirs):
     pipes = set(list(range(args.pipes)))
     fuzz_queue = pipeline.copy()
     fuzz_tasks = []
-    while fuzz_queue and pipes:
-        p = fuzz_queue.pop()
-        t = task_fuzz(
-            args,
-            pipes.pop(),
-            p['harness_dir'],
-            p['target_dir'],
-            p['work_dir'])
-        fuzz_tasks.append(t)
+    while fuzz_queue:
+        while pipes and fuzz_queue:
+            p = fuzz_queue.pop()
+            t = task_fuzz(
+                args,
+                pipes.pop(),
+                p['harness_dir'],
+                p['target_dir'],
+                p['work_dir'])
+            fuzz_tasks.append(t)
         while not pipes:
             time.sleep(2)
             for t in fuzz_tasks:
                 if t.done():
+                    fuzz_tasks.remove(t)
                     pipes.add(t.result())
 
     # wait for remaining fuzz tasks to complete
