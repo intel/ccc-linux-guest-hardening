@@ -95,7 +95,7 @@ KAFL_CONFIG_HARNESSES = {
                                  " -virtfs local,path=/tmp/kafl,mount_tag=tmp,security_model=mapped-file"],
     "BPH_VIRTIO_CONSOLE_INIT":  ["qemu_extra:"
                                  " -device virtio-serial,max_ports=1 -device virtconsole,chardev=kafl_serial"
-                                 " -device virtio-serial-pci -device virtconsole,chardev=kafl_serial"],
+                                 " -device virtio-serial-pci"],
     "BPH_HANDLE_CONTROL_MESSAGE": ["qemu_extra:"
                                  " -device virtio-serial-pci -device virtconsole,chardev=kafl_serial"],
 }
