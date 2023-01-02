@@ -12,6 +12,7 @@
       - busybox-static # to generate initrd
       - elfutils       # for eu-addr2line
       - cargo          # fast_matcher
+      - gnuplot        # for stats.py
   become: true
 
 - name: Install BKC python dependencies
