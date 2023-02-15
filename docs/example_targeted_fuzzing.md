@@ -133,7 +133,7 @@ Hardware assisted breakpoint 1 at 0xffffffff810020e0: file init/main.c, line 747
 
 ## Notes:
 ### 1. It is advisable to ensure the compiler avoids inlining the fuzzing target function when it is simple and small. Otherwise, kprobe based harness may stop working, and all fuzzing instances will be stuck at "waiting." This is because of a known kprobe [limitation](https://docs.kernel.org/trace/kprobes.html):
-- > If you install a probe in an inline-able function, Kprobes makes no attempt to chase down all inline instances of the function and install probes there.  gcc may inline a function without being asked, so keep this in mind if you're not seeing the probe hits you expect.
+- > If you install a probe in an inline-able function, Kprobes makes no attempt to chase down all inline instances of the function and install probes there.  gcc may inline a function without being asked, so keep this in mind if you're not seeing the probe hits you expect. You can use the noinline keyword shown in the example above to prevent inlining.
 
 ### 2. The fuzzing instance can also be stuck at "waiting" if no sufficient input can be fuzzed in the target function.
 
