@@ -85,6 +85,11 @@ make prepare
 
 #### 3.2. Initialize a harness directory with desired setup, e.g. `POST_TRAP` harness:
 
+For the following subsections, one must be in the environment:
+```bash
+make env
+```
+
 ```bash
 init_harness.py ~/data/test1 BOOT_POST_TRAP 
 ```
