@@ -76,6 +76,19 @@ dmesg|grep KVM-PT
 # [KVM-PT] Info:  LVT PMI handler registrated!
 ```
 
+**Note:** When launching the kAFL/SDV emulation kernel, you might encounter an
+initramfs unpacking [failure](https://github.com/intel/ccc-linux-guest-hardening/issues/90)
+because [the current kernel lacks support for the `zstd` compression algorithm](https://github.com/intel/ccc-linux-guest-hardening/issues/90#issuecomment-1458468480).
+
+To fix this, follow the steps below:
+1. Edit `/etc/initramfs-tools/initramfs.conf` to change the compression
+algorithm from `zstd` to, e.g., `lz4`
+2. Rebuild the initramfs: `sudo update-initramfs -c -k all`
+3. Select the kAFL/SDV emulation kernel after a reboot
+
+The `zstd` support will be provided in the future kAFL/SDV emulation kernel.
+
+
 ## Activate the environment and check if tools are available:
 
 When the installation is complete, you will find several tools and scripts 
