@@ -104,7 +104,18 @@ cd ~/data/test1/BOOT_POST_TRAP
 fuzz.sh run build -p 16 --redqueen --log-crashes
 ```
 
-Open kAFL UI in another console on same system:
+**Note:** In step 3.2, [`init_harness.py`](../bkc/kafl/init_harness.py) generates a set of desired guest Kconfig options based on the chosen harness and configs the kAFL agent setting to coordinate. Please review the script and the harness-related [configurations](kafl_agent.md#harness-configuration). You can tweak this setup for different fuzzing campaign needs (e.g., injection ranges, debug utility, etc.) or for a fix. 
+
+For instance, you might encounter a [Guest ABORT issue](https://github.com/intel/ccc-linux-guest-hardening/issues/95) after launching a fuzzing execution in step 3.4. 
+
+One way to fix this is switching off the option `CONFIG_TDX_FUZZ_KAFL_SKIP_RNG_SEEDING` in the `.config` under your guest kernel's build directory and re-build the guest.
+
+We can also do so from outside the build directory:
+1. Disable the `CONFIG_TDX_FUZZ_KAFL_SKIP_RNG_SEEDING` in the Kconfig template with, e.g., `sed -i -e '/CONFIG_TDX_FUZZ_KAFL_SKIP_RNG_SEEDING=/s/y/n/' ~/data/test1/BOOT_POST_TRAP/linux.config`
+2. In `~/data/test1/BOOT_POST_TRAP/`, apply the changed Kconfig template and re-build the guest kernel with `fuzz.sh build ./ build`
+3. (Optional) Verify the fix with a single-worker campaign and debug info, using `fuzz.sh run build -p1 --debug`
+
+#### 3.5. (Optional) Open kAFL UI in another console on same system:
 
 ```bash
 kafl_gui $KAFL_WORKDIR
@@ -116,7 +127,7 @@ that each usage (`kafl_fuzz.py`, `kafl_cov.py`, `kafl_debug.py`) is called with
 the same consistent VM setup. Moreover, it prefers local files and arguments over
 global defaults to allow easy customization.
 
-More more information about using kAFL, [see here (TBD)](https://wenzel.github.io/kAFL/).
+For more information about using kAFL, [see here (TBD)](https://wenzel.github.io/kAFL/).
 
 ## 4. Define a new Harness
 
