@@ -85,6 +85,11 @@ make prepare
 
 #### 3.2. Initialize a harness directory with desired setup, e.g. `POST_TRAP` harness:
 
+For the following subsections, one must be in the environment:
+```bash
+make env
+```
+
 ```bash
 init_harness.py ~/data/test1 BOOT_POST_TRAP 
 ```
@@ -106,8 +111,13 @@ fuzz.sh run build -p 16 --redqueen --log-crashes
 
 Open kAFL UI in another console on same system:
 
+Change to the root of the respository first. If you followed the steps from
+[here](https://github.com/intel/ccc-linux-guest-hardening#clone-this-repo-to-a-new-top-level-workspace-and-install-using-make-deploy)
+it would be `~/cocofuzz` and be sure to enter the environment first.
+
 ```bash
-kafl_gui $KAFL_WORKDIR
+make env
+kafl_gui.py $KAFL_WORKDIR
 ```
 
 Review the `fuzz.sh` helper to get an idea for how this works. Generally, the
