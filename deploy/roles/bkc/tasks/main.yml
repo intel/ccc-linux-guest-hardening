@@ -42,3 +42,12 @@
   when: not ansible_check_mode
   tags:
     - build
+
+- name: Update KVM module option to set VE injection
+  ansible.builtin.blockinfile:
+    path: /etc/modprobe.d/kvm-intel.conf
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - ccc-linux-guest-hardening"
+    block: |
+      options kvm-intel nested=1 ve_injection=1 halt_on_triple_fault=1
+    create: true
+  become: true
