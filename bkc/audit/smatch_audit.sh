@@ -63,7 +63,8 @@ SMATCH_RUNNER=$SMATCH_ROOT/smatch_scripts/test_kernel.sh
 SMATCH_FILTER=$BKC_ROOT/bkc/audit/process_smatch_output.py
 SMATCH_TRANSFER=$BKC_ROOT/bkc/audit/transfer_results.py
 
-SMATCH_ANNOTATED=$BKC_ROOT/bkc/audit/sample_output/5.15-rc1/smatch_warns_5.15_tdx_allyesconfig_filtered_results_analyzed
+SMATCH_ANNOTATED=$BKC_ROOT/bkc/audit/sample_output/6.0-rc2/smatch_warns_6.0_tdx_allyesconfig_filtered_analyzed
+
 
 # Outputs
 SMATCH_LOGS=smatch_build.log
