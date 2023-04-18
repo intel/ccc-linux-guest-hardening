@@ -109,9 +109,10 @@ cd ~/data/test1/BOOT_POST_TRAP
 fuzz.sh run build -p 16 --redqueen --log-crashes
 ```
 
-Open kAFL UI in another console on same system:
+During the fuzzing execution, there is an option to monitor fuzzing status through kAFL 
+[user interface](https://intellabs.github.io/kAFL/reference/user_interface.html): 
 
-Change to the root of the respository first. If you followed the steps from
+Open another console, and switch to the ccc repository directory. If you followed the steps from
 [here](https://github.com/intel/ccc-linux-guest-hardening#clone-this-repo-to-a-new-top-level-workspace-and-install-using-make-deploy)
 it would be `~/cocofuzz` and be sure to enter the environment first.
 
@@ -120,13 +121,34 @@ make env
 kafl_gui.py $KAFL_WORKDIR
 ```
 
+#### 3.5. (Optional) Getting verbose output from the guest kernel
+Some predefined harnesses will set [`log_crashes`](https://intellabs.github.io/kAFL/reference/fuzzer_configuration.html#log-crashes) in for the kAFL config in the build directory. For example:
+```
+# cat ~/data/test1/BOOT_POST_TRAP/kafl.yaml
+abort_time: 2
+trace: True
+log_crashes: True
+kickstart: 4
+```
+This is recommended to save space while collecting guest logs corresponding to irregular payloads. However, it _also truncates the main hprintf log after every execution_. 
+
+Such verbosity can be useful in the case of debugging.  Instead, you can use [`log_hprintf`](https://intellabs.github.io/kAFL/reference/fuzzer_configuration.html#log-hprintf), as it allows a linear log of the guest executions across multiple snapshots/restores:
+```
+# the same kafl.yaml after overriding log_crashes with log_hprintf:
+abort_time: 2
+trace: True
+log_hprintf: True
+kickstart: 4
+```
+After the change, you could run the same fuzzing campaign with `fuzz.sh run build -p1` and observe the linear log from `$KAFL_WORKDIR/hprintf_00.log`.  If `log_crashes` is not present in the local kAFL config, you may use the [`--log-hprintf`](https://intellabs.github.io/kAFL/tutorials/fuzzing_linux_kernel.html#coverage) parameter directly. You may further increase verbosity via `hprintf=7` in the kAFL `qemu_append` [option](https://github.com/intel/ccc-linux-guest-hardening/blob/fd3e9c055476836d192a43074a7621e94afc5137/bkc/kafl/kafl_config.yaml#L7). Review [Fuzzer Configuration](https://intellabs.github.io/kAFL/reference/fuzzer_configuration.html#fuzzer-configuration) for more environment variables and command line switches.
+
 Review the `fuzz.sh` helper to get an idea for how this works. Generally, the
 script abstracts the most common usages of the kAFL fuzzer and ensures
 that each usage (`kafl_fuzz.py`, `kafl_cov.py`, `kafl_debug.py`) is called with
 the same consistent VM setup. Moreover, it prefers local files and arguments over
 global defaults to allow easy customization.
 
-More more information about using kAFL, [see here (TBD)](https://wenzel.github.io/kAFL/).
+For more information about using kAFL, [see here](https://wenzel.github.io/kAFL/).
 
 ## 4. Define a new Harness
 
