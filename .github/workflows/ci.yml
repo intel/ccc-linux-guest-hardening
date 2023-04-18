@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
-          python-version: '3.8'
+          python-version: '3.9'
           
       - name: Setup ansible venv
         working-directory: deploy
@@ -47,7 +47,7 @@ jobs:
 
       - uses: actions/setup-python@v2
         with:
-          python-version: '3.8'
+          python-version: '3.9'
           cache: 'pip'
 
       - name: Setup ansible
@@ -87,7 +87,7 @@ jobs:
 
       - uses: actions/setup-python@v2
         with:
-          python-version: '3.8'
+          python-version: '3.9'
           cache: 'pip'
 
       - name: Setup ansible
@@ -139,7 +139,7 @@ jobs:
 
       - uses: actions/setup-python@v2
         with:
-          python-version: '3.8'
+          python-version: '3.9'
           cache: 'pip'
 
       - name: install flake8
