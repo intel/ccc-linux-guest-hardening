@@ -83,7 +83,39 @@ Multiple helpers are provided to generate a pre-defined harnesses.
 make prepare
 ```
 
-#### 3.2. Initialize a harness directory with desired setup, e.g. `POST_TRAP` harness:
+#### 3.2. (Optional) Build smatch cross-function database for better coverage results:
+
+This is an optional step if you just want to try out the fuzzing, but it is highly
+recommended to do before any real fuzzing is started since it improves greatly the precision
+of the generated smatch audit log.
+
+```bash
+  cd ~/cocofuzz/linux-guest
+  ../smatch/smatch_scripts/build_kernel_data.sh
+```
+
+The above would make a one full round of kernel compilation and build a resulting
+smatch cross-function database in ~/cocofuzz/linux-guest/smatch_db.sqlite
+The step should be *repeated 5-6 times* in total and with each iteration the database
+size will grow and this will improve both the coverage and audit results.
+
+After you have successfully build the cross-function database 5-6 times, the following
+should be executed to generate an updated list of smatch audit entries:
+
+```bash
+cd ~/cocofuzz
+make env
+```
+
+```bash
+bkc/audit/smatch_audit.sh . bkc/kafl/linux_kernel_tdx_guest.config 
+```
+
+The step 3.2 is enough to do only once per each base upstream kernel version that
+is being used as guest kernel since the database of cross functions does not change
+drastically between different minor kernel versions. 
+
+#### 3.3. Initialize a harness directory with desired setup, e.g. `POST_TRAP` harness:
 
 For the following subsections, one must be in the environment:
 ```bash
@@ -94,7 +126,7 @@ make env
 init_harness.py ~/data/test1 BOOT_POST_TRAP 
 ```
 
-#### 3.3. Build the target kernel (based on sources at `$LINUX_GUEST`)
+#### 3.4. Build the target kernel (based on sources at `$LINUX_GUEST`)
 
 ```bash
 cd ~/data/test1/BOOT_POST_TRAP
@@ -102,7 +134,7 @@ mkdir build
 fuzz.sh build ./ build
 ```
 
-#### 3.4. Launch kAFL based on assets/configs in $PWD:
+#### 3.5. Launch kAFL based on assets/configs in $PWD:
 
 ```bash
 cd ~/data/test1/BOOT_POST_TRAP
@@ -121,7 +153,7 @@ make env
 kafl_gui.py $KAFL_WORKDIR
 ```
 
-#### 3.5. (Optional) Getting verbose output from the guest kernel
+#### 3.6. (Optional) Getting verbose output from the guest kernel
 Some predefined harnesses will set [`log_crashes`](https://intellabs.github.io/kAFL/reference/fuzzer_configuration.html#log-crashes) in for the kAFL config in the build directory. For example:
 ```
 # cat ~/data/test1/BOOT_POST_TRAP/kafl.yaml
