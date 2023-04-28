@@ -57,7 +57,7 @@ HARNESSES = boot_harnesses + initcall_harnesses + bph_harnesses + user_harnesses
 BOOT_PARAM_HARNESSES = {
     "BPH_ACPI_INIT": "fuzzing_func_harness=acpi_init",
     "BPH_VP_MODERN_PROBE": "fuzzing_func_harness=vp_modern_probe fuzzing_disallow=virtio_pci_find_capability",
-    "BPH_VIRTIO_CONSOLE_INIT": "fuzzing_func_harness=init console=hvc0 console=hvc1 earlyprintk=hvc0",
+    "BPH_VIRTIO_CONSOLE_INIT": "fuzzing_func_harness=virtio_console_init console=hvc0 console=hvc1 earlyprintk=hvc0",
     "BPH_VIRTIO_PCI_PROBE": "fuzzing_func_harness=virtio_pci_probe",
     "BPH_P9_VIRTIO_PROBE": "fuzzing_func_harness=p9_virtio_probe",
     "BPH_PCI_SUBSYS_INIT": "fuzzing_func_harness=pci_subsys_init",
