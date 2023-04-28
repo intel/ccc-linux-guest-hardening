@@ -10,6 +10,8 @@ REST_INIT: start_kernel from arch_call_rest_init() onwards to before userspace
 DO_BASIC: init/main.c:do_basic_setup(). Includes all initcall levels
 
 DOINITCALLS_LEVEL_3,4,5,6,7: Different initcall levels (see https://0xax.gitbooks.io/linux-insides/content/Concepts/linux-cpu-3.html for an explanation of levels). Biggest one here is level 4.
+Please note that currently the DOINITCALLS_LEVEL_7 harness does not consume any host input (and therefore kafl fuzz input) and isn't used for fuzzing.
+However, it is left in the fuzz suite in case future kernels add late initcall functions that can consume such input. 
 DOINITCALLS_PCI: pci-related initcalls. Selective fuzzing for initcalls such as pci_subsys_init, pci_arch_init. See the code for DOINITCALLS_FILTER in init/main.c.
 DOINITCALLS_VIRTIO: virtio-related initcalls. virtio_mmio_init, virtio_pci_driver_init, etc.
 DOINITCALLS_ACPI: acpi-related initcalls. For now only acpi_init.
