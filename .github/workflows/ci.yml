@@ -37,9 +37,8 @@ jobs:
       - name: Run ansible-lint
         working-directory: deploy
         run: |
-          ./venv/bin/ansible-lint -x 'meta-no-info'
-        continue-on-error: true
-  
+          ./venv/bin/ansible-lint -x 'meta-no-info' -x 'risky-file-permissions'
+      
   local:
     runs-on: ubuntu-20.04
 
