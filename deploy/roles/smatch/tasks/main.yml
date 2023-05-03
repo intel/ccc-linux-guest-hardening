@@ -31,6 +31,7 @@
     - git config --global user.email "ansible@ansible.com"
     - git config --global user.name "Ansible"
   when: git_config.rc != 0
+  changed_when: false
 
 - name: Apply smatch patch
   ansible.builtin.command: git am "{{ install_root }}/smatch.patch"  # noqa command-instead-of-module
