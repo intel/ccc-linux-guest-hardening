@@ -39,7 +39,7 @@ jobs:
       # ignore 'meta-no-info', since we don't need to publish our roles to Ansible Galaxy
       - name: Run ansible-lint
         working-directory: deploy
-        run: ansible-lint -x 'meta-no-info' -x 'risky-file-permissions'
+        run: ansible-lint -x 'meta-no-info' -x 'risky-file-permissions' -vvvv
       
   local:
     runs-on: ubuntu-20.04
