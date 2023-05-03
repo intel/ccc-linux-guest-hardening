@@ -36,6 +36,9 @@ jobs:
       - name: add deploy/venv/bin to PATH
         run: echo $(realpath deploy/venv/bin) >> $GITHUB_PATH
 
+      - name: Display Ansible env
+        run: ansible --version
+
       # ignore 'meta-no-info', since we don't need to publish our roles to Ansible Galaxy
       - name: Run ansible-lint
         working-directory: deploy
