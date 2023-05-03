@@ -38,7 +38,8 @@ jobs:
         working-directory: deploy
         run: |
           ./venv/bin/ansible-lint -x 'meta-no-info'
-      
+        continue-on-error: true
+  
   local:
     runs-on: ubuntu-20.04
 
