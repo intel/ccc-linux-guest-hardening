@@ -31,15 +31,19 @@ jobs:
         working-directory: deploy
         run: |
           ./venv/bin/pip install wheel
-          ./venv/bin/pip install ansible-lint==6.9.1
+          ./venv/bin/pip install ansible-lint==6.16.0
+
+      - name: add deploy/venv/bin to PATH
+        run: echo $(realpath deploy/venv/bin) >> $GITHUB_PATH
+
+      - name: Display Ansible env
+        run: ansible --version
 
       # ignore 'meta-no-info', since we don't need to publish our roles to Ansible Galaxy
       - name: Run ansible-lint
         working-directory: deploy
-        run: |
-          ./venv/bin/ansible-lint -x 'meta-no-info'
-        continue-on-error: true
-  
+        run: ansible-lint --exclude venv -x 'meta-no-info' -x 'risky-file-permissions' -vvvv
+      
   local:
     runs-on: ubuntu-20.04
 
