@@ -122,4 +122,4 @@ Now that the necessary components are installed, you can pursue by one the follo
 2. [Generate smatch audit list](docs/generate_smatch_audit_list.md)
 3. [Launch a Pre-Defined Harness](docs/getting_started.md#3-launch-a-pre-defined-harness)
 4. [Explore how to define new harnesses](docs/getting_started.md#4-define-a-new-harness)
-5. Targeting your own guest kernel [TBD]
+5. [Targeting your own guest kernel](docs/guest_kernel_changes.md)
