@@ -1,6 +1,6 @@
 humanize==4.4.0
 lz4==4.0.2
 msgpack==1.0.4
-parsl==2022.10.17
+parsl==2023.06.19
 PyYAML==6.0
 tqdm==4.64.1
