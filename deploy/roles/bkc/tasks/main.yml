@@ -47,7 +47,7 @@
     - build
 
 - name: Install BKC fast_matcher
-  ansible.builtin.command: cargo install --path "{{ install_root }}/bkc/coverage/fast_matcher"
+  ansible.builtin.command: ~/.cargo/bin/cargo install --path "{{ install_root }}/bkc/coverage/fast_matcher"
   changed_when: true
   when: not ansible_check_mode
   tags:

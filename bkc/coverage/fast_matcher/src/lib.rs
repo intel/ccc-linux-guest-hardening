@@ -13,14 +13,14 @@ use glob::glob;
 use itertools::sorted;
 use lzzzz::lz4f::ReadDecompressor;
 use rangemap::RangeInclusiveSet;
-use regex::Regex;
+use regex::{Regex, bytes};
 use std::collections::{HashMap, HashSet};
 use std::path::Component;
 use std::process::{exit, Command};
 use std::thread;
 use std::{
     fmt,
-    fs::File,
+    fs::{read, File},
     io,
     io::prelude::*,
     path::{Path, PathBuf},
@@ -475,17 +475,15 @@ fn read_trace_file_get_ranges<R: addr2line::gimli::Reader>(
 }
 
 fn collect_smatch_report(fname: &Path) -> Result<SmatchData, io::Error> {
-    let mut f = File::open(fname)?;
-    let mut s = String::new();
-    f.read_to_string(&mut s)?;
+    let s = read(fname)?;
 
-    let re = Regex::new(r"(\S+:[0-9]+)\s(\S+)\(\)").unwrap();
+    let re = bytes::Regex::new(r"(\S+:[0-9]+)\s(\S+)\(\)").unwrap();
     //let re_warn_error = Regex::new(r".*(warn:\|error:).*").unwrap();
     let smatch_data: SmatchData = re
         .captures_iter(&s)
         .map(|cap| {
-            let line = cap.get(1).unwrap().as_str().to_string();
-            let func = cap.get(2).unwrap().as_str().to_string();
+            let line = String::from_utf8_lossy(cap.get(1).unwrap().as_bytes()).to_string();
+            let func = String::from_utf8_lossy(cap.get(2).unwrap().as_bytes()).to_string();
             let lineinfo = LineInfo::from(line);
             (lineinfo, func)
         })
@@ -590,7 +588,7 @@ fn populate_wq(wq: &mut WorkQueue<PathBuf>, traces_dir: &Path) {
         });
 }
 
-fn start(args: Args) {
+pub fn start(args: Args) {
     let nproc = args.parallelize;
 
     let workdir = Path::new(&args.workdir);
@@ -700,7 +698,7 @@ fn start(args: Args) {
     version,
     about = "Parse kAFL traces and match them against a Smatch report"
 )]
-struct Args {
+pub struct Args {
     workdir: PathBuf,
     #[arg(short, long, default_value = "1")]
     parallelize: usize,
@@ -714,9 +712,4 @@ struct Args {
     frames: bool,
     #[arg(long = "prefix")]
     prefix: Option<String>,
-}
-
-fn main() {
-    let args = Args::parse();
-    start(args);
 }
