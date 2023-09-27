@@ -11,9 +11,19 @@
       - qemu-utils     # for qemu-img
       - busybox-static # to generate initrd
       - elfutils       # for eu-addr2line
-      - cargo          # fast_matcher
       - gnuplot        # for stats.py
   become: true
+
+- name: Download Installer
+  get_url:
+    url: https://sh.rustup.rs
+    dest: /tmp/sh.rustup.rs
+    mode: '0755'
+    force: 'yes'
+  
+- name: install rust/cargo
+  ansible.builtin.command: /tmp/sh.rustup.rs -y
+  changed_when: true
 
 - name: Install BKC python dependencies
   ansible.builtin.pip:
