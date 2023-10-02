@@ -14,16 +14,27 @@
       - gnuplot        # for stats.py
   become: true
 
+- name: Create temporary installer download directory
+  ansible.builtin.tempfile:
+    state: directory
+    suffix: rs
+  register: rustup_installer_dir
+
 - name: Download Installer
   ansible.builtin.get_url:
     url: https://sh.rustup.rs
-    dest: /tmp/sh.rustup.rs
+    dest: "{{ rustup_installer_dir.path }}/sh.rustup.rs"
     mode: '0755'
     force: 'yes'
 
 - name: Install rust/cargo
-  ansible.builtin.command: /tmp/sh.rustup.rs -y
+  ansible.builtin.command: "{{ rustup_installer_dir.path }}/sh.rustup.rs -y"
   changed_when: true
+
+- name: Remove temporary installer download directory
+  ansible.builtin.file:
+    path: "{{ rustup_installer_dir.path }}"
+    state: absent
 
 - name: Install BKC python dependencies
   ansible.builtin.pip:
