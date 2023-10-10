@@ -1,35 +1,32 @@
 /**
- * 
- * Copyright (C)  2022  Intel Corporation. 
+ *
+ * Copyright (C)  2022  Intel Corporation.
  *
  * This software and the related documents are Intel copyrighted materials, and your use of them is governed by the express license under which they were provided to you ("License"). Unless the License provides otherwise, you may not use, modify, copy, publish, distribute, disclose or transmit this software or the related documents without Intel's prior written permission.
  * This software and the related documents are provided as is, with no express or implied warranties, other than those that are expressly stated in the License.
  *
  * SPDX-License-Identifier: MIT
 **/
-
-use addr2line;
 use addr2line::fallible_iterator::FallibleIterator;
-use clap::{App, Arg, ArgMatches};
+use clap::Parser;
 use glob::glob;
 use itertools::sorted;
 use lzzzz::lz4f::ReadDecompressor;
-use regex::Regex;
+use rangemap::RangeInclusiveSet;
+use regex::{Regex, bytes};
 use std::collections::{HashMap, HashSet};
+use std::path::Component;
 use std::process::{exit, Command};
 use std::thread;
 use std::{
     fmt,
-    fs::File,
+    fs::{read, File},
     io,
     io::prelude::*,
     path::{Path, PathBuf},
     sync::{Arc, RwLock},
 };
 use workctl::WorkQueue;
-use rangemap::RangeInclusiveSet;
-use std::path::Component;
-
 
 type Node = u64;
 type Edge = (Node, Node);
@@ -48,7 +45,10 @@ struct LineInfo {
 
 impl LineInfo {
     fn new(path: &Path, line: u32) -> Self {
-        Self{path: normalize(path), line}
+        Self {
+            path: normalize(path),
+            line,
+        }
     }
 }
 
@@ -62,13 +62,13 @@ impl<'a> From<addr2line::Location<'a>> for LineInfo {
     fn from(location: addr2line::Location) -> Self {
         let path = Path::new(location.file.unwrap());
         let line = location.line.unwrap();
-        LineInfo::new(&path, line)
+        LineInfo::new(path, line)
     }
 }
 
 impl From<String> for LineInfo {
     fn from(location: String) -> Self {
-        let split: Vec<&str> = location.split(":").collect();
+        let split: Vec<&str> = location.split(':').collect();
         let path = Path::new(split[0]);
         let line = split[1].parse().unwrap();
         LineInfo::new(path, line)
@@ -85,7 +85,7 @@ fn normalize(p: &Path) -> PathBuf {
     for component in p.components() {
         match component {
             // Drop CurDir components, do not even push onto the stack.
-            Component::CurDir => {},
+            Component::CurDir => {}
 
             // For ParentDir components, we need to use the contents of the stack.
             Component::ParentDir => {
@@ -97,30 +97,42 @@ fn normalize(p: &Path) -> PathBuf {
                     Some(c) => {
                         match c {
                             // Push the ParentDir on the stack.
-                            Component::Prefix(_) => { stack.push(component); },
+                            Component::Prefix(_) => {
+                                stack.push(component);
+                            }
 
                             // The parent of a RootDir is itself, so drop the ParentDir (no-op).
-                            Component::RootDir => {},
+                            Component::RootDir => {}
 
                             // A CurDir should never be found on the stack, since they are dropped when seen.
-                            Component::CurDir => { unreachable!(); },
+                            Component::CurDir => {
+                                unreachable!();
+                            }
 
                             // If a ParentDir is found, it must be due to it piling up at the start of a path.
                             // Push the new ParentDir onto the stack.
-                            Component::ParentDir => { stack.push(component); },
+                            Component::ParentDir => {
+                                stack.push(component);
+                            }
 
                             // If a Normal is found, pop it off.
-                            Component::Normal(_) => { let _ = stack.pop(); }
+                            Component::Normal(_) => {
+                                let _ = stack.pop();
+                            }
                         }
-                    },
+                    }
 
                     // Stack is empty, so path is empty, just push.
-                    None => { stack.push(component); }
+                    None => {
+                        stack.push(component);
+                    }
                 }
-            },
+            }
 
             // All others, simply push onto the stack.
-            _ => { stack.push(component); },
+            _ => {
+                stack.push(component);
+            }
         }
     }
 
@@ -165,19 +177,22 @@ impl<'a> Iterator for TraceFileIter<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(Ok(next)) = self.lines.next() {
-            let d: Vec<&str> = next.trim_end().split(",").collect();
+            let d: Vec<&str> = next.trim_end().split(',').collect();
             if d.len() != 2 {
                 // ptdump timeout may lead to partly written files..
-                eprintln!("Failed to parse trace, line input \"{}\" - skipping..", next);
+                eprintln!(
+                    "Failed to parse trace, line input \"{}\" - skipping..",
+                    next
+                );
                 return None;
             }
             let src = match u64::from_str_radix(d[0], 16) {
                 Ok(src) => src,
-                Err(e) => panic!("Failed to parse line input \"{}\": {}", next, e)
+                Err(e) => panic!("Failed to parse line input \"{}\": {}", next, e),
             };
             let dst = match u64::from_str_radix(d[1], 16) {
                 Ok(dst) => dst,
-                Err(e) => panic!("Failed to parse line input \"{}\": {}", next, e)
+                Err(e) => panic!("Failed to parse line input \"{}\": {}", next, e),
             };
             // Filter out PT_TOKEN edges
             if dst == PT_TOKEN {
@@ -185,14 +200,11 @@ impl<'a> Iterator for TraceFileIter<'a> {
                     if src_next == PT_TOKEN {
                         return Some((src, dst_next));
                     } else {
-                        //eprintln!("Found edge with PT_TOKEN, without a sequential PT_TOKEN edge. ({:x}, {:x}) -> ({:x}, {:x})", src,dst, src_next, dst_next);
-                        
-                        assert!(false, "unexpected PT_TOKEN in trace");
-                        return None;
+                        panic!("unexpected PT_TOKEN in trace");
                     }
                 }
             }
-           return Some((src, dst));
+            return Some((src, dst));
         }
 
         None
@@ -215,12 +227,12 @@ fn read_trace_file(fname: &Path, nodes_collector: &mut HashSet<Node>) -> Result<
 fn get_addr_func<R: addr2line::gimli::Reader>(
     ctx: &addr2line::Context<R>,
     addr: Node,
-    ) -> Option<Function> {
+) -> Option<Function> {
     // Avoid overflow in find_location()
     if addr == PT_TOKEN {
         return None;
     }
-    let mut frames = ctx.find_frames(addr).unwrap();
+    let mut frames = ctx.find_frames(addr).skip_all_loads().unwrap();
     while let Some(frame) = frames.next().unwrap() {
         if let Some(func) = frame.function {
             let func_name = func.raw_name().unwrap();
@@ -235,12 +247,12 @@ fn get_addr_func<R: addr2line::gimli::Reader>(
 fn get_addr_frame_func<R: addr2line::gimli::Reader>(
     ctx: &addr2line::Context<R>,
     addr: Node,
-    ) -> Option<Function> {
+) -> Option<Function> {
     // Avoid overflow in find_location()
     if addr == PT_TOKEN {
         return None;
     }
-    let frames = ctx.find_frames(addr).unwrap();
+    let frames = ctx.find_frames(addr).skip_all_loads().unwrap();
     if let Some(frame) = frames.last().unwrap() {
         if let Some(func) = frame.function {
             let func_name = func.raw_name().unwrap();
@@ -255,13 +267,13 @@ fn get_addr_frame_func<R: addr2line::gimli::Reader>(
 fn get_addr_funcs<R: addr2line::gimli::Reader>(
     ctx: &addr2line::Context<R>,
     addr: Node,
-    ) -> Vec<(Function, LineInfo)> {
+) -> Vec<(Function, LineInfo)> {
     // Avoid overflow in find_location()
     let mut result = Vec::new();
     if addr == PT_TOKEN {
         return result;
     }
-    let mut frames = ctx.find_frames(addr).unwrap();
+    let mut frames = ctx.find_frames(addr).skip_all_loads().unwrap();
     while let Some(frame) = frames.next().unwrap() {
         if let Some(func) = frame.function {
             let func_name = func.raw_name().unwrap();
@@ -278,12 +290,12 @@ fn get_addr_frame_lineinfo<R: addr2line::gimli::Reader>(
     ctx: &addr2line::Context<R>,
     addr: Node,
     prefix: &Path,
-    ) -> Option<LineInfo> {
+) -> Option<LineInfo> {
     // Avoid overflow in find_location()
     if addr == PT_TOKEN {
         return None;
     }
-    let frames = ctx.find_frames(addr).unwrap();
+    let frames = ctx.find_frames(addr).skip_all_loads().unwrap();
     if let Some(frame) = frames.last().unwrap() {
         if let Some(l) = frame.location {
             let file = l.file.unwrap();
@@ -304,13 +316,13 @@ fn get_addr_frame_lineinfos<R: addr2line::gimli::Reader>(
     ctx: &addr2line::Context<R>,
     addr: Node,
     prefix: &Path,
-    ) -> HashSet<LineInfo> {
+) -> HashSet<LineInfo> {
     // Avoid overflow in find_location()
     let mut result = HashSet::new();
     if addr == PT_TOKEN {
         return result;
     }
-    let mut frames = ctx.find_frames(addr).unwrap();
+    let mut frames = ctx.find_frames(addr).skip_all_loads().unwrap();
     while let Some(frame) = frames.next().unwrap() {
         if let Some(l) = frame.location {
             let file = l.file.unwrap();
@@ -331,7 +343,7 @@ fn get_addr_lineinfo<R: addr2line::gimli::Reader>(
     ctx: &addr2line::Context<R>,
     addr: Node,
     prefix: &Path,
-    ) -> Option<LineInfo> {
+) -> Option<LineInfo> {
     // Avoid overflow in find_location()
     if addr == PT_TOKEN {
         return None;
@@ -355,7 +367,7 @@ fn get_addr_lineinfo_range<R: addr2line::gimli::Reader>(
     end: Node,
     prefix: &Path,
     include_frames: bool,
-    ) -> Vec<LineInfo> {
+) -> Vec<LineInfo> {
     let infos = ctx.find_location_range(start, end).unwrap();
     let mut result = Vec::new();
     for (s, _e, l) in infos {
@@ -380,7 +392,7 @@ fn in_same_function<R: addr2line::gimli::Reader>(
     _smatch_funcs: &HashSet<Function>,
     a: Node,
     b: Node,
-    ) -> bool {
+) -> bool {
     //fn in_same_function_and_is_smatch_func<R: addr2line::gimli::Reader>(ctx: &addr2line::Context<R>, smatch_funcs: &HashSet<Function>, a: Node, b: Node) -> bool{
     if let Some(cur_func) = get_addr_func(ctx, a) {
         if let Some(prev_func) = get_addr_func(ctx, b) {
@@ -399,7 +411,7 @@ fn in_same_frame_function<R: addr2line::gimli::Reader>(
     _smatch_funcs: &HashSet<Function>,
     a: Node,
     b: Node,
-    ) -> bool {
+) -> bool {
     if let Some(cur_func) = get_addr_frame_func(ctx, a) {
         if let Some(prev_func) = get_addr_frame_func(ctx, b) {
             return cur_func == prev_func;
@@ -412,7 +424,7 @@ fn read_trace_file_get_ranges<R: addr2line::gimli::Reader>(
     ctx: &addr2line::Context<R>,
     trace_file: &Path,
     smatch_data: &SmatchData,
-    ) -> Result<RangeInclusiveSet<Node>, io::Error> {
+) -> Result<RangeInclusiveSet<Node>, io::Error> {
     let mut f = File::open(trace_file).unwrap();
     let ti = TraceFileIter::new(&mut f).unwrap();
     let mut ranges = RangeInclusiveSet::new();
@@ -420,7 +432,6 @@ fn read_trace_file_get_ranges<R: addr2line::gimli::Reader>(
 
     let mut prev_edge: Option<Edge> = None;
     for edge in ti {
-
         // Trace:
         // ...
         // (prev_src, prev_dst)
@@ -441,21 +452,16 @@ fn read_trace_file_get_ranges<R: addr2line::gimli::Reader>(
             // Get possible functions (i.e., inlining sequence) for prev_dst and src
             let frame_funcs = get_addr_funcs(ctx, prev_dst);
             let frame_funcs_2 = get_addr_funcs(ctx, src);
-            let s1 : HashSet<Function> = frame_funcs.iter().map(|(f, _l)| f.to_string()).collect();
-            let s2 : HashSet<Function> = frame_funcs_2.iter().map(|(f, _l)| f.to_string()).collect();
-            let is : HashSet<Function> = s1.intersection(&s2).map(|s| s.to_string()).collect();
+            let s1: HashSet<Function> = frame_funcs.iter().map(|(f, _l)| f.to_string()).collect();
+            let s2: HashSet<Function> = frame_funcs_2.iter().map(|(f, _l)| f.to_string()).collect();
+            let is: HashSet<Function> = s1.intersection(&s2).map(|s| s.to_string()).collect();
             let func_intersect_len = is.intersection(&smatch_funcs).count();
             //let mut func_intersect_len = s1.intersection(&smatch_funcs).count();
             //func_intersect_len += s2.intersection(&smatch_funcs).count();
 
-
-
             if prev_dst <= src && func_intersect_len > 0 {
                 ranges.insert(prev_dst..=src);
-            } 
-
-
-
+            }
         }
         // Insert src and dst, just to be sure
         // TODO: check if earlier ranges will be inclusive
@@ -468,23 +474,20 @@ fn read_trace_file_get_ranges<R: addr2line::gimli::Reader>(
     Ok(ranges)
 }
 
-
 fn collect_smatch_report(fname: &Path) -> Result<SmatchData, io::Error> {
-    let mut f = File::open(fname)?;
-    let mut s = String::new();
-    f.read_to_string(&mut s)?;
+    let s = read(fname)?;
 
-    let re = Regex::new(r"(\S+:[0-9]+)\s(\S+)\(\)").unwrap();
+    let re = bytes::Regex::new(r"(\S+:[0-9]+)\s(\S+)\(\)").unwrap();
     //let re_warn_error = Regex::new(r".*(warn:\|error:).*").unwrap();
     let smatch_data: SmatchData = re
         .captures_iter(&s)
         .map(|cap| {
-            let line = cap.get(1).unwrap().as_str().to_string();
-            let func = cap.get(2).unwrap().as_str().to_string();
+            let line = String::from_utf8_lossy(cap.get(1).unwrap().as_bytes()).to_string();
+            let func = String::from_utf8_lossy(cap.get(2).unwrap().as_bytes()).to_string();
             let lineinfo = LineInfo::from(line);
             (lineinfo, func)
         })
-    .collect();
+        .collect();
 
     Ok(smatch_data)
 }
@@ -496,7 +499,7 @@ fn match_smatch_report(fname: &Path, hits: SmatchHits) -> Result<(), io::Error> 
     let br = io::BufReader::new(f);
     // Match fileinfo
     let re = Regex::new(r"(\S+:[0-9]+)").unwrap();
-    for report_line in br.lines() {
+    br.lines().for_each(|report_line| {
         if let Ok(l) = report_line {
             for cap in re.captures_iter(&l) {
                 let line = LineInfo::from(cap.get(1).unwrap().as_str().to_string());
@@ -505,7 +508,7 @@ fn match_smatch_report(fname: &Path, hits: SmatchHits) -> Result<(), io::Error> 
                 }
             }
         }
-    }
+    });
 
     Ok(())
 }
@@ -520,7 +523,7 @@ fn get_linux_source_path(vmlinux_path: &Path) -> Option<String> {
     let cmd = format!(
         "readelf --debug-dump=info {} | grep DW_AT_comp_dir | head -n 1 | cut -d: -f 4 | xargs",
         vmlinux_path.display()
-        );
+    );
     let output = Command::new("/usr/bin/bash")
         .arg("-c")
         .arg(cmd)
@@ -537,7 +540,8 @@ fn get_linux_source_path(vmlinux_path: &Path) -> Option<String> {
             .trim()
             .to_string()
     };
-    return Some(path);
+
+    Some(path)
 }
 
 fn assert_file_exists(path: &Path) {
@@ -545,7 +549,7 @@ fn assert_file_exists(path: &Path) {
         eprintln!(
             "file '{}' does not exist! Please provide a valid file.",
             path.display()
-            );
+        );
         exit(1);
     }
 }
@@ -555,38 +559,39 @@ fn do_checks(traces_dir: &Path, smatch_report: &Path, vmlinux_path: &Path) {
         eprintln!(
             "Could not find traces dir '{}'. Please generate the traces with 'fuzz.sh cov'.",
             traces_dir.display()
-            );
+        );
         exit(1);
     }
-    assert_file_exists(&smatch_report);
-    assert_file_exists(&vmlinux_path);
-
+    assert_file_exists(smatch_report);
+    assert_file_exists(vmlinux_path);
 }
 
 fn populate_wq(wq: &mut WorkQueue<PathBuf>, traces_dir: &Path) {
     let trace_dir_str = traces_dir.to_str().unwrap().to_owned();
-    for entry in glob(&(trace_dir_str.clone() + "/fuzz*.lst.lz4")).expect("Failed to read glob pattern") {
-        if let Ok(path) = entry {
-            eprintln!("Push: {:?}", path.display());
-            wq.push_work(path);
-        }
-    }
+    glob(&(trace_dir_str.clone() + "/fuzz*.lst.lz4"))
+        .expect("Failed to read glob pattern")
+        .for_each(|entry| {
+            if let Ok(path) = entry {
+                eprintln!("Push: {:?}", path.display());
+                wq.push_work(path);
+            }
+        });
+
     // Support legacy trace paths
-    for entry in glob(&(trace_dir_str + "/payload_*.lz4")).expect("Failed to read glob pattern") {
-        if let Ok(path) = entry {
-            eprintln!("Push: {:?}", path.display());
-            wq.push_work(path);
-        }
-    }
-
-
+    glob(&(trace_dir_str + "/payload_*.lz4"))
+        .expect("Failed to read glob pattern")
+        .for_each(|entry| {
+            if let Ok(path) = entry {
+                eprintln!("Push: {:?}", path.display());
+                wq.push_work(path);
+            }
+        });
 }
 
-fn start(matches: ArgMatches) {
+pub fn start(args: Args) {
+    let nproc = args.parallelize;
 
-    let nproc = matches.value_of("par").unwrap_or("1").parse().unwrap();
-
-    let workdir = Path::new(matches.value_of("WORKDIR").unwrap());
+    let workdir = Path::new(&args.workdir);
     if !workdir.is_dir() {
         eprintln!("Could not find workdir dir '{}'.", workdir.display());
         exit(1);
@@ -595,20 +600,18 @@ fn start(matches: ArgMatches) {
     let traces_dir = workdir.join("traces");
     let vmlinux_path = workdir.join("target").join("vmlinux");
 
-    let smatch_report = match matches.value_of("smatch") {
-        Some(f) => Path::new(f).to_path_buf(),
+    let smatch_report = match args.smatch_report {
+        Some(f) => f,
         None => workdir.join("target").join("smatch_warns.txt"),
     };
-
 
     let smatch_entries = collect_smatch_report(&smatch_report).unwrap();
 
     // Get kernel source dir prefix, so we can strip the absolute path later
-    let prefix = Path::new(string_to_static_str(match matches.value_of("prefix") {
-        Some(f) => f.to_string(),
+    let prefix = Path::new(string_to_static_str(match args.prefix {
+        Some(f) => f,
         None => get_linux_source_path(&vmlinux_path).unwrap(),
     }));
-
 
     // Sanity checks
     do_checks(&traces_dir, &smatch_report, &vmlinux_path);
@@ -634,8 +637,7 @@ fn start(matches: ArgMatches) {
             let a2l = addr2line::Context::new(&addr2line_file).unwrap();
             while let Some(path) = thread_wq.pull_work() {
                 eprintln!("Processing: {:?}", path.display());
-                if let Ok(res) = read_trace_file_get_ranges(&a2l, &path, &smatch_entries)
-                {
+                if let Ok(res) = read_trace_file_get_ranges(&a2l, &path, &smatch_entries) {
                     if let Ok(mut db) = ranges_db.write() {
                         for range in res {
                             db.insert(range);
@@ -653,7 +655,6 @@ fn start(matches: ArgMatches) {
     eprintln!("Done parsing traces... Now finding reached lines.");
 
     if let Ok(ranges) = ranges_db.read() {
-
         let fdebug = File::open(&vmlinux_path).unwrap();
         let map = unsafe { memmap::Mmap::map(&fdebug).unwrap() };
         let addr2line_file = addr2line::object::File::parse(&*map).unwrap();
@@ -663,80 +664,52 @@ fn start(matches: ArgMatches) {
         for range in ranges.iter() {
             // Collect range info
             //eprintln!("range {:x} - {:x} ({} bytes)", *range.start(), *range.end(), *range.end() - *range.start());
-            let lineinfos = get_addr_lineinfo_range(&a2l, *range.start(), *range.end(), prefix, matches.is_present("frames"));
+            let lineinfos =
+                get_addr_lineinfo_range(&a2l, *range.start(), *range.end(), prefix, args.frames);
 
             for info in lineinfos {
-                if smatch_entries.contains_key(&info) {
-                    //println!("{}", info);
-                    hits.insert(info);
-                } else if matches.is_present("all-visited") {
+                if smatch_entries.contains_key(&info) || args.all_visited {
                     hits.insert(info);
                 }
             }
         }
         // Print hit lines if not invoked --match
-        if !matches.is_present("match") {
+        if !args.match_only {
             for hit in sorted(hits.clone()) {
                 println!("{}", hit)
             }
         }
 
         // If invoked with --match, print the lines from the smatch report
-        if matches.is_present("match") {
+        if args.match_only {
             match_smatch_report(&smatch_report, hits.clone()).ok();
         }
-        eprintln!("FOUND {} matches with {}", hits.len(), smatch_report.display());
+        eprintln!(
+            "FOUND {} matches with {}",
+            hits.len(),
+            smatch_report.display()
+        );
     };
-
 }
 
-fn main() {
-    let matches = App::new("kAFL trace smatch matcher")
-        .version("0.1.0")
-        .author("Sebastian Österlund <sebastian.osterlund@intel.com>")
-        .about("Program to parse kAFL traces and match them against a Smatch report")
-        .arg(
-            Arg::with_name("WORKDIR")
-            .required(true)
-            .help("The workdir of the fuzzing campaign to analyze"),
-            )
-        .arg(
-            Arg::with_name("par")
-            .short("p")
-            .long("parallelize")
-            .takes_value(true)
-            .help("Parallelize to `par` threads"),
-            )
-        .arg(
-            Arg::with_name("smatch")
-            .short("s")
-            .long("smatch-report")
-            .takes_value(true),
-            )
-        .arg(
-            Arg::with_name("match")
-            .short("m")
-            .long("match")
-            .takes_value(false)
-            .help("Print hit lines from smatch report rather than unique hit lines"),
-            )
-        .arg(
-            Arg::with_name("all-visited")
-            .short("a")
-            .long("all-visited")
-            .takes_value(false)
-            .help("Print full line coverage, rather than smatch hits"),
-            )
-        .arg(
-            Arg::with_name("frames")
-            .short("f")
-            .long("frames")
-            .takes_value(false)
-            .help("Include all inlined frame locations in hit lines"),
-            )
-
-        .arg(Arg::with_name("prefix").long("prefix").takes_value(true))
-        .get_matches();
-
-    start(matches);
+#[derive(Parser)]
+#[command(
+    author,
+    version,
+    about = "Parse kAFL traces and match them against a Smatch report"
+)]
+pub struct Args {
+    workdir: PathBuf,
+    #[arg(short, long, default_value = "1")]
+    parallelize: usize,
+    #[arg(short, long)]
+    smatch_report: Option<PathBuf>,
+    #[arg(short = 'm', long = "match")]
+    match_only: bool,
+    #[arg(short = 'a', long = "all-visited")]
+    all_visited: bool,
+    #[arg(short = 'f', long = "frames")]
+    frames: bool,
+    #[arg(long = "prefix")]
+    prefix: Option<String>,
 }
