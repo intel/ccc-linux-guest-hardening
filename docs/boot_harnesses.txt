@@ -19,16 +19,35 @@ DOINITCALLS_ACPI: acpi-related initcalls. For now only acpi_init.
 VIRTIO_BLK_PROBE: Probing for virtio blk devices. drivers/block/virtio_blk.c
 ACPI_EARLY_INIT: acpi_early_init function that happens in start_kernel. Added because of ACPI fuzzing request (identified as concern).
 
-BOOT PARAM HARNESSES (BPH) (uses kprobe on function set by fuzzing_func_harness kernel boot param. fuzzing_disallow disables fuzzing input consumption for specified functions).
+BOOT PARAM HARNESSES (BPH) uses kretprobe on function set by fuzzing_func_harness kernel boot param.
+fuzzing_disallow disables fuzzing input consumption for specified functions.
+The following BPH harnesses are currently defined:
 
-"BPH_ACPI_INIT": "fuzzing_func_harness=acpi_init",
-"BPH_VP_MODERN_PROBE": "fuzzing_func_harness=vp_modern_probe fuzzing_disallow=virtio_pci_find_capability",
-"BPH_VIRTIO_CONSOLE_INIT": "fuzzing_func_harness=init",
-"BPH_VIRTIO_PCI_PROBE": "fuzzing_func_harness=virtio_pci_probe",
-"BPH_P9_VIRTIO_PROBE": "fuzzing_func_harness=p9_virtio_probe",
-"BPH_PCI_SUBSYS_INIT": "fuzzing_func_harness=pci_subsys_init",
+1. "BPH_ACPI_INIT": "fuzzing_func_harness=acpi_init"
+
+2. "BPH_VP_MODERN_PROBE": "fuzzing_func_harness=vp_modern_probe fuzzing_disallow=virtio_pci_find_capability"
+
+3. "BPH_VIRTIO_CONSOLE_INIT": "fuzzing_func_harness=virtio_console_init"
+ The goal of this harness is to exercise the initialization of the virtio console, including its probe function virtcons_probe(). 
+ The virtcons_probe() function performs the following relevant actions:
+  1. access the pci config space via virtio_cread_feature()-->virtio_cread()-->vdev->config->get primitives
+  2. initializes its workqueues as well a config and control works, selects and activates all queues. This step also results in control work handler being invoked, consumption of a buffer 
+     from the host via virtqueue_get_buf() and the subsequent handling of this buffer via handle_control_message(). The latter just parses the content of this buffer and makes actions based 
+     on them. Note that the value of the buffer in handle_control_message() cannot change anymore, so we should not enable fuzzing of the virtio*_to_cpu() primitives.
+
+4. "BPH_HANDLE_CONTROL_MESSAGE": "fuzzing_func_harness=handle_control_message fuzzing_disallow=virtio_pci_find_capability,pci_read_config_dword"
+  This is a subset harness of the previous BPH_VIRTIO_CONSOLE_INIT harness. The main difference is that the handle_control_message() function is fuzzed directly and fuzzing of the config 
+  space access is disabled. For this reason, this harness must be run using TDX_FUZZ_KAFL_VIRTIO_TO_CPU config option and care must be taken to ensure that the subsequent calls to virtio*_to_cpu() wrappers return the same fuzzed data (since the data cannot change while handle_control_message() is run). This is ensured by using a fuzzing cache that is attached to a virtio device node and the cache is updated only when the swiotlb_bounce() is executed. The TDX_FUZZ_KAFL_VIRTIO_GET_BUF config option shoud be turned off for this harness since there are no further input received from the host via virtqueue_get_buf() in the handle_control_message() function.
+
+5. "BPH_VIRTIO_PCI_PROBE": "fuzzing_func_harness=virtio_pci_probe"
+
+6. "BPH_P9_VIRTIO_PROBE": "fuzzing_func_harness=p9_virtio_probe"
+ The goal of this harness is to exercise the probe function p9_virtio_probe() of the Virtio 9p Transport driver. 
+
+7. "BPH_PCI_SUBSYS_INIT": "fuzzing_func_harness=pci_subsys_init"
+
 # TODO: kprobes not avail, do manual harness
-# "BPH_EARLY_PCI_SERIAL": "fuzzing_func_harness=setup_early_printk # earlyprintk=pciserial,force,00:18.1,115200",
-"BPH_PCIBIOS_FIXUP_IRQS": "fuzzing_func_harness=pcibios_fixup_irqs acpi=noirq",
-"BPH_HANDLE_CONTROL_MESSAGE": "fuzzing_func_harness=handle_control_message fuzzing_disallow=virtio_pci_find_capability,pci_read_config_dword",
+# "BPH_EARLY_PCI_SERIAL": "fuzzing_func_harness=setup_early_printk # earlyprintk=pciserial,force,00:18.1,115200"
+
+8. "BPH_PCIBIOS_FIXUP_IRQS": "fuzzing_func_harness=pcibios_fixup_irqs acpi=noirq"
 
