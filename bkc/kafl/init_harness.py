@@ -96,7 +96,7 @@ KAFL_CONFIG_HARNESSES = {
     "BPH_VIRTIO_CONSOLE_INIT":  ["qemu_extra:"
                                  " -device virtio-serial,max_ports=1 -device virtconsole,chardev=kafl_serial"
                                  " -device virtio-serial-pci"],
-    "BPH_HANDLE_CONTROL_MESSAGE": ["qemu_extra:"
+    "BPH_HANDLE_CONTROL_MESSAGE": ["kickstart: 5000", "qemu_extra:"
                                  " -device virtio-serial-pci -device virtconsole,chardev=kafl_serial"],
 }
 
@@ -138,6 +138,8 @@ harness_options = {
                           "CONFIG_PM_AUTOSLEEP": "n", "CONFIG_PM_WAKELOCKS": "n",
                           "CONFIG_PM_TRACE_RTC": "n", "CONFIG_ACPI_TAD": "n",
                           "CONFIG_FW_CACHE": "y"},
+    "BPH_HANDLE_CONTROL_MESSAGE": {"CONFIG_TDX_FUZZ_KAFL_VIRTIO_GET_BUF": "n",
+        "CONFIG_TDX_FUZZ_KAFL_VIRTIO_TO_CPU" : "y"},
 }
 
 
