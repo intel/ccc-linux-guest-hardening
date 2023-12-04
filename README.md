@@ -67,13 +67,13 @@ available in a local Python virtual environment.
 
 ```bash
 uname -a
-# Linux tdx-fuzz0 5.6.0-rc1-tdfl+ #15 SMP Wed May 25 02:23:44 CEST 2022 x86_64 x86_64 x86_64 GNU/Linux
+# Linux tdx-fuzz0 6.1.0-sdv+ #15 SMP Wed May 25 02:23:44 CEST 2022 x86_64 x86_64 x86_64 GNU/Linux
 ```
 
 ```bash
-dmesg|grep KVM-PT
-# [KVM-PT] Info:  CPU is supported!
-# [KVM-PT] Info:  LVT PMI handler registrated!
+dmesg|grep KVM-NYX
+# [KVM-NYX] Info:  CPU is supported!
+# [KVM-NYX] Info:  LVT PMI handler registrated!
 ```
 
 **Note:** When launching the kAFL/SDV emulation kernel, you might encounter an
