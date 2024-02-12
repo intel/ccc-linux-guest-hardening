@@ -1,4 +1,5 @@
 name: CI
+permissions: read-all
 
 # trigger build on every pull request activity against master branch
 on:
