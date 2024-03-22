@@ -91,7 +91,7 @@ Best known defaults are encoded in existing harness definitions in `bkc/kafl/run
 
 ### Logging and Debug
 
-Kernel printk facility is redirected to log messages via hypercalls (`kafl_hprintf()`). The loglevel can be set using `hprintf=` cmdline on kernel boot. For debugging, enable storing per-VM logs using `kafl_fuzz.py --log-hprintf` option. This can overflow a disk quickly, so normal fuzzing operation should be done with `--log-crashes`.
+Kernel printk facility is redirected to log messages via hypercalls (`kafl_hprintf()`). The loglevel can be set using `hprintf=` cmdline on kernel boot. For debugging, enable storing per-VM logs using `kafl fuzz --log-hprintf` option. This can overflow a disk quickly, so normal fuzzing operation should be done with `--log-crashes`.
 
 The kAFL agent also supports printing 3 types of debug/trace statistics. This is done only once for every new input found by the fuzzer, and enabled using a special `agent_flags` field in the payload buffer:
 * dump_stats - write a line of input injection stats at end of execution
