@@ -172,7 +172,7 @@ function run()
 	popd  > /dev/null
 
 	echo "Launching kAFL with workdir ${WORK_DIR}.."
-	kafl_fuzz.py \
+	kafl fuzz \
 		--memory $MEMSIZE \
 		-ip0 $ip0_a-$ip0_b \
 		-ip1 $ip1_a-$ip1_b \
@@ -195,7 +195,7 @@ function debug()
 	echo "Target kernel location:  $TARGET_BIN"
 	echo -e "\033[00m"
 
-	kafl_debug.py \
+	kafl debug \
 		--resume --memory $MEMSIZE \
 		--bios $BIOS_IMAGE \
 		--initrd $INITRD_IMAGE \
@@ -215,7 +215,7 @@ function single()
 
 	get_ip_regions
 
-	kafl_debug.py \
+	kafl debug \
 		--resume --memory $MEMSIZE \
 		-ip0 $ip0_a-$ip0_b \
 		-ip1 $ip1_a-$ip1_b \
@@ -246,7 +246,7 @@ function triage()
 
 	get_ip_regions
 
-	kafl_debug.py \
+	kafl debug \
 		--resume --memory $MEMSIZE \
 		-ip0 $ip0_a-$ip0_b \
 		-ip1 $ip1_a-$ip1_b \
@@ -273,7 +273,7 @@ function noise()
 	echo
 	sleep 1
 
-	kafl_debug.py \
+	kafl debug \
 		--resume --memory $MEMSIZE \
 		-ip0 $ip0_a-$ip0_b \
 		-ip1 $ip1_a-$ip1_b \
@@ -300,7 +300,7 @@ function cov()
 	echo "$ip2_a-$ip2_b ($ip2_name) // disabled"
 	sleep 2
 
-	kafl_cov.py \
+	kafl cov \
 		--resume --memory $MEMSIZE \
 		-ip0 $ip0_a-$ip0_b \
 		-ip1 $ip1_a-$ip1_b \

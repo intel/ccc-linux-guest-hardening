@@ -176,7 +176,7 @@ After the change, you could run the same fuzzing campaign with `fuzz.sh run buil
 
 Review the `fuzz.sh` helper to get an idea for how this works. Generally, the
 script abstracts the most common usages of the kAFL fuzzer and ensures
-that each usage (`kafl_fuzz.py`, `kafl_cov.py`, `kafl_debug.py`) is called with
+that each usage (`kafl fuzz`, `kafl cov`, `kafl debug`) is called with
 the same consistent VM setup. Moreover, it prefers local files and arguments over
 global defaults to allow easy customization.
 

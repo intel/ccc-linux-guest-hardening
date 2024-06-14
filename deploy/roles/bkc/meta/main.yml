@@ -3,7 +3,8 @@ dependencies:
     tags:
       - fuzzer
     vars:
-      fuzzer_revision: kafl_tdx
+      fuzzer_url: https://github.com/Wenzel/kafl.fuzzer
+      fuzzer_revision: kafl_tdx_rebased
       qemu_revision: kafl_stable_tdx
       libxdc_revision: kafl_stable_tdx
       kernel_deb_urls:
