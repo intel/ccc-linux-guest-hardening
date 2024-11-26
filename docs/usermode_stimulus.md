@@ -113,7 +113,7 @@ ln -sf  $BUILDROOT_VERSION/output/images/rootfs.cpio.gz $BKC_ROOT/initrd.cpio.gz
 ## Sharedir Setup
 
 The kAFL `sharedir` feature offers an OS-independent interface for downloading
-files from a host directory provided using the `kafl_fuzz.py --sharedir` option.
+files from a host directory provided using the `kafl fuzz --sharedir` option.
 
 By default, the stage 1 `loader.sh` uses `hget` to request and execute an
 `init.sh` script as the 2nd stage and perform actual harness initialization.

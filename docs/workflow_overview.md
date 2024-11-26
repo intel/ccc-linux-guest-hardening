@@ -110,7 +110,7 @@ which can then be mapped against the smatch audit lists (#1.1).
 
 There are multiple tools involved in this step:
 
-- `fuzz.sh cov` uses the `kafl_cov.py` tool to obtain the list of seen block
+- `fuzz.sh cov` uses the `kafl cov` tool to obtain the list of seen block
   transitions for a given corpus of inputs. The binary and decoded traces, and
   a summary of unique seen edges are stored to `<workdir>/traces`
 
