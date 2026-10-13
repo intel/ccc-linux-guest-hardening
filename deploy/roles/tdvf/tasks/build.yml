@@ -17,7 +17,7 @@
     force: true
 
 - name: Build BaseTools
-  community.general.system.make:
+  community.general.make:
     chdir: "{{ tdvf_root }}/BaseTools"
     jobs: "{{ ansible_processor_nproc }}"
 

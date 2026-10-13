@@ -40,7 +40,7 @@
   changed_when: false
 
 - name: Build smatch
-  community.general.system.make:
+  community.general.make:
     chdir: "{{ smatch_root }}"
     jobs: "{{ ansible_processor_nproc }}"
 
