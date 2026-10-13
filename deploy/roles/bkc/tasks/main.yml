@@ -18,22 +18,22 @@
   ansible.builtin.tempfile:
     state: directory
     suffix: rs
-  register: rustup_installer_dir
+  register: bkc_rustup_installer_dir
 
 - name: Download Installer
   ansible.builtin.get_url:
     url: https://sh.rustup.rs
-    dest: "{{ rustup_installer_dir.path }}/sh.rustup.rs"
+    dest: "{{ bkc_rustup_installer_dir.path }}/sh.rustup.rs"
     mode: '0755'
     force: 'yes'
 
 - name: Install rust/cargo
-  ansible.builtin.command: "{{ rustup_installer_dir.path }}/sh.rustup.rs -y"
+  ansible.builtin.command: "{{ bkc_rustup_installer_dir.path }}/sh.rustup.rs -y"
   changed_when: true
 
 - name: Remove temporary installer download directory
   ansible.builtin.file:
-    path: "{{ rustup_installer_dir.path }}"
+    path: "{{ bkc_rustup_installer_dir.path }}"
     state: absent
 
 - name: Install BKC python dependencies
