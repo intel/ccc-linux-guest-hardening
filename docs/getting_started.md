@@ -25,6 +25,9 @@ Quick guide for getting started with kAFL for Confidential Compute hardening.
 
 #### 2.1. Clone this repo to a new top-level workspace and install using `make deploy`:
 
+> **Note:** Ansible 12 requires Python 3.11 or newer. If `python3` is older,
+> install Python 3.11 with `venv` and run `make deploy PYTHON=python3.11`.
+
   ```bash
   git clone https://github.com/intel/ccc-linux-guest-hardening ~/cocofuzz
   cd ~/cocofuzz

@@ -16,12 +16,12 @@ on:
 
 jobs:
   ansible-lint:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: '3.11'
           
       - name: Setup ansible venv
         working-directory: deploy
@@ -32,7 +32,7 @@ jobs:
         working-directory: deploy
         run: |
           ./venv/bin/pip install wheel
-          ./venv/bin/pip install ansible-lint==6.16.0
+          ./venv/bin/pip install ansible-lint==25.11.0
 
       - name: add deploy/venv/bin to PATH
         run: echo $(realpath deploy/venv/bin) >> $GITHUB_PATH
@@ -46,14 +46,14 @@ jobs:
         run: ansible-lint --exclude venv -x 'meta-no-info' -x 'risky-file-permissions' -vvvv
       
   local:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: '3.11'
           cache: 'pip'
 
       - name: Setup ansible
@@ -77,7 +77,7 @@ jobs:
           --extra-vars "@parameters.json"
 
   remote:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     services:
       ssh:
@@ -93,7 +93,7 @@ jobs:
 
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: '3.11'
           cache: 'pip'
 
       - name: Setup ansible
@@ -138,7 +138,7 @@ jobs:
           --extra-vars "@parameters.json"
   
   lint-python:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
       - uses: actions/checkout@v4
