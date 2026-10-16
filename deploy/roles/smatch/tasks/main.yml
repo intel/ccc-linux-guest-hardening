@@ -21,7 +21,7 @@
 
 - name: Check whether git committer identity is configured
   ansible.builtin.command: git config user.email  # noqa command-instead-of-module
-  register: git_config
+  register: smatch_git_config
   ignore_errors: true
   changed_when: false
 
@@ -30,7 +30,7 @@
   with_items:
     - git config --global user.email "ansible@ansible.com"
     - git config --global user.name "Ansible"
-  when: git_config.rc != 0
+  when: smatch_git_config.rc != 0
   changed_when: false
 
 - name: Apply smatch patch

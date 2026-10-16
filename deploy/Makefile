@@ -8,6 +8,7 @@ ALL_TARGETS:=deploy clean update build
 ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 LOCALHOST_INVENTORY:=$(shell grep 'localhost' $(ROOT_DIR)/inventory > /dev/null 2>&1; echo $$?)
 ANSIBLE_COMMAND:=venv/bin/ansible-playbook -i $(ROOT_DIR)/inventory $(ROOT_DIR)/site.yml
+PYTHON ?= python3
 # declare all target as PHONY
 .PHONY: $(ALL_TARGETS)
 
@@ -39,7 +40,11 @@ endif
 venv: venv/bin/ansible-galaxy
 
 venv/bin/ansible-galaxy: clean
-	python3 -m venv venv
+	@if ! $(PYTHON) -c 'import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)' 2>/dev/null; then \
+		echo 'Ansible 12 requires Python 3.11 or newer; try make deploy PYTHON=python3.11.' >&2; \
+		exit 1; \
+	fi
+	$(PYTHON) -m venv venv
 	venv/bin/pip install wheel
 	venv/bin/pip install -r requirements.txt
 
