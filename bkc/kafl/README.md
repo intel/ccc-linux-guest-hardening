@@ -12,7 +12,7 @@ __TODO:__ update and split out different example harnesses as subsections
 kAFL requires the guest OS to implements an 'agent' which communicates with
 the fuzzer using hypercalls and shared memory. There are two basic approaches.
 
-1. Boot to userspace and initiate the agent via cron/systemd and `kafl_fuzz.py -sharedir`
+1. Boot to userspace and initiate the agent via cron/systemd and `kafl fuzz -sharedir`
 2. Integrate the agent into the Linux kernel to start fuzzing before userspace is up
 
 For simpler first option is described below. 
