@@ -50,6 +50,9 @@ sudo apt-get install python3 python3-venv
 
 #### Clone this repo to a new top-level workspace and install using `make deploy`:
 
+> **Note:** Ansible 12 requires Python 3.11 or newer. If `python3` is older,
+> install Python 3.11 with `venv` and run `make deploy PYTHON=python3.11`.
+
   ```bash
   git clone https://github.com/intel/ccc-linux-guest-hardening ~/cocofuzz
   cd ~/cocofuzz
